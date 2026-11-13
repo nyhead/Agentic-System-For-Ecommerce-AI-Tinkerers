@@ -11,7 +11,7 @@ import urllib.request
 import uuid
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from app.state import ProductRecord
 
@@ -353,6 +353,95 @@ def upload_image(
     body, content_type = _multipart(fields, filename, mime_type, data)
     client.upload(str(target["url"]), body, content_type)
     return str(target["resourceUrl"])
+
+
+PURCHASE_FACTS = """
+query ProductPurchaseFacts($id: ID!, $publicationId: ID!) {
+  shop {
+    currencyCode
+  }
+  product(id: $id) {
+    status
+    publishedOnPublication(publicationId: $publicationId)
+    variants(first: 1) {
+      nodes {
+        id
+        price
+        availableForSale
+      }
+    }
+  }
+}
+"""
+
+NotBuyableReason = Literal["not_found", "not_active", "not_published", "no_variant", "sold_out"]
+
+
+@dataclass(frozen=True)
+class PurchaseInfo:
+    """Whether a product can be bought now; `checkout_url` is set only when it can."""
+
+    status: str | None
+    published: bool
+    variant_id: str | None
+    price: str | None
+    currency: str | None
+    available: bool
+    checkout_url: str | None
+    reason: NotBuyableReason | None
+
+
+def purchase_info(
+    record: ProductRecord,
+    *,
+    publication_id: str | None = None,
+    client: ShopifyClient | None = None,
+) -> PurchaseInfo:
+    """Look up status, Online Store publication and first variant; link via a cart permalink."""
+    if not record.shopifyProductId:
+        raise ShopifyError(f"Product {record.productId!r} has no Shopify product to sell")
+    client = client or ShopifyClient()
+    publication_id = publication_id or online_store_publication_id(client)
+    found = client.graphql(
+        PURCHASE_FACTS, {"id": record.shopifyProductId, "publicationId": publication_id}
+    )
+    currency = (found.get("shop") or {}).get("currencyCode")
+    product = found.get("product")
+    if product is None:
+        return PurchaseInfo(None, False, None, None, currency, False, None, "not_found")
+    status = product.get("status")
+    published = bool(product.get("publishedOnPublication"))
+    variants = (product.get("variants") or {}).get("nodes") or []
+    variant = variants[0] if variants else {}
+    variant_id = variant.get("id")
+    price = variant.get("price")
+    available = bool(variant.get("availableForSale"))
+    reason: NotBuyableReason | None = None
+    if status != "ACTIVE":
+        reason = "not_active"
+    elif not published:
+        reason = "not_published"
+    elif not variant_id:
+        reason = "no_variant"
+    elif not available:
+        reason = "sold_out"
+    checkout_url = None
+    if reason is None:
+        # Cart permalink: https://{shop}/cart/{variant_id}:{quantity} opens checkout directly.
+        numeric_id = str(variant_id).rsplit("/", 1)[-1]
+        if not numeric_id.isdigit():
+            raise ShopifyError(f"Unexpected variant id {variant_id!r}")
+        checkout_url = f"https://{client.config.store_domain}/cart/{numeric_id}:1"
+    return PurchaseInfo(
+        status=str(status) if status else None,
+        published=published,
+        variant_id=str(variant_id) if variant_id else None,
+        price=str(price) if price is not None else None,
+        currency=str(currency) if currency else None,
+        available=available,
+        checkout_url=checkout_url,
+        reason=reason,
+    )
 
 
 def _multipart(

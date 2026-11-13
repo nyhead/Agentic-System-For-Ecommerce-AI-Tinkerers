@@ -340,3 +340,90 @@ def test_product_handle_is_stable_and_url_safe():
     assert shopify.product_handle("Demo Mug_001") == "commercecrew-demo-mug-001"
     with pytest.raises(ShopifyError):
         shopify.product_handle("---")
+
+
+VARIANT_GID = "gid://shopify/ProductVariant/4242"
+ONLINE_STORE = data(
+    publications={
+        "nodes": [
+            {
+                "id": "gid://shopify/Publication/3",
+                "catalog": {"apps": {"nodes": [{"handle": "online_store"}]}},
+            }
+        ]
+    }
+)
+
+
+def purchase_facts(status="ACTIVE", published=True, available=True, variants=None):
+    nodes = (
+        [{"id": VARIANT_GID, "price": "24.00", "availableForSale": available}]
+        if variants is None
+        else variants
+    )
+    return data(
+        shop={"currencyCode": "EUR"},
+        product={
+            "status": status,
+            "publishedOnPublication": published,
+            "variants": {"nodes": nodes},
+        },
+    )
+
+
+def listed():
+    return record().model_copy(update={"shopifyProductId": PRODUCT_GID})
+
+
+def test_purchase_info_links_active_available_product_to_checkout():
+    fake = FakeShopify(ONLINE_STORE, purchase_facts())
+    info = shopify.purchase_info(listed(), client=make_client(fake))
+    assert info.checkout_url == "https://demo-shop.myshopify.com/cart/4242:1"
+    assert info.reason is None
+    assert (info.price, info.currency) == ("24.00", "EUR")
+    assert info.variant_id == VARIANT_GID
+    assert info.status == "ACTIVE" and info.published and info.available
+    sent = fake.request(1)
+    assert "publishedOnPublication(publicationId: $publicationId)" in sent["query"]
+    assert sent["variables"] == {"id": PRODUCT_GID, "publicationId": "gid://shopify/Publication/3"}
+
+
+def test_purchase_info_uses_given_publication_without_lookup():
+    fake = FakeShopify(purchase_facts())
+    info = shopify.purchase_info(
+        listed(), publication_id="gid://shopify/Publication/9", client=make_client(fake)
+    )
+    assert info.checkout_url is not None
+    assert len(fake.calls) == 1
+    assert fake.request(0)["variables"]["publicationId"] == "gid://shopify/Publication/9"
+
+
+@pytest.mark.parametrize(
+    ("facts", "reason"),
+    [
+        (purchase_facts(status="DRAFT", published=False), "not_active"),
+        (purchase_facts(status="ARCHIVED"), "not_active"),
+        (purchase_facts(published=False), "not_published"),
+        (purchase_facts(available=False), "sold_out"),
+        (purchase_facts(variants=[]), "no_variant"),
+        (data(shop={"currencyCode": "EUR"}, product=None), "not_found"),
+    ],
+)
+def test_purchase_info_gives_no_link_when_product_cannot_be_bought(facts, reason):
+    fake = FakeShopify(ONLINE_STORE, facts)
+    info = shopify.purchase_info(listed(), client=make_client(fake))
+    assert info.checkout_url is None
+    assert info.reason == reason
+
+
+def test_sold_out_product_still_reports_price():
+    fake = FakeShopify(ONLINE_STORE, purchase_facts(available=False))
+    info = shopify.purchase_info(listed(), client=make_client(fake))
+    assert (info.price, info.currency, info.available) == ("24.00", "EUR", False)
+
+
+def test_purchase_info_requires_a_shopify_product():
+    fake = FakeShopify()
+    with pytest.raises(ShopifyError, match="no Shopify product"):
+        shopify.purchase_info(record(), client=make_client(fake))
+    assert fake.calls == []
