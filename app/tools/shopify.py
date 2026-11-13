@@ -18,7 +18,8 @@ from app.state import ProductRecord
 DEFAULT_API_VERSION = "2026-10"
 PRODUCT_TAG = "commercecrew"
 HANDLE_PREFIX = "commercecrew-"
-ONLINE_STORE_CATALOG = "Online Store"
+# Catalog titles vary by store ("Channel Catalog 123 for Online Store"); the app handle does not.
+ONLINE_STORE_APP_HANDLE = "online_store"
 # CDNs often reject urllib's default "Python-urllib" agent with 403.
 USER_AGENT = "commercecrew/0.1"
 
@@ -72,7 +73,13 @@ query AppPublications {
     nodes {
       id
       catalog {
-        title
+        ... on AppCatalog {
+          apps(first: 5) {
+            nodes {
+              handle
+            }
+          }
+        }
       }
     }
   }
@@ -296,7 +303,8 @@ def online_store_publication_id(client: ShopifyClient | None = None) -> str:
     client = client or ShopifyClient()
     publications = client.graphql(APP_PUBLICATIONS)["publications"]["nodes"]
     for publication in publications:
-        if (publication.get("catalog") or {}).get("title") == ONLINE_STORE_CATALOG:
+        apps = ((publication.get("catalog") or {}).get("apps") or {}).get("nodes") or []
+        if any(app.get("handle") == ONLINE_STORE_APP_HANDLE for app in apps):
             return str(publication["id"])
     raise ShopifyError("No Online Store publication found; is the Online Store channel installed?")
 
