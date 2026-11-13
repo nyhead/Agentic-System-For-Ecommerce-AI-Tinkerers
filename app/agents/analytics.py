@@ -1,20 +1,13 @@
 """Analytics agent: conversion rate and one rule-based next action, computed without a model."""
 
 from collections.abc import Callable, Iterable
-from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
-
-from app.state import MetricsRecord
+from app.state import AnalyticsResult, MetricsRecord, RecommendationRule
 
 # Below this many visits one order moves the rate by more than a percentage point: too noisy.
 MIN_SESSIONS_TO_JUDGE = 100
 # Commonly cited online-store conversion is about 2-3%; below 2% the listing is underperforming.
 LOW_CONVERSION_RATE = 0.02
-
-RecommendationRule = Literal[
-    "no_traffic", "low_traffic", "no_orders", "low_conversion", "healthy_conversion"
-]
 
 _ACTIONS: dict[RecommendationRule, str] = {
     "no_traffic": "share the product link on your social channels to bring in first visitors.",
@@ -23,19 +16,6 @@ _ACTIONS: dict[RecommendationRule, str] = {
     "low_conversion": "improve the product photos and description so more visitors buy.",
     "healthy_conversion": "post your launch ads to bring more visitors; the listing converts well.",
 }
-
-
-class AnalyticsResult(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    productId: str
-    source: Literal["synthetic", "observed"]
-    periodDays: int
-    sessions: int
-    orders: int
-    conversionRate: float | None
-    recommendationRule: RecommendationRule
-    recommendation: str
 
 
 def conversion_rate(sessions: int, orders: int) -> float | None:
