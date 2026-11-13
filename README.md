@@ -10,7 +10,7 @@ Built in the room at [AI Agents for the Rest of Us](https://luma.com/6rgvg844), 
 | --- | --- |
 | 14:00 | First combined flow runs on the deployed URL, on fixtures. |
 | 15:00 | Real Shopify and model calls replace the fixtures. |
-| **16:00** | Feature freeze. Fixes and docs only. |
+| **16:30** | Feature freeze. Fixes and docs only. |
 | **16:45** | Flow rehearsed. GitHub and demo links work and are on the [hackathon form](https://hackathon.computergeneratedreality.com/register). |
 | 17:45 | Official hand-in. |
 | 18:15 | Demos: three minutes, hard stop, live, no slides. |
