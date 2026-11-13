@@ -9,96 +9,84 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="vendor/modernist/styles.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..600&amp;display=swap">
+<link rel="stylesheet" href="css/cockpit.css">
 <script src="js/icons.js"></script>
 <script src="js/demo.js"></script>
-<style>
-:root{--color-bg:#F6F5F2;--color-surface:#FFFFFF;--color-text:#202522;--color-accent:#B84324;--color-accent-100:#F8ECE7;--color-accent-600:#A33B1F;--color-accent-700:#8C321A;--color-divider:#E3E6E0;--radius-sm:6px;--radius-md:8px;--radius-lg:12px;--font-heading-weight:600;--shadow-lg:0 16px 40px rgba(32,35,33,.18)}
-html,body{margin:0;height:100%;background:#F6F5F2;color:#202522;font-family:Archivo,system-ui,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
-a{color:#B84324}a:hover{color:#8C321A}
-button,input,select,textarea{font-family:inherit}
-:focus-visible{outline:2px solid #B84324;outline-offset:2px}
-@keyframes ccFade{from{opacity:0}to{opacity:1}}
-@keyframes ccDrawer{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
-@keyframes ccPop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
-@keyframes ccSpin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:1ms!important;animation-iteration-count:1!important;transition-duration:1ms!important}}
-</style>
 </helmet>
-<div style="display:grid;grid-template-columns:224px minmax(0,1fr);height:100vh;overflow:hidden;background:#F6F5F2;font-variant-numeric:tabular-nums">
-<aside aria-label="Main" style="background:#202321;color:#ECEDEA;display:flex;flex-direction:column;height:100vh;padding:18px 12px 12px;gap:18px;position:relative;z-index:30">
-  <div style="display:flex;align-items:center;gap:10px;padding:2px 8px">
-    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="0" y="8" width="14" height="14" rx="3" fill="#B84324"></rect><rect x="8" y="1" width="13" height="13" rx="3" fill="none" stroke="#ECEDEA" stroke-width="2"></rect></svg>
-    <span style="font-size:16px;font-weight:600;letter-spacing:-0.01em">CommerceCrew</span>
+<div class="app">
+<aside aria-label="Main" class="sidebar">
+  <div class="brand">
+    <svg class="brand-mark" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect class="brand-a" x="0.75" y="6.75" width="12.5" height="12.5" rx="3"></rect><rect class="brand-b" x="6.75" y="0.75" width="12.5" height="12.5" rx="3"></rect></svg>
+    <span class="brand-name">CommerceCrew</span>
   </div>
-  <div style="position:relative">
-    <button onClick="{{ toggleStore }}" aria-haspopup="true" aria-expanded="{{ storeOpen }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:8px 10px;background:#2A2E2B;border:1px solid #3A3F3B;border-radius:10px;color:#ECEDEA;cursor:pointer;text-align:left;transition:background 160ms" style-hover="background:#303531">
-      <span style="width:28px;height:28px;border-radius:7px;background:#ECEDEA;color:#202321;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none">A</span>
-      <span style="flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25"><span style="font-size:13px;font-weight:600">Atelier Store</span><span style="font-size:11.5px;color:#9AA29C">Demo workspace</span></span>
+  <div class="anchor">
+    <button class="store-switch" onClick="{{ toggleStore }}" aria-haspopup="true" aria-expanded="{{ storeOpen }}" title="Atelier Store">
+      <span class="store-avatar">A</span>
+      <span class="stack-text"><span>Atelier Store</span><span>Demo workspace</span></span>
       <cc-icon name="chevrons-up-down" size="14"></cc-icon>
     </button>
     <sc-if value="{{ storeOpen }}" hint-placeholder-val="{{ false }}">
-      <div onClick="{{ closeMenu }}" style="position:fixed;inset:0;z-index:50"></div>
-      <div role="menu" style="position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:51;background:#FFFFFF;color:#202522;border-radius:10px;box-shadow:0 12px 32px rgba(32,35,33,.22);padding:6px;animation:ccPop 160ms ease-out">
-        <div role="menuitem" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;background:#F6F5F2;font-size:13px;font-weight:500"><span style="flex:1">Atelier Store</span><cc-icon name="check" size="14"></cc-icon></div>
-        <div style="padding:8px 10px 6px;font-size:12px;color:#626A64">This demo workspace has one store. Data is simulated.</div>
+      <div onClick="{{ closeMenu }}" class="scrim-clear"></div>
+      <div class="popover popover--down">
+        <div class="popover-item" aria-current="true"><span class="grow">Atelier Store</span><cc-icon name="check" size="14"></cc-icon></div>
+        <div class="popover-note">This demo workspace has one store. Data is simulated.</div>
       </div>
     </sc-if>
   </div>
-  <nav style="display:flex;flex-direction:column;gap:2px">
+  <nav class="nav" aria-label="Sections">
     <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
-      <button onClick="{{ n.go }}" aria-current="{{ n.ac }}" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border:0;border-radius:8px;background:{{ n.bg }};color:{{ n.fg }};font-size:13.5px;font-weight:500;cursor:pointer;text-align:left;transition:background 160ms,color 160ms" style-hover="color:#FFFFFF;background:#2C302D">
-        <cc-icon name="{{ n.icon }}" size="16"></cc-icon><span style="flex:1">{{ n.label }}</span>
-        <sc-if value="{{ n.hasBadge }}" hint-placeholder-val="{{ false }}"><span aria-label="{{ n.badgeLabel }}" style="min-width:20px;height:20px;padding:0 6px;border-radius:6px;background:{{ n.badgeBg }};color:#FFFFFF;font-size:11.5px;font-weight:600;display:grid;place-items:center">{{ n.badge }}</span></sc-if>
+      <button class="nav-item" onClick="{{ n.go }}" aria-current="{{ n.ac }}" title="{{ n.label }}">
+        <cc-icon name="{{ n.icon }}" size="16"></cc-icon><span class="nav-label">{{ n.label }}</span>
+        <sc-if value="{{ n.hasBadge }}" hint-placeholder-val="{{ false }}"><span class="badge" aria-label="{{ n.badgeLabel }}" style="background:{{ n.badgeBg }}">{{ n.badge }}</span></sc-if>
       </button>
     </sc-for>
   </nav>
-  <div style="margin-top:auto;display:flex;flex-direction:column;gap:14px">
-    <div style="padding:0 10px;display:flex;flex-direction:column;gap:8px">
-      <div style="font-size:10.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#8E968F">Connections</div>
-      <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#C4CAC5"><cc-icon name="store" size="14"></cc-icon><span style="flex:1">Shopify</span><span style="font-size:11px;color:#9AA29C;border:1px solid #3A3F3B;border-radius:5px;padding:0 6px">Simulated</span></div>
-      <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#C4CAC5"><cc-icon name="message-square" size="14"></cc-icon><span style="flex:1">Store chat</span><span style="font-size:11px;color:#9AA29C;border:1px solid #3A3F3B;border-radius:5px;padding:0 6px">Simulated</span></div>
+  <div class="side-foot">
+    <div class="side-group">
+      <div class="side-label">Connections</div>
+      <div class="conn"><cc-icon name="store" size="14"></cc-icon><span class="grow">Shopify</span><span class="conn-tag">Simulated</span></div>
+      <div class="conn"><cc-icon name="message-square" size="14"></cc-icon><span class="grow">Store chat</span><span class="conn-tag">Simulated</span></div>
     </div>
-    <div style="position:relative;border-top:1px solid #343935;padding-top:12px">
-      <button onClick="{{ toggleAccount }}" aria-haspopup="true" aria-expanded="{{ accountOpen }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:6px 8px;border:0;border-radius:8px;background:transparent;color:#ECEDEA;cursor:pointer;text-align:left" style-hover="background:#2C302D">
-        <span style="width:30px;height:30px;border-radius:50%;background:#B84324;color:#FFFFFF;display:grid;place-items:center;font-size:12px;font-weight:600;flex:none">EM</span>
-        <span style="flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25"><span style="font-size:13px;font-weight:500">Elena Marsh</span><span style="font-size:11.5px;color:#9AA29C">Owner</span></span>
+    <div class="anchor account-wrap">
+      <button class="account" onClick="{{ toggleAccount }}" aria-haspopup="true" aria-expanded="{{ accountOpen }}" title="Elena Marsh">
+        <span class="avatar">EM</span>
+        <span class="stack-text"><span>Elena Marsh</span><span>Owner</span></span>
         <cc-icon name="more" size="16"></cc-icon>
       </button>
       <sc-if value="{{ accountOpen }}" hint-placeholder-val="{{ false }}">
-        <div onClick="{{ closeMenu }}" style="position:fixed;inset:0;z-index:50"></div>
-        <div role="menu" style="position:absolute;left:0;right:0;bottom:calc(100% + 6px);z-index:51;background:#FFFFFF;color:#202522;border-radius:10px;box-shadow:0 12px 32px rgba(32,35,33,.22);padding:6px;animation:ccPop 160ms ease-out">
-          <button role="menuitem" onClick="{{ askReset }}" style="width:100%;display:flex;align-items:center;gap:8px;padding:8px 10px;border:0;border-radius:6px;background:transparent;font-size:13px;color:#202522;cursor:pointer;text-align:left" style-hover="background:#F3F2EE"><cc-icon name="rotate-ccw" size="14"></cc-icon>Reset demo…</button>
-          <div style="padding:6px 10px;font-size:12px;color:#626A64">Signed in to a demo account</div>
+        <div onClick="{{ closeMenu }}" class="scrim-clear"></div>
+        <div class="popover popover--up">
+          <button class="popover-item" onClick="{{ askReset }}"><cc-icon name="rotate-ccw" size="14"></cc-icon>Reset demo…</button>
+          <div class="popover-note">Signed in to a demo account</div>
         </div>
       </sc-if>
     </div>
   </div>
 </aside>
-<div style="display:flex;flex-direction:column;min-width:0;height:100vh">
-  <header style="height:60px;flex:none;display:flex;align-items:center;gap:10px;padding:0 32px 0 40px;border-bottom:1px solid #E3E6E0;background:#F6F5F2">
-    <h1 style="margin:0;font-size:17px;font-weight:600;letter-spacing:-0.01em;color:#202522;flex:1;min-width:0">{{ pageTitle }}</h1>
-    <span style="font-size:12px;color:#626A64;display:inline-flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#8C948E"></span>Demo workspace</span>
-    <div style="position:relative">
-      <button class="btn btn-secondary btn-icon" aria-label="More options" aria-haspopup="true" aria-expanded="{{ moreOpen }}" onClick="{{ toggleMore }}" style="background:#FFFFFF;border-color:#D3D7D0;border-radius:8px;width:36px;height:36px;color:#202522" style-hover="background:#F3F2EE"><cc-icon name="more" size="16"></cc-icon></button>
+<div class="column">
+  <header class="topbar">
+    <h1 class="page-title">{{ pageTitle }}</h1>
+    <span class="topbar-meta"><span class="live-dot"></span><span class="hide-sm">Demo workspace</span></span>
+    <div class="anchor">
+      <button class="btn btn-ghost btn-icon" aria-label="More options" aria-haspopup="true" aria-expanded="{{ moreOpen }}" onClick="{{ toggleMore }}"><cc-icon name="more" size="16"></cc-icon></button>
       <sc-if value="{{ moreOpen }}" hint-placeholder-val="{{ false }}">
-        <div onClick="{{ closeMenu }}" style="position:fixed;inset:0;z-index:50"></div>
-        <div role="menu" style="position:absolute;right:0;top:calc(100% + 6px);z-index:51;width:240px;background:#FFFFFF;border-radius:10px;box-shadow:0 12px 32px rgba(32,35,33,.18);border:1px solid #E3E6E0;padding:6px;animation:ccPop 160ms ease-out">
-          <button role="menuitem" onClick="{{ askReset }}" style="width:100%;display:flex;align-items:center;gap:8px;padding:8px 10px;border:0;border-radius:6px;background:transparent;font-size:13px;color:#202522;cursor:pointer;text-align:left" style-hover="background:#F3F2EE"><cc-icon name="rotate-ccw" size="14"></cc-icon>Reset demo…</button>
-          <div style="padding:6px 10px 4px;font-size:12px;color:#626A64;line-height:1.45">All agents, connections and publishing in this workspace are simulated.</div>
+        <div onClick="{{ closeMenu }}" class="scrim-clear"></div>
+        <div class="popover popover--end">
+          <button class="popover-item" onClick="{{ askReset }}"><cc-icon name="rotate-ccw" size="14"></cc-icon>Reset demo…</button>
+          <div class="popover-note">All agents, connections and publishing in this workspace are simulated.</div>
         </div>
       </sc-if>
     </div>
-    <button class="btn btn-primary" onClick="{{ openAdd }}" style="font-weight:500;font-size:13.5px;padding:9px 14px;border-radius:8px;color:#FFFFFF"><cc-icon name="plus" size="16"></cc-icon>Add product</button>
+    <button class="btn btn-primary" onClick="{{ openAdd }}" aria-label="Add product"><cc-icon name="plus" size="16"></cc-icon><span class="add-label">Add product</span></button>
   </header>
-  <main ref="{{ mainRef }}" style="flex:1;min-height:0;overflow:auto;position:relative">
+  <main ref="{{ mainRef }}" class="main">
     <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">
-      <div aria-busy="true" style="padding:32px 40px;display:flex;flex-direction:column;gap:16px">
-        <div style="width:320px;height:28px;border-radius:6px;background:#ECEBE6"></div>
-        <div style="width:520px;height:16px;border-radius:6px;background:#ECEBE6"></div>
-        <div style="height:72px;border-radius:12px;background:#ECEBE6;margin-top:12px"></div>
-        <div style="display:grid;grid-template-columns:2fr 1fr;gap:32px"><div style="height:320px;border-radius:12px;background:#ECEBE6"></div><div style="height:320px;border-radius:12px;background:#EFEEEA"></div></div>
+      <div aria-busy="true" aria-label="Loading" class="skeleton">
+        <div class="sk" style="width:320px;max-width:80%;height:28px"></div>
+        <div class="sk" style="width:520px;max-width:100%;height:16px"></div>
+        <div class="sk" style="height:72px;margin-top:12px"></div>
+        <div class="sk-grid"><div class="sk" style="height:320px"></div><div class="sk" style="height:320px"></div></div>
       </div>
     </sc-if>
     <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ false }}">
@@ -1043,16 +1031,16 @@ button,input,select,textarea{font-family:inherit}
     </div>
   </div>
 </sc-if>
-<div aria-live="polite" role="status" style="position:fixed;left:248px;bottom:24px;z-index:80">
+<div aria-live="polite" role="status" class="toast-region">
   <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
-    <div style="display:flex;align-items:flex-start;gap:12px;width:420px;max-width:calc(100vw - 272px);background:#202321;color:#ECEDEA;border-radius:10px;padding:14px 14px 14px 16px;box-shadow:0 12px 32px rgba(32,35,33,.28);animation:ccPop 180ms ease-out">
-      <span style="color:#8FCFA4;padding-top:1px"><cc-icon name="check-circle" size="18"></cc-icon></span>
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-        <span style="font-size:14px;font-weight:600;color:#FFFFFF">{{ toast.title }}</span>
-        <span style="font-size:13px;color:#C4CAC5;line-height:1.45">{{ toast.body }}</span>
-        <sc-if value="{{ toast.hasAction }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toast.doAction }}" style="align-self:flex-start;margin-top:6px;border:0;background:none;padding:0;color:#F2A68F;font-size:13px;font-weight:500;cursor:pointer;text-decoration:underline;text-underline-offset:3px">{{ toast.action }}</button></sc-if>
+    <div class="toast">
+      <cc-icon name="check-circle" size="18"></cc-icon>
+      <div class="toast-text">
+        <span class="toast-title">{{ toast.title }}</span>
+        <span class="toast-body">{{ toast.body }}</span>
+        <sc-if value="{{ toast.hasAction }}" hint-placeholder-val="{{ false }}"><button class="btn btn-link btn-sm toast-action" onClick="{{ toast.doAction }}">{{ toast.action }}</button></sc-if>
       </div>
-      <button aria-label="Dismiss" onClick="{{ closeToast }}" style="width:26px;height:26px;border:0;border-radius:6px;background:transparent;color:#C4CAC5;display:grid;place-items:center;cursor:pointer" style-hover="background:#2C302D;color:#FFFFFF"><cc-icon name="x" size="14"></cc-icon></button>
+      <button class="btn btn-ghost btn-icon btn-sm" aria-label="Dismiss" onClick="{{ closeToast }}"><cc-icon name="x" size="14"></cc-icon></button>
     </div>
   </sc-if>
 </div>
@@ -1068,19 +1056,19 @@ class Component extends DCLogic {
   _stack = [];
   FOC = 'button:not([disabled]),[href],input:not([disabled]):not([type="file"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
   T = {
-    working: { label: 'Working', fg: '#3E4A44', bg: '#ECEEEA', dot: '#6B7770' },
-    needs_input: { label: 'Needs your input', fg: '#7A4A00', bg: '#FBF0DA', dot: '#C98A12' },
-    completed: { label: 'Completed', fg: '#235A3A', bg: '#E5EFE7', dot: '#2F7A4C' },
-    failed: { label: 'Failed', fg: '#A0281C', bg: '#FBE7E4', dot: '#C8382A' },
-    draft: { label: 'Draft', fg: '#4A524D', bg: '#EEEFEA', dot: '#8C948E' },
-    needs_review: { label: 'Needs review', fg: '#7A4A00', bg: '#FBF0DA', dot: '#C98A12' },
-    published: { label: 'Published', fg: '#235A3A', bg: '#E5EFE7', dot: '#2F7A4C' },
-    waiting: { label: 'Waiting for you', fg: '#7A4A00', bg: '#FBF0DA', dot: '#C98A12' },
-    agent: { label: 'Agent handling', fg: '#3E4A44', bg: '#ECEEEA', dot: '#6B7770' },
-    merchant: { label: 'You’re handling', fg: '#8C321A', bg: '#F8ECE7', dot: '#B84324' },
-    resolved: { label: 'Resolved', fg: '#235A3A', bg: '#E5EFE7', dot: '#2F7A4C' },
+    working: { label: 'Working', fg: 'var(--text-2)', bg: 'var(--subtle)', dot: 'var(--dot-neutral)' },
+    needs_input: { label: 'Needs your input', fg: 'var(--warning-text)', bg: 'var(--warning-soft)', dot: 'var(--warning)' },
+    completed: { label: 'Completed', fg: 'var(--success-text)', bg: 'var(--success-soft)', dot: 'var(--success)' },
+    failed: { label: 'Failed', fg: 'var(--danger-text)', bg: 'var(--danger-soft)', dot: 'var(--danger)' },
+    draft: { label: 'Draft', fg: 'var(--text-2)', bg: 'var(--subtle)', dot: 'var(--dot-neutral)' },
+    needs_review: { label: 'Needs review', fg: 'var(--warning-text)', bg: 'var(--warning-soft)', dot: 'var(--warning)' },
+    published: { label: 'Published', fg: 'var(--success-text)', bg: 'var(--success-soft)', dot: 'var(--success)' },
+    waiting: { label: 'Waiting for you', fg: 'var(--warning-text)', bg: 'var(--warning-soft)', dot: 'var(--warning)' },
+    agent: { label: 'Agent handling', fg: 'var(--text-2)', bg: 'var(--subtle)', dot: 'var(--dot-neutral)' },
+    merchant: { label: 'You’re handling', fg: 'var(--accent-text)', bg: 'var(--accent-soft)', dot: 'var(--accent)' },
+    resolved: { label: 'Resolved', fg: 'var(--success-text)', bg: 'var(--success-soft)', dot: 'var(--success)' },
   };
-  SRC = { seen: { label: 'Seen in photo', icon: 'eye', fg: '#4A524D' }, ai: { label: 'AI suggestion', icon: 'circle-dashed', fg: '#8C321A' }, you: { label: 'Provided by you', icon: 'user', fg: '#235A3A' } };
+  SRC = { seen: { label: 'Seen in photo', icon: 'eye', fg: 'var(--text-2)' }, ai: { label: 'AI suggestion', icon: 'circle-dashed', fg: 'var(--accent-text)' }, you: { label: 'Provided by you', icon: 'user', fg: 'var(--success-text)' } };
 
   componentDidMount() {
     this._prevState = this.state;
@@ -1175,8 +1163,8 @@ class Component extends DCLogic {
   openTarget(t) { if (!t) return; if (t.type === 'product') this.openProduct(t.id); else if (t.type === 'conversation') this.go('conversations', { convoId: t.id }); else if (t.type === 'decision') this.openDecision(t.id); }
   thumbOf(p) {
     const im = (p.images || []).find(i => i.id === p.coverId) || (p.images || [])[0];
-    if (im) return { photo: true, noPhoto: false, src: im.src, t: 'scale(' + (im.zoom || 1) + ')', o: (im.fx ?? 50) + '% ' + (im.fy ?? 50) + '%', bg: '#EEECE7' };
-    return { photo: false, noPhoto: true, icon: p.icon || 'package', bg: '#EEECE7' };
+    if (im) return { photo: true, noPhoto: false, src: im.src, t: 'scale(' + (im.zoom || 1) + ')', o: (im.fx ?? 50) + '% ' + (im.fy ?? 50) + '%', bg: 'var(--subtle)' };
+    return { photo: false, noPhoto: true, icon: p.icon || 'package', bg: 'var(--subtle)' };
   }
   resolveDecisions(d, pred, outcome) {
     const ids = [];
@@ -1362,9 +1350,9 @@ class Component extends DCLogic {
     const price = this.money(p.price, p.currency); const has = p.stock !== '' && p.stock != null;
     const dec = this.state.data.decisions.find(x => x.kind === 'listing' && x.productId === p.id && x.status === 'pending');
     return {
-      id: p.id, name: p.name, category: p.category, sku: p.sku || 'Not provided', skuColor: p.sku ? '#3E4641' : '#626A64',
-      price: price || 'Not provided', priceColor: price ? '#202522' : '#626A64',
-      stock: has ? (Number(p.stock) === 0 ? '0 · Out of stock' : String(p.stock)) : 'Not provided', stockColor: has ? (Number(p.stock) === 0 ? '#A0281C' : '#202522') : '#626A64',
+      id: p.id, name: p.name, category: p.category, sku: p.sku || 'Not provided', skuColor: p.sku ? 'var(--text-2)' : 'var(--text-3)',
+      price: price || 'Not provided', priceColor: price ? 'var(--text)' : 'var(--text-3)',
+      stock: has ? (Number(p.stock) === 0 ? '0 · Out of stock' : String(p.stock)) : 'Not provided', stockColor: has ? (Number(p.stock) === 0 ? 'var(--danger-text)' : 'var(--text)') : 'var(--text-3)',
       st: this.T[p.status], updated: this.rel(p.updated), thumb: this.thumbOf(p),
       open: () => this.openProduct(p.id),
       action: p.status === 'needs_review' ? 'Review' : p.status === 'draft' ? 'Continue' : 'View',
@@ -1379,8 +1367,8 @@ class Component extends DCLogic {
       const base = x.revised ? 'Revised per your feedback. ' : 'Prepared from ' + p.images.length + ' photo' + (p.images.length === 1 ? '' : 's') + '. ';
       text = isW ? 'Applying your feedback to the draft…' : base + (miss.length ? 'Still needed: ' + this.list(miss) + '.' : 'All required details are in — ready to publish.');
       thumb = this.thumbOf(p);
-    } else if (x.kind === 'support') thumb = { photo: false, noPhoto: true, icon: 'message-square', bg: '#F3F2EE' };
-    else { const im = p.images.find(i => i.id === d.campaign.imageId) || p.images[0]; thumb = im ? { photo: true, noPhoto: false, src: im.src, t: 'scale(1.2)', o: im.fx + '% ' + im.fy + '%', bg: '#EEECE7' } : { photo: false, noPhoto: true, icon: 'megaphone', bg: '#F3F2EE' }; }
+    } else if (x.kind === 'support') thumb = { photo: false, noPhoto: true, icon: 'message-square', bg: 'var(--subtle)' };
+    else { const im = p.images.find(i => i.id === d.campaign.imageId) || p.images[0]; thumb = im ? { photo: true, noPhoto: false, src: im.src, t: 'scale(1.2)', o: im.fx + '% ' + im.fy + '%', bg: 'var(--subtle)' } : { photo: false, noPhoto: true, icon: 'megaphone', bg: 'var(--subtle)' }; }
     return { id: x.id, title: x.title, text, agentName: ag.name, agentIcon: ag.icon, time: this.rel(x.created), st: isW ? this.T.working : this.T.needs_input, action: isW ? 'Revising…' : x.action, working: isW, open: () => this.openDecision(x.id), thumb, outcome: x.outcome || '', resolvedTime: x.resolvedAt ? this.rel(x.resolvedAt) : '' };
   }
   av(a) {
@@ -1400,7 +1388,7 @@ class Component extends DCLogic {
     return {
       hasImages: imgs.length > 0, noImages: !imgs.length, idxLabel: imgs.length ? (gi + 1) + ' of ' + imgs.length : '',
       main: main ? { src: main.src, label: main.label, isCover: main.id === coverId, role: main.id === coverId ? 'Cover' : main.role } : { src: '', label: '' },
-      images: imgs.map((im, i) => ({ id: im.id, src: im.src, label: im.label, active: i === gi, border: i === gi ? '#B84324' : '#E3E6E0', pos: (im.fx ?? 50) + '% ' + (im.fy ?? 50) + '%', select: () => setIdx(i) })),
+      images: imgs.map((im, i) => ({ id: im.id, src: im.src, label: im.label, active: i === gi, border: i === gi ? 'var(--accent)' : 'var(--border)', pos: (im.fx ?? 50) + '% ' + (im.fy ?? 50) + '%', select: () => setIdx(i) })),
       enlarge: () => this.setState({ lightbox: { images: imgs.map(x => ({ src: x.src, label: x.label })), idx: gi } }),
     };
   }
@@ -1415,8 +1403,8 @@ class Component extends DCLogic {
     const menuT = k => () => this.setState(st => ({ menu: st.menu === k ? null : k }));
     const base = {
       mainRef: this.mainRef, fileRef: this.fileRef, drawerRef: this.R.drawer, modalRef: this.R.modal, lightboxRef: this.R.lightbox, confirmRef: this.R.confirm,
-      nav: navDefs.map(([k, l, i]) => ({ key: k, label: l, icon: i, go: () => this.go(k, k === 'products' ? { filter: 'all' } : k === 'activity' ? { actStatus: 'all', actAgent: 'all' } : {}), bg: cur === k ? '#343935' : 'transparent', fg: cur === k ? '#FFFFFF' : '#C4CAC5', ac: cur === k ? 'page' : undefined,
-        hasBadge: (k === 'review' && pending.length > 0) || (k === 'conversations' && waitingC > 0), badge: k === 'review' ? pending.length : waitingC, badgeBg: k === 'review' ? '#B84324' : '#4A504C', badgeLabel: k === 'review' ? pending.length + ' pending' : waitingC + ' waiting' })),
+      nav: navDefs.map(([k, l, i]) => ({ key: k, label: l, icon: i, go: () => this.go(k, k === 'products' ? { filter: 'all' } : k === 'activity' ? { actStatus: 'all', actAgent: 'all' } : {}), bg: cur === k ? 'var(--subtle-2)' : 'transparent', fg: cur === k ? 'var(--surface)' : 'var(--text-2)', ac: cur === k ? 'page' : undefined,
+        hasBadge: (k === 'review' && pending.length > 0) || (k === 'conversations' && waitingC > 0), badge: k === 'review' ? pending.length : waitingC, badgeBg: k === 'review' ? 'var(--accent)' : 'var(--accent)', badgeLabel: k === 'review' ? pending.length + ' pending' : waitingC + ' waiting' })),
       pageTitle: { overview: 'Overview', products: 'Products', product: 'Products', review: 'Review queue', conversations: 'Conversations', activity: 'Agent activity' }[s.route],
       storeOpen: s.menu === 'store', accountOpen: s.menu === 'account', moreOpen: s.menu === 'more',
       toggleStore: menuT('store'), toggleAccount: menuT('account'), toggleMore: menuT('more'), closeMenu: () => this.setState({ menu: null }),
@@ -1437,9 +1425,9 @@ class Component extends DCLogic {
       todayLabel: new Date(s.now).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) + ' · Atelier Store',
       summary: (n ? n + ' decision' + (n > 1 ? 's are' : ' is') + ' waiting on you' : 'Nothing is waiting on you') + '. Your agents are running ' + w + ' task' + (w === 1 ? '' : 's') + ', and ' + published.length + ' of ' + d.products.length + ' products are published in the demo store.',
       counts: [
-        { n, label: 'Needs your review', hint: 'Open the review queue', fg: n ? '#8C321A' : '#202522', border: '0', go: () => this.go('review', { queueTab: 'pending' }) },
-        { n: w, label: 'Tasks in progress', hint: 'See what agents are doing', fg: '#202522', border: '1px solid #E3E6E0', go: () => this.go('activity', { actStatus: 'working', actAgent: 'all' }) },
-        { n: published.length, label: 'Published products', hint: 'In the demo catalog', fg: '#202522', border: '1px solid #E3E6E0', go: () => this.go('products', { filter: 'published', search: '' }) },
+        { n, label: 'Needs your review', hint: 'Open the review queue', fg: n ? 'var(--accent-text)' : 'var(--text)', border: '0', go: () => this.go('review', { queueTab: 'pending' }) },
+        { n: w, label: 'Tasks in progress', hint: 'See what agents are doing', fg: 'var(--text)', border: '1px solid var(--border)', go: () => this.go('activity', { actStatus: 'working', actAgent: 'all' }) },
+        { n: published.length, label: 'Published products', hint: 'In the demo catalog', fg: 'var(--text)', border: '1px solid var(--border)', go: () => this.go('products', { filter: 'published', search: '' }) },
       ],
       attention: pending.map(x => this.dv(x)), noAttention: !n, attentionCount: n ? n + ' pending' : 'All clear',
       feed: [...d.activity].sort((a, b) => b.ts - a.ts).slice(0, 7).map(a => this.av(a)),
@@ -1454,7 +1442,7 @@ class Component extends DCLogic {
     const rows = byUpdated.filter(p => (s.filter === 'all' || p.status === s.filter) && (!q || (p.name + ' ' + (p.sku || '') + ' ' + p.category).toLowerCase().includes(q))).map(p => this.pv(p));
     Object.assign(out, {
       search: s.search, onSearch: e => this.setState({ search: e.target.value }), clearSearch: () => this.setState({ search: '', filter: 'all' }),
-      filters: [['all', 'All'], ['draft', 'Draft'], ['needs_review', 'Needs review'], ['published', 'Published']].map(([k, l], i) => ({ key: k, label: l, count: cnt[k], active: s.filter === k, pick: () => this.setState({ filter: k }), bg: s.filter === k ? '#202522' : '#FFFFFF', fg: s.filter === k ? '#FFFFFF' : '#202522', cfg: s.filter === k ? '#C4CAC5' : '#626A64', bl: i ? '1px solid #D3D7D0' : '0' })),
+      filters: [['all', 'All'], ['draft', 'Draft'], ['needs_review', 'Needs review'], ['published', 'Published']].map(([k, l], i) => ({ key: k, label: l, count: cnt[k], active: s.filter === k, pick: () => this.setState({ filter: k }), bg: s.filter === k ? 'var(--text)' : 'var(--surface)', fg: s.filter === k ? 'var(--surface)' : 'var(--text)', cfg: s.filter === k ? 'var(--text-2)' : 'var(--text-3)', bl: i ? '1px solid var(--border-strong)' : '0' })),
       rows, hasRows: rows.length > 0, noRows: !rows.length, resultLabel: rows.length + ' of ' + d.products.length + ' products',
       emptyTitle: q ? 'No products match “' + s.search.trim() + '”' : 'No products in this view', emptyBody: q ? 'Try a different name or SKU, or clear the search.' : 'Change the filter or add a product.',
     });
@@ -1487,7 +1475,7 @@ class Component extends DCLogic {
     const resolved = d.decisions.filter(x => x.status === 'resolved').sort((a, b) => b.resolvedAt - a.resolvedAt);
     Object.assign(out, {
       qPending: s.queueTab === 'pending', qResolved: s.queueTab === 'resolved',
-      qTabs: [['pending', 'Pending', n], ['resolved', 'Resolved', resolved.length]].map(([k, l, c]) => ({ label: l, count: c, active: s.queueTab === k, pick: () => this.setState({ queueTab: k }), border: s.queueTab === k ? '#B84324' : 'transparent', fg: s.queueTab === k ? '#202522' : '#626A64' })),
+      qTabs: [['pending', 'Pending', n], ['resolved', 'Resolved', resolved.length]].map(([k, l, c]) => ({ label: l, count: c, active: s.queueTab === k, pick: () => this.setState({ queueTab: k }), border: s.queueTab === k ? 'var(--accent)' : 'transparent', fg: s.queueTab === k ? 'var(--text)' : 'var(--text-3)' })),
       resolvedList: resolved.map(x => this.dv(x)), hasResolved: resolved.length > 0, noResolved: !resolved.length,
     });
 
@@ -1496,7 +1484,7 @@ class Component extends DCLogic {
     const sel = d.conversations.find(c => c.id === s.convoId) || clist[0];
     const sp = sel && this.P(sel.productId);
     const sdec = sel && d.decisions.find(x => x.kind === 'support' && x.convoId === sel.id && x.status === 'pending');
-    out.convos = clist.map(c => { const last = c.messages.filter(m => m.from !== 'system').slice(-1)[0] || {}; return { id: c.id, customer: c.customer, initials: c.initials, subject: c.subject, preview: (last.from === 'customer' ? '' : 'Reply: ') + (last.text || ''), time: this.rel(c.ts), st: T[c.state], pick: () => this.setState({ convoId: c.id, composer: '' }), bg: c.id === sel.id ? '#FFFFFF' : 'transparent', bar: c.id === sel.id ? '#B84324' : 'transparent', cur: c.id === sel.id ? 'true' : undefined }; });
+    out.convos = clist.map(c => { const last = c.messages.filter(m => m.from !== 'system').slice(-1)[0] || {}; return { id: c.id, customer: c.customer, initials: c.initials, subject: c.subject, preview: (last.from === 'customer' ? '' : 'Reply: ') + (last.text || ''), time: this.rel(c.ts), st: T[c.state], pick: () => this.setState({ convoId: c.id, composer: '' }), bg: c.id === sel.id ? 'var(--surface)' : 'transparent', bar: c.id === sel.id ? 'var(--accent)' : 'transparent', cur: c.id === sel.id ? 'true' : undefined }; });
     out.CV = sel ? {
       customer: sel.customer, initials: sel.initials, subject: sel.subject, channel: sel.channel, st: T[sel.state], agentName: A[sel.agent].name, agentIcon: A[sel.agent].icon,
       hasProduct: !!sp, productName: sp ? sp.name : '', openProduct: () => sp && this.openProduct(sp.id), pthumb: sp ? this.thumbOf(sp) : {},
@@ -1505,7 +1493,7 @@ class Component extends DCLogic {
       agentHandling: sel.state === 'agent', canCompose: sel.state !== 'agent', canHandBack: sel.state === 'merchant',
       take: () => this.mut(dd => { const c = this.convo(dd, sel.id); c.state = 'merchant'; c.messages.push({ from: 'system', text: 'You took over from ' + A[c.agent].name, ts: Date.now() }); }),
       handBack: () => this.mut(dd => { const c = this.convo(dd, sel.id); c.state = 'agent'; c.messages.push({ from: 'system', text: 'You handed this back to ' + A[c.agent].name, ts: Date.now() }); }),
-      messages: sel.messages.map((m, i) => ({ i, text: m.text, time: this.clock(m.ts), isCustomer: m.from === 'customer', isOut: m.from === 'agent' || m.from === 'merchant', isSystem: m.from === 'system', who: m.from === 'merchant' ? 'You' : m.from === 'agent' ? (A[m.agent || sel.agent].name) : sel.customer, note: m.note || '', hasNote: !!m.note, outBg: m.from === 'merchant' ? '#F8ECE7' : '#F1F3EF' })),
+      messages: sel.messages.map((m, i) => ({ i, text: m.text, time: this.clock(m.ts), isCustomer: m.from === 'customer', isOut: m.from === 'agent' || m.from === 'merchant', isSystem: m.from === 'system', who: m.from === 'merchant' ? 'You' : m.from === 'agent' ? (A[m.agent || sel.agent].name) : sel.customer, note: m.note || '', hasNote: !!m.note, outBg: m.from === 'merchant' ? 'var(--accent-soft)' : 'var(--surface)' })),
     } : null;
     Object.assign(out, {
       composer: s.composer, onComposer: e => this.setState({ composer: e.target.value }), cantSend: !s.composer.trim(),
@@ -1519,7 +1507,7 @@ class Component extends DCLogic {
     Object.assign(out, {
       actAgent: s.actAgent, onActAgent: e => this.setState({ actAgent: e.target.value }),
       agentOpts: [{ k: 'all', l: 'All agents' }].concat(Object.entries(A).map(([k, v]) => ({ k, l: v.name }))).concat([{ k: 'you', l: 'You' }]),
-      statusOpts: [['all', 'All'], ['working', 'Working'], ['needs_input', 'Needs your input'], ['completed', 'Completed'], ['failed', 'Failed']].map(([k, l], i) => ({ label: l, count: acnt(k), active: s.actStatus === k, pick: () => this.setState({ actStatus: k }), bg: s.actStatus === k ? '#202522' : '#FFFFFF', fg: s.actStatus === k ? '#FFFFFF' : '#202522', cfg: s.actStatus === k ? '#C4CAC5' : '#626A64', bl: i ? '1px solid #D3D7D0' : '0' })),
+      statusOpts: [['all', 'All'], ['working', 'Working'], ['needs_input', 'Needs your input'], ['completed', 'Completed'], ['failed', 'Failed']].map(([k, l], i) => ({ label: l, count: acnt(k), active: s.actStatus === k, pick: () => this.setState({ actStatus: k }), bg: s.actStatus === k ? 'var(--text)' : 'var(--surface)', fg: s.actStatus === k ? 'var(--surface)' : 'var(--text)', cfg: s.actStatus === k ? 'var(--text-2)' : 'var(--text-3)', bl: i ? '1px solid var(--border-strong)' : '0' })),
       arows, hasArows: arows.length > 0, noArows: !arows.length, clearAct: () => this.setState({ actAgent: 'all', actStatus: 'all' }),
     });
 
@@ -1538,13 +1526,13 @@ class Component extends DCLogic {
           title: p.name, onTitle: e => this.setP(p.id, { name: e.target.value, nameSrc: 'you', nameNote: 'Edited by you' }), nameS: SRC[p.nameSrc] || SRC.ai, nameNote: p.nameNote || '', hasNameNote: !!p.nameNote, titleMiss: !rk('title'),
           desc: p.description, onDesc: e => this.setP(p.id, { description: e.target.value, descSrc: 'you' }), descS: SRC[p.descSrc] || SRC.ai, descMiss: !rk('description'),
           price: p.price, onPrice: e => this.setP(p.id, { price: e.target.value, priceSrc: 'you' }), currency: p.currency, onCurrency: e => this.setP(p.id, { currency: e.target.value }),
-          priceMiss: !rk('price'), priceByResearch: rk('price') && p.priceSrc === 'research', priceByYou: rk('price') && p.priceSrc !== 'research', priceBorder: rk('price') ? '#D3D7D0' : '#D9A441', priceBg: rk('price') ? '#FFFFFF' : '#FFFBF2',
+          priceMiss: !rk('price'), priceByResearch: rk('price') && p.priceSrc === 'research', priceByYou: rk('price') && p.priceSrc !== 'research', priceBorder: rk('price') ? 'var(--border-strong)' : 'var(--warning-border)', priceBg: rk('price') ? 'var(--surface)' : 'var(--warning-soft)',
           hasResearch: !!p.research, researchNote: p.research ? 'Research agent suggested ' + C.euro(p.research.suggested) + ' · range ' + C.euro(p.research.low) + '–' + C.euro(p.research.high) + ' across ' + p.research.comps + ' comparable listings · ' + p.research.confidence.toLowerCase() + ' confidence · synthetic in this demo' : '',
-          stock: p.stock, onStock: e => this.setP(p.id, { stock: e.target.value === '' ? '' : Number(e.target.value), stockSrc: 'you' }), stockMiss: !rk('stock'), stockByDefault: rk('stock') && p.stockSrc === 'default', stockByYou: rk('stock') && p.stockSrc !== 'default', stockBorder: rk('stock') ? '#D3D7D0' : '#D9A441', stockBg: rk('stock') ? '#FFFFFF' : '#FFFBF2', setSingle: () => this.setP(p.id, { stock: 1, stockSrc: 'you' }),
+          stock: p.stock, onStock: e => this.setP(p.id, { stock: e.target.value === '' ? '' : Number(e.target.value), stockSrc: 'you' }), stockMiss: !rk('stock'), stockByDefault: rk('stock') && p.stockSrc === 'default', stockByYou: rk('stock') && p.stockSrc !== 'default', stockBorder: rk('stock') ? 'var(--border-strong)' : 'var(--warning-border)', stockBg: rk('stock') ? 'var(--surface)' : 'var(--warning-soft)', setSingle: () => this.setP(p.id, { stock: 1, stockSrc: 'you' }),
           condition: p.condition, onCondition: e => this.setP(p.id, { condition: e.target.value }), condOk: !!p.condition,
           working: p.working, onWorking: e => this.setP(p.id, { working: e.target.value }), workOk: !!p.working,
-          boxOpts: [['yes', 'Included'], ['no', 'Not included'], ['unsure', 'Not sure']].map(([k, l], i) => ({ label: l, active: p.box === k, pick: () => this.setP(p.id, { box: k }), bg: p.box === k ? '#202522' : '#FFFFFF', fg: p.box === k ? '#FFFFFF' : '#202522', bl: i ? '1px solid #D3D7D0' : '0' })),
-          claims: (p.claims || []).map(c => ({ id: c.id, text: c.text, why: c.why, open: c.state === 'open', done: c.state !== 'open', remove: () => this.claim(p.id, c.id, 'removed'), verify: () => this.claim(p.id, c.id, 'verified'), undo: () => this.claim(p.id, c.id, 'open'), doneLabel: c.state === 'removed' ? 'Removed from the description' : 'Kept — you verified this', doneFg: c.state === 'removed' ? '#4A524D' : '#235A3A', doneIcon: c.state === 'removed' ? 'trash' : 'check-circle', border: c.state === 'open' ? '#E8C77E' : '#E3E6E0', bg: c.state === 'open' ? '#FFFBF2' : '#FFFFFF' })),
+          boxOpts: [['yes', 'Included'], ['no', 'Not included'], ['unsure', 'Not sure']].map(([k, l], i) => ({ label: l, active: p.box === k, pick: () => this.setP(p.id, { box: k }), bg: p.box === k ? 'var(--text)' : 'var(--surface)', fg: p.box === k ? 'var(--surface)' : 'var(--text)', bl: i ? '1px solid var(--border-strong)' : '0' })),
+          claims: (p.claims || []).map(c => ({ id: c.id, text: c.text, why: c.why, open: c.state === 'open', done: c.state !== 'open', remove: () => this.claim(p.id, c.id, 'removed'), verify: () => this.claim(p.id, c.id, 'verified'), undo: () => this.claim(p.id, c.id, 'open'), doneLabel: c.state === 'removed' ? 'Removed from the description' : 'Kept — you verified this', doneFg: c.state === 'removed' ? 'var(--text-2)' : 'var(--success-text)', doneIcon: c.state === 'removed' ? 'trash' : 'check-circle', border: c.state === 'open' ? 'var(--warning-border)' : 'var(--border)', bg: c.state === 'open' ? 'var(--warning-soft)' : 'var(--surface)' })),
           hasClaims: !!(p.claims && p.claims.length), openClaims: (p.claims || []).filter(c => c.state === 'open').length, claimsLabel: (() => { const o = (p.claims || []).filter(c => c.state === 'open').length; return o ? o + ' to resolve before publishing' : 'All resolved'; })(),
           obs: (p.observations || []).map(o => ({ id: o.id, area: o.area, text: o.text, note: o.note || '', hasNote: !!o.note, hasImg: (p.images || []).some(x => x.id === o.img), view: () => { const i = (p.images || []).findIndex(x => x.id === o.img); if (i >= 0) this.setState({ gIdx: i }); } })), hasObs: !!(p.observations && p.observations.length),
           details: (p.details || []).map(x => ({ k: x.k, v: x.v, s: SRC[x.src] || SRC.ai })), hasDetails: !!(p.details && p.details.length),
@@ -1569,7 +1557,7 @@ class Component extends DCLogic {
           hasFirstReply: !!firstReply, firstReply: firstReply ? firstReply.text : '', firstReplyTime: firstReply ? this.rel(firstReply.ts) : '',
           customer: c.customer, initials: c.initials, channel: c.channel, time: this.rel((c.messages.find(m => m.from === 'customer') || {}).ts || c.ts), msg: (c.messages.find(m => m.from === 'customer') || {}).text,
           pname: p.name, pst: T[p.status], pthumb: this.thumbOf(p), openProduct: () => this.openProduct(p.id),
-          options: [['not_tested', 'Not tested recently', 'The reply will advise keeping it away from water.'], ['tested', 'Pressure-tested', 'Share the rating and when it was tested.'], ['not_resistant', 'Not water resistant', 'The reply will ask the customer to keep it dry.']].map(([k, l, h]) => ({ key: k, id: 'wr-' + k, label: l, hint: h, checked: c.answer === k, pick: () => this.setAnswer(c.id, k), border: c.answer === k ? '#B84324' : '#E3E6E0', bg: c.answer === k ? '#FCF5F2' : '#FFFFFF' })),
+          options: [['not_tested', 'Not tested recently', 'The reply will advise keeping it away from water.'], ['tested', 'Pressure-tested', 'Share the rating and when it was tested.'], ['not_resistant', 'Not water resistant', 'The reply will ask the customer to keep it dry.']].map(([k, l, h]) => ({ key: k, id: 'wr-' + k, label: l, hint: h, checked: c.answer === k, pick: () => this.setAnswer(c.id, k), border: c.answer === k ? 'var(--accent)' : 'var(--border)', bg: c.answer === k ? 'var(--accent-soft)' : 'var(--surface)' })),
           isTested: c.answer === 'tested', rating: c.rating || '', onRating: e => this.mut(dd => { this.convo(dd, c.id).rating = e.target.value; }),
           reply, onReply: e => this.mut(dd => { const cc = this.convo(dd, c.id); cc.reply = e.target.value; cc.replyEdited = true; }),
           replyS: c.replyEdited ? SRC.you : SRC.ai, edited: !!c.replyEdited, regen: () => this.mut(dd => { const cc = this.convo(dd, c.id); cc.replyEdited = false; cc.reply = ''; }),
@@ -1586,7 +1574,7 @@ class Component extends DCLogic {
         out.isCampaign = true;
         out.K = {
           src: im.src, label: im.label, isAgentPick: im.id === cm.agentImageId, enlarge: () => this.setState({ lightbox: { images: imgs.map(x => ({ src: x.src, label: x.label })), idx: ci } }),
-          images: imgs.map(x => ({ id: x.id, src: x.src, label: x.label, pos: (x.fx ?? 50) + '% ' + (x.fy ?? 50) + '%', border: x.id === cm.imageId ? '#B84324' : '#E3E6E0', active: x.id === cm.imageId, pick: () => this.setCamp({ imageId: x.id }) })),
+          images: imgs.map(x => ({ id: x.id, src: x.src, label: x.label, pos: (x.fx ?? 50) + '% ' + (x.fy ?? 50) + '%', border: x.id === cm.imageId ? 'var(--accent)' : 'var(--border)', active: x.id === cm.imageId, pick: () => this.setCamp({ imageId: x.id }) })),
           channel: cm.channel, onChannel: e => this.setCamp({ channel: e.target.value }), headline: cm.headline, onHeadline: e => this.setCamp({ headline: e.target.value }), body: cm.body, onBody: e => this.setCamp({ body: e.target.value }),
           hlen: cm.headline.length + ' / 60', blen: cm.body.length + ' characters',
           pname: p.name, pst: T[p.status], listingNote: p.status === 'published' ? 'Listing is published in demo.' : 'Listing isn’t published yet — approving keeps this as a draft either way.',
@@ -1603,17 +1591,17 @@ class Component extends DCLogic {
       out.modalOpen = true;
       out.M = {
         s1: m.step === 1, sGen: m.step === 2, notGen: m.step !== 2,
-        steps: ['Photos', 'Generate'].map((l, i) => ({ n: i + 1, label: l, isDone: m.step > i + 1, notDone: m.step <= i + 1, bg: m.step === i + 1 ? '#202522' : m.step > i + 1 ? '#2F7A4C' : '#FFFFFF', fg: m.step >= i + 1 ? '#FFFFFF' : '#626A64', border: m.step >= i + 1 ? 'transparent' : '#D3D7D0', lfg: m.step === i + 1 ? '#202522' : '#626A64', hasLine: i < 1 })),
-        images: m.images.map(im => ({ id: im.id, src: im.src, label: im.label, isCover: im.id === m.coverId, notCover: im.id !== m.coverId, setCover: () => this.setM({ coverId: im.id }), remove: () => this.removeImg(im.id), border: im.id === m.coverId ? '#B84324' : '#E3E6E0', removeLabel: 'Remove ' + im.label, coverLabel: 'Set ' + im.label + ' as cover' })),
+        steps: ['Photos', 'Generate'].map((l, i) => ({ n: i + 1, label: l, isDone: m.step > i + 1, notDone: m.step <= i + 1, bg: m.step === i + 1 ? 'var(--text)' : m.step > i + 1 ? 'var(--success)' : 'var(--surface)', fg: m.step >= i + 1 ? 'var(--surface)' : 'var(--text-3)', border: m.step >= i + 1 ? 'transparent' : 'var(--border-strong)', lfg: m.step === i + 1 ? 'var(--text)' : 'var(--text-3)', hasLine: i < 1 })),
+        images: m.images.map(im => ({ id: im.id, src: im.src, label: im.label, isCover: im.id === m.coverId, notCover: im.id !== m.coverId, setCover: () => this.setM({ coverId: im.id }), remove: () => this.removeImg(im.id), border: im.id === m.coverId ? 'var(--accent)' : 'var(--border)', removeLabel: 'Remove ' + im.label, coverLabel: 'Set ' + im.label + ' as cover' })),
         hasImages: m.images.length > 0, countLabel: m.images.length + ' photo' + (m.images.length === 1 ? '' : 's') + ' · one product',
         busy: m.busy > 0, busyLabel: 'Preparing ' + m.busy + ' preview' + (m.busy === 1 ? '' : 's') + '…',
         errors: m.errors.map((t, i) => ({ t, i })), hasErrors: m.errors.length > 0, err: m.err, hasErr: !!m.err,
-        dropBorder: m.dragging ? '#B84324' : '#C9CEC6', dropBg: m.dragging ? '#FCF3EF' : '#FBFAF8', dropText: m.dragging ? 'Drop to add photos' : 'Drag photos here',
+        dropBorder: m.dragging ? 'var(--accent)' : 'var(--border-strong)', dropBg: m.dragging ? 'var(--accent-soft)' : 'var(--bg)', dropText: m.dragging ? 'Drop to add photos' : 'Drag photos here',
         onDragOver: e => { e.preventDefault(); if (!this.state.modal.dragging) this.setM({ dragging: true }); }, onDragLeave: e => { if (e.currentTarget.contains(e.relatedTarget)) return; this.setM({ dragging: false }); }, onDrop: e => { e.preventDefault(); this.addFiles(e.dataTransfer.files); },
         pick: () => this.fileRef.current && this.fileRef.current.click(), onFiles: e => { this.addFiles(e.target.files); e.target.value = ''; },
         useSample: () => this.useSample(), isSample: this.isSample(m),
         cover: (m.images.find(i => i.id === m.coverId) || {}).src || '', hasCover: !!m.coverId,
-        gen: C.GEN_STEPS.map((l, i) => ({ label: l, done: m.gen > i, active: m.gen === i, pending: m.gen < i, fg: m.gen >= i ? '#202522' : '#8C948E', weight: m.gen === i ? '600' : '400' })),
+        gen: C.GEN_STEPS.map((l, i) => ({ label: l, done: m.gen > i, active: m.gen === i, pending: m.gen < i, fg: m.gen >= i ? 'var(--text)' : 'var(--dot-neutral)', weight: m.gen === i ? '600' : '400' })),
         genError: m.genError || '', hasGenError: !!m.genError, retryGen: () => this.generate(), backFromError: () => this.setM({ step: 1, genError: null, gen: -1 }),
         thumbs: m.images.slice(0, 6).map(im => ({ id: im.id, src: im.src })),
         next: () => this.modalNext(), nextLabel: 'Generate listing',
