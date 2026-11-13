@@ -349,16 +349,26 @@ def publish_product(
     publication_id: str | None = None,
     client: ShopifyClient | None = None,
 ) -> ProductRecord:
-    """Publish an approved product to the Online Store, then make it ACTIVE. Safe to repeat.
+    """Set the record's price on the default variant, publish to the Online Store, then make
+    the product ACTIVE. Safe to repeat.
 
-    Publishing comes first because a DRAFT stays hidden from customers even on a channel, so a
-    failure between the two calls leaves the product a hidden DRAFT rather than ACTIVE.
+    A record without a price is refused before any request, so nothing is sold for 0.00. The
+    price is written every time, so Shopify has it even if it failed when the draft was made.
+    Publishing comes before ACTIVE because a DRAFT stays hidden from customers even on a
+    channel, so a failure between the two calls leaves the product a hidden DRAFT.
     """
     if not record.shopifyProductId:
         raise ShopifyError(f"Product {record.productId!r} has no Shopify draft to publish")
+    if record.price is None:
+        raise ShopifyError(f"Product {record.productId!r} has no price; it was not published")
     client = client or ShopifyClient()
     publication_id = publication_id or online_store_publication_id(client)
     product_id = record.shopifyProductId
+    found = client.graphql(PURCHASE_FACTS, {"id": product_id, "publicationId": publication_id})
+    product = found.get("product")
+    if product is None:
+        raise ShopifyError(f"Shopify product {product_id} was not found")
+    _set_default_price(client, product_id, product, record.price)
     client.mutate(
         PUBLISH_PRODUCT,
         {"id": product_id, "input": [{"publicationId": publication_id}]},
@@ -580,7 +590,7 @@ def _set_default_price(
 ) -> None:
     variants = (product.get("variants") or {}).get("nodes") or []
     if not variants or not variants[0].get("id"):
-        raise ShopifyError(f"Draft {product_id} was created without a variant to price")
+        raise ShopifyError(f"Product {product_id} has no variant to price")
     # Money is a decimal string; the format also turns an exponent such as 1E+3 into 1000.00.
     variant = {"id": variants[0]["id"], "price": f"{price:.2f}"}
     try:
@@ -591,7 +601,7 @@ def _set_default_price(
         )
     except ShopifyError as error:
         raise ShopifyError(
-            f"Draft {product_id} was created but its price was not set: {error}"
+            f"Product {product_id} exists but its price was not set: {error}"
         ) from error
 
 

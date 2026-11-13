@@ -4,12 +4,14 @@ import os
 import subprocess
 import sys
 from datetime import datetime
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
 
 from app import graph
 from app.graph import (
+    MissingPriceError,
     NotAwaitingApprovalError,
     UnknownWorkflowError,
     Workflow,
@@ -38,6 +40,8 @@ RESOURCE_URL = "https://shopify-staged-uploads.storage.googleapis.com/tmp/photo.
 PHOTO = b"\xff\xd8\xff fake jpeg"
 
 LISTING = {"title": "Blue Ceramic Mug", "description": "A blue ceramic mug with a handle."}
+PRICED_LISTING = {**LISTING, "price": "24.90"}
+VARIANT_GID = "gid://shopify/ProductVariant/2001"
 COPY = {
     "seoTitle": "Blue Ceramic Mug",
     "metaDescription": "A blue ceramic mug with a handle.",
@@ -109,10 +113,31 @@ CREATED = data(
     productCreate={
         "product": {
             "id": PRODUCT_GID,
+            "variants": {"nodes": [{"id": VARIANT_GID}]},
             "media": {"nodes": [{"preview": {"image": {"url": "https://cdn.shopify.com/m.jpg"}}}]},
         },
         "userErrors": [],
     }
+)
+
+
+def price_set(price="24.90"):
+    return data(
+        productVariantsBulkUpdate={
+            "productVariants": [{"id": VARIANT_GID, "price": price}],
+            "userErrors": [],
+        }
+    )
+
+
+# Shopify still has the default 0.00 when the publish flow reads the variant.
+FACTS = data(
+    shop={"currencyCode": "EUR"},
+    product={
+        "status": "DRAFT",
+        "publishedOnPublication": False,
+        "variants": {"nodes": [{"id": VARIANT_GID, "price": "0.00", "availableForSale": True}]},
+    },
 )
 STAGED = data(
     stagedUploadsCreate={
@@ -132,7 +157,7 @@ ACTIVATED = data(
     productUpdate={"product": {"id": PRODUCT_GID, "status": "ACTIVE"}, "userErrors": []}
 )
 PUBLISHED = data(publishablePublish={"userErrors": []})
-PUBLISH_FLOW = (PUBLICATIONS, PUBLISHED, ACTIVATED)
+PUBLISH_FLOW = (PUBLICATIONS, FACTS, price_set(), PUBLISHED, ACTIVATED)
 
 
 class Abort(BaseException):
@@ -169,9 +194,10 @@ def make_workflow(llm_responses=(), shopify_responses=(), capture=None):
     return Workflow(llm=llm, shopify=shopify, capture=capture), llm_fake, shopify_fake
 
 
-def pending_workflow(metrics=None):
-    workflow, llm, shopify = make_workflow([reply(LISTING), reply(COPY)], [NOT_FOUND, CREATED])
-    state = workflow.start(PRODUCT_ID, "Blue mug, 350 ml.", metrics=metrics)
+def pending_workflow(metrics=None, listing=PRICED_LISTING):
+    created = [NOT_FOUND, CREATED] + ([price_set()] if "price" in listing else [])
+    workflow, llm, shopify = make_workflow([reply(listing), reply(COPY)], created)
+    state = workflow.start(PRODUCT_ID, "Blue mug, 350 ml, 24.90.", metrics=metrics)
     assert state["approval"] == "pending"
     return workflow, llm, shopify
 
@@ -273,7 +299,16 @@ def test_approval_publishes_and_ends_approved():
     assert state["approval"] == "approved"
     assert "error" not in state
     # Publish to the channel first and set ACTIVE last, so a failure in between stays hidden.
-    assert shopify.operations()[-3:] == ["AppPublications", "PublishProduct", "ActivateProduct"]
+    # The price is written to Shopify before the product goes live.
+    assert shopify.operations()[-5:] == [
+        "AppPublications",
+        "ProductPurchaseFacts",
+        "SetDefaultVariantPrice",
+        "PublishProduct",
+        "ActivateProduct",
+    ]
+    priced = json.loads(shopify.calls[-3]["body"])["variables"]
+    assert priced == {"productId": PRODUCT_GID, "variants": [{"id": VARIANT_GID, "price": "24.90"}]}
     publish = json.loads(shopify.calls[-2]["body"])["variables"]
     assert publish == {"id": PRODUCT_GID, "input": [{"publicationId": PUBLICATION_GID}]}
     activate = json.loads(shopify.calls[-1]["body"])["variables"]
@@ -440,7 +475,7 @@ def test_start_again_after_a_shopify_failure_reuses_the_written_listing():
 
 def test_publish_failure_leaves_a_hidden_draft_and_can_be_retried():
     workflow, _, shopify = pending_workflow()
-    shopify.queue(PUBLICATIONS, user_errors("publishablePublish", "Not allowed"))
+    shopify.queue(PUBLICATIONS, FACTS, price_set(), user_errors("publishablePublish", "No"))
 
     state = workflow.decide(PRODUCT_ID, True)
 
@@ -517,7 +552,9 @@ def test_checkpoint_restores_state_types_without_unregistered_type_warnings(capl
 
 
 def test_module_functions_use_one_lazily_built_default_workflow(monkeypatch):
-    workflow, _, shopify = make_workflow([reply(LISTING), reply(COPY)], [NOT_FOUND, CREATED])
+    workflow, _, shopify = make_workflow(
+        [reply(PRICED_LISTING), reply(COPY)], [NOT_FOUND, CREATED, price_set()]
+    )
     monkeypatch.setattr(graph, "_default", workflow)
 
     assert graph.start(PRODUCT_ID, "Blue mug.")["approval"] == "pending"
@@ -608,7 +645,7 @@ def test_retry_after_failed_create_keeps_the_photo():
 
 def test_retry_keeps_analytics_instead_of_running_it_again():
     workflow, _, shopify = pending_workflow(metrics=METRICS)
-    shopify.queue(PUBLICATIONS, user_errors("publishablePublish", "Not allowed"))
+    shopify.queue(PUBLICATIONS, FACTS, price_set(), user_errors("publishablePublish", "No"))
     workflow.decide(PRODUCT_ID, True)
 
     state = workflow.start(PRODUCT_ID, "Blue mug.")
@@ -648,7 +685,7 @@ def test_module_products_and_events_use_the_default_workflow(monkeypatch):
 def test_full_run_to_approval_sends_one_posthog_event_per_step():
     capture = Captured()
     workflow, _, shopify = make_workflow(
-        [reply(LISTING), reply(COPY)], [NOT_FOUND, CREATED], capture=capture
+        [reply(PRICED_LISTING), reply(COPY)], [NOT_FOUND, CREATED, price_set()], capture=capture
     )
     workflow.start(PRODUCT_ID, "Blue mug, 350 ml.", metrics=METRICS)
     shopify.queue(*PUBLISH_FLOW)
@@ -749,3 +786,80 @@ def test_module_decide_passes_the_reason(monkeypatch):
     assert lessons.recall("product", scope=PRODUCT_ID) == [
         'The shop owner rejected an earlier draft of this listing and said: "Too long."'
     ]
+
+
+def test_approval_without_any_price_publishes_nothing_and_keeps_waiting():
+    workflow, _, shopify = pending_workflow(listing=LISTING)
+    assert workflow.snapshot(PRODUCT_ID)["product"].price is None
+    before = len(shopify.calls)
+
+    with pytest.raises(MissingPriceError) as raised:
+        workflow.decide(PRODUCT_ID, True)
+
+    assert str(raised.value) == graph.MISSING_PRICE
+    assert len(shopify.calls) == before
+    state = workflow.snapshot(PRODUCT_ID)
+    assert state["approval"] == "pending" and "error" not in state
+    assert workflow.graph.get_state({"configurable": {"thread_id": PRODUCT_ID}}).next == (
+        "decision",
+    )
+    # A later approval with a price goes through.
+    shopify.queue(*PUBLISH_FLOW)
+    state = workflow.decide(PRODUCT_ID, True, price="24.90")
+    assert state["approval"] == "approved"
+    assert state["product"].price == Decimal("24.90")
+
+
+def test_price_given_on_approval_is_set_before_publishing_and_replaces_the_notes_price():
+    workflow, _, shopify = pending_workflow()
+    before = len(shopify.calls)
+    shopify.queue(PUBLICATIONS, FACTS, price_set("19.50"), PUBLISHED, ACTIVATED)
+
+    state = workflow.decide(PRODUCT_ID, True, price="19.50")
+
+    assert state["approval"] == "approved"
+    assert state["product"].price == Decimal("19.50")
+    assert workflow.snapshot(PRODUCT_ID)["product"].price == Decimal("19.50")
+    assert shopify.operations()[before:] == [
+        "AppPublications",
+        "ProductPurchaseFacts",
+        "SetDefaultVariantPrice",
+        "PublishProduct",
+        "ActivateProduct",
+    ]
+    priced = json.loads(shopify.calls[before + 2]["body"])["variables"]
+    assert priced["variants"] == [{"id": VARIANT_GID, "price": "19.50"}]
+
+
+def test_price_from_the_notes_publishes_with_the_two_argument_call():
+    workflow, _, shopify = pending_workflow()
+    shopify.queue(*PUBLISH_FLOW)
+
+    state = workflow.decide(PRODUCT_ID, True)
+
+    assert state["approval"] == "approved"
+    assert state["product"].price == Decimal("24.90")
+
+
+@pytest.mark.parametrize("price", ["-1", "12.345", "free", "NaN"])
+def test_invalid_price_is_rejected_before_anything_is_sent(price):
+    workflow, _, shopify = pending_workflow(listing=LISTING)
+    before = len(shopify.calls)
+
+    with pytest.raises(ValueError):
+        workflow.decide(PRODUCT_ID, True, price=price)
+
+    assert len(shopify.calls) == before
+    assert workflow.snapshot(PRODUCT_ID)["approval"] == "pending"
+    assert workflow.snapshot(PRODUCT_ID)["product"].price is None
+
+
+def test_rejection_ignores_a_price():
+    workflow, _, shopify = pending_workflow(listing=LISTING)
+    before = len(shopify.calls)
+
+    state = workflow.decide(PRODUCT_ID, False, price="nonsense")
+
+    assert state["approval"] == "rejected"
+    assert state["product"].price is None
+    assert len(shopify.calls) == before

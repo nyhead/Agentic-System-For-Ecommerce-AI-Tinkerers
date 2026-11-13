@@ -1,4 +1,5 @@
 import base64
+from decimal import Decimal
 from typing import Any
 
 import pytest
@@ -28,6 +29,7 @@ class StubWorkflow:
     def __init__(self) -> None:
         self.states: dict[str, dict[str, Any]] = {}
         self.calls: list[tuple[str, dict[str, Any]]] = []
+        self.prices: list[Any] = []
 
     def start(self, product_id: str, notes: str, **kwargs: Any) -> dict[str, Any]:
         self.calls.append(("start", {"product_id": product_id, "notes": notes, **kwargs}))
@@ -46,13 +48,18 @@ class StubWorkflow:
         self.states[product_id] = state
         return state
 
-    def decide(self, product_id: str, approved: bool) -> dict[str, Any]:
+    def decide(self, product_id: str, approved: bool, *, price: Any = None) -> dict[str, Any]:
         self.calls.append(("decide", {"product_id": product_id, "approved": approved}))
+        self.prices.append(price)
         if product_id not in self.states:
             raise graph.UnknownWorkflowError(product_id)
         state = self.states[product_id]
         if state["approval"] != "pending":
             raise graph.NotAwaitingApprovalError(product_id)
+        if approved and price is not None:
+            state["product"] = {**state["product"], "price": price}
+        if approved and state["product"].get("price") is None:
+            raise graph.MissingPriceError(graph.MISSING_PRICE)
         state["approval"] = "approved" if approved else "rejected"
         return state
 
@@ -151,12 +158,33 @@ def test_draft_for_an_existing_workflow_conflicts(client, stub):
 def test_approval_publishes_once(client, stub):
     product_id = client.post("/api/products/draft", json={"notes": "Mug"}).json()["productId"]
 
-    approved = client.post(f"/api/products/{product_id}/approval", json={"approved": True})
-    again = client.post(f"/api/products/{product_id}/approval", json={"approved": True})
+    body = {"approved": True, "price": "24.90"}
+    approved = client.post(f"/api/products/{product_id}/approval", json=body)
+    again = client.post(f"/api/products/{product_id}/approval", json=body)
 
     assert approved.status_code == 200
     assert approved.json()["approval"] == "approved"
+    assert approved.json()["product"]["price"] == "24.90"
+    assert stub.prices[0] == Decimal("24.90")
     assert again.status_code == 409
+
+
+def test_approval_without_a_price_asks_for_one(client, stub):
+    product_id = client.post("/api/products/draft", json={"notes": "Mug"}).json()["productId"]
+
+    response = client.post(f"/api/products/{product_id}/approval", json={"approved": True})
+
+    assert response.status_code == 422
+    assert response.json() == {"detail": graph.MISSING_PRICE}
+    assert stub.prices == [None]
+    assert stub.states[product_id]["approval"] == "pending"
+
+
+@pytest.mark.parametrize("price", ["-1", "1.234", "free"])
+def test_approval_rejects_an_invalid_price(client, stub, price):
+    response = client.post("/api/products/x/approval", json={"approved": True, "price": price})
+    assert response.status_code == 422
+    assert stub.calls == []
 
 
 def test_rejection_is_recorded(client, stub):

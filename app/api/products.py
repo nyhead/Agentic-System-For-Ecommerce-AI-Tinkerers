@@ -4,6 +4,7 @@ import base64
 import binascii
 import re
 import uuid
+from decimal import Decimal
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -35,6 +36,8 @@ class DraftRequest(BaseModel):
 
 class ApprovalRequest(BaseModel):
     approved: bool
+    # Optional on approval, ignored on rejection; replaces a price from the notes.
+    price: Decimal | None = Field(default=None, ge=0, decimal_places=2)
 
 
 class WorkflowEvent(BaseModel):
@@ -129,11 +132,15 @@ def draft_product(body: DraftRequest, workflow: Workflow) -> WorkflowView:
 def decide_product(productId: str, body: ApprovalRequest, workflow: Workflow) -> WorkflowView:
     """Approve to publish the listing to the Online Store; reject to leave it a hidden draft."""
     try:
-        state = workflow.decide(productId, body.approved)
+        state = workflow.decide(productId, body.approved, price=body.price)
+    except graph.MissingPriceError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
     except graph.UnknownWorkflowError as error:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(error)) from error
     except graph.NotAwaitingApprovalError as error:
         raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
     return _view(productId, dict(state))
 
 

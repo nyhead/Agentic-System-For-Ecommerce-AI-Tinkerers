@@ -217,14 +217,14 @@ def test_failed_price_step_raises_and_says_the_draft_exists():
         }
     )
     fake = FakeShopify(NOT_FOUND, CREATED_WITH_VARIANT, rejected)
-    with pytest.raises(ShopifyError, match=f"Draft {PRODUCT_GID} was created but its price"):
+    with pytest.raises(ShopifyError, match=f"Product {PRODUCT_GID} exists but its price"):
         shopify.create_draft_product(listing(), client=make_client(fake))
     assert len(fake.calls) == 3
 
 
 def test_created_product_without_variant_raises_on_price():
     fake = FakeShopify(NOT_FOUND, CREATED)
-    with pytest.raises(ShopifyError, match="without a variant"):
+    with pytest.raises(ShopifyError, match="no variant to price"):
         shopify.create_draft_product(listing(), client=make_client(fake))
 
 
@@ -254,6 +254,29 @@ def test_top_level_graphql_errors_raise():
         make_client(fake).graphql("query { x }")
 
 
+PUBLISH_VARIANT_GID = "gid://shopify/ProductVariant/2001"
+FACTS = data(
+    shop={"currencyCode": "EUR"},
+    product={
+        "status": "DRAFT",
+        "publishedOnPublication": False,
+        "variants": {
+            "nodes": [{"id": PUBLISH_VARIANT_GID, "price": "0.00", "availableForSale": True}]
+        },
+    },
+)
+PRICE_SET = data(
+    productVariantsBulkUpdate={
+        "productVariants": [{"id": PUBLISH_VARIANT_GID, "price": "24.90"}],
+        "userErrors": [],
+    }
+)
+
+
+def priced_draft():
+    return record().model_copy(update={"shopifyProductId": PRODUCT_GID, "price": Decimal("24.9")})
+
+
 def test_publish_activates_and_publishes_to_online_store():
     def catalog(handle):
         return {"apps": {"nodes": [{"handle": handle}]}}
@@ -271,19 +294,61 @@ def test_publish_activates_and_publishes_to_online_store():
         productUpdate={"product": {"id": PRODUCT_GID, "status": "ACTIVE"}, "userErrors": []}
     )
     published = data(publishablePublish={"userErrors": []})
-    fake = FakeShopify(publications, published, activated)
-    draft = record().model_copy(update={"shopifyProductId": PRODUCT_GID})
+    fake = FakeShopify(publications, FACTS, PRICE_SET, published, activated)
+    draft = priced_draft()
 
     assert shopify.publish_product(draft, client=make_client(fake)) == draft
     assert "publications(first: 50, catalogType: APP)" in fake.request(0)["query"]
-    # Publish to the channel first; ACTIVE last, so a failure in between leaves a hidden DRAFT.
-    assert "publishablePublish" in fake.request(1)["query"]
+    # The record's price is written over Shopify's 0.00 before anything goes live.
+    assert fake.request(1)["query"] == shopify.PURCHASE_FACTS
     assert fake.request(1)["variables"] == {
+        "id": PRODUCT_GID,
+        "publicationId": "gid://shopify/Publication/3",
+    }
+    assert fake.request(2)["query"] == shopify.SET_VARIANT_PRICE
+    assert fake.request(2)["variables"] == {
+        "productId": PRODUCT_GID,
+        "variants": [{"id": PUBLISH_VARIANT_GID, "price": "24.90"}],
+    }
+    # Publish to the channel first; ACTIVE last, so a failure in between leaves a hidden DRAFT.
+    assert "publishablePublish" in fake.request(3)["query"]
+    assert fake.request(3)["variables"] == {
         "id": PRODUCT_GID,
         "input": [{"publicationId": "gid://shopify/Publication/3"}],
     }
-    assert "productUpdate" in fake.request(2)["query"]
-    assert fake.request(2)["variables"] == {"product": {"id": PRODUCT_GID, "status": "ACTIVE"}}
+    assert "productUpdate" in fake.request(4)["query"]
+    assert fake.request(4)["variables"] == {"product": {"id": PRODUCT_GID, "status": "ACTIVE"}}
+
+
+def test_publish_without_a_price_sends_nothing():
+    fake = FakeShopify()
+    draft = record().model_copy(update={"shopifyProductId": PRODUCT_GID})
+    with pytest.raises(ShopifyError, match="has no price"):
+        shopify.publish_product(draft, client=make_client(fake))
+    assert fake.calls == []
+
+
+def test_failed_price_on_publish_sends_no_publish():
+    rejected = data(
+        productVariantsBulkUpdate={
+            "productVariants": None,
+            "userErrors": [{"field": ["variants", "0", "price"], "message": "Price is invalid"}],
+        }
+    )
+    publications = data(
+        publications={
+            "nodes": [
+                {
+                    "id": "gid://shopify/Publication/3",
+                    "catalog": {"apps": {"nodes": [{"handle": "online_store"}]}},
+                }
+            ]
+        }
+    )
+    fake = FakeShopify(publications, FACTS, rejected)
+    with pytest.raises(ShopifyError, match="price was not set"):
+        shopify.publish_product(priced_draft(), client=make_client(fake))
+    assert len(fake.calls) == 3
 
 
 def test_failed_channel_publish_sends_no_status_change():
@@ -298,11 +363,10 @@ def test_failed_channel_publish_sends_no_status_change():
         }
     )
     failed = data(publishablePublish={"userErrors": [{"field": ["id"], "message": "Nope"}]})
-    fake = FakeShopify(publications, failed)
-    draft = record().model_copy(update={"shopifyProductId": PRODUCT_GID})
+    fake = FakeShopify(publications, FACTS, PRICE_SET, failed)
     with pytest.raises(ShopifyError, match="publishablePublish failed"):
-        shopify.publish_product(draft, client=make_client(fake))
-    assert len(fake.calls) == 2
+        shopify.publish_product(priced_draft(), client=make_client(fake))
+    assert len(fake.calls) == 4
     assert all("productUpdate" not in json.loads(call["body"])["query"] for call in fake.calls)
 
 
@@ -322,9 +386,8 @@ def test_publish_requires_a_shopify_draft():
 
 def test_publish_without_online_store_raises_before_writing():
     fake = FakeShopify(data(publications={"nodes": []}))
-    draft = record().model_copy(update={"shopifyProductId": PRODUCT_GID})
     with pytest.raises(ShopifyError, match="No Online Store publication"):
-        shopify.publish_product(draft, client=make_client(fake))
+        shopify.publish_product(priced_draft(), client=make_client(fake))
     assert len(fake.calls) == 1
 
 

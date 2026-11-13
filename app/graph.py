@@ -6,6 +6,7 @@ import operator
 import threading
 from collections.abc import Callable
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Annotated, Any, Literal, TypedDict, cast
 
 from langchain_core.runnables import RunnableConfig
@@ -124,6 +125,16 @@ class NotAwaitingApprovalError(WorkflowError):
 
 class WorkflowExistsError(WorkflowError):
     """`start` for a product whose workflow is waiting or finished; new inputs were not used."""
+
+
+class MissingPriceError(WorkflowError):
+    """An approval for a listing with no price; it still waits for the owner."""
+
+
+MISSING_PRICE = (
+    "This listing has no price yet, so it was not published. Add a price and approve it "
+    "again to make it live."
+)
 
 
 def _event(agent: Agent, action: str, ok: bool = True) -> WorkflowEvent:
@@ -276,11 +287,22 @@ class Workflow:
             self._invoke(product_id, seed, config)
             return _public(self._graph.get_state(config).values)
 
-    def decide(self, product_id: str, approved: bool, *, reason: str | None = None) -> RunState:
+    def decide(
+        self,
+        product_id: str,
+        approved: bool,
+        *,
+        reason: str | None = None,
+        price: Decimal | str | None = None,
+    ) -> RunState:
         """Record the merchant's decision; publish only when `approved` is True.
 
         A `reason` given with a rejection is remembered for this product only, and used if
         the product agent drafts this product again.
+
+        `price` sets the listing's price on approval, replacing one from the notes; a rejection
+        ignores it. Approving a listing with no price raises MissingPriceError and keeps it
+        waiting. An invalid price raises ValueError. Either way nothing is sent to Shopify.
         """
         if not isinstance(approved, bool):
             raise TypeError("approved must be True or False")
@@ -293,7 +315,8 @@ class Workflow:
                 raise NotAwaitingApprovalError(
                     f"Product {product_id!r} is not waiting for approval"
                 )
-            self._invoke(product_id, Command(resume=approved), config)
+            answer = _answer(cast(RunState, current.values), approved, price)
+            self._invoke(product_id, Command(resume=answer), config)
             # Scoped to this product: a reason about one item ("no box with this one") must
             # never become an instruction for other listings. Capped, as the route is public.
             reason = " ".join((reason or "").split())[:MAX_REASON_LENGTH]
@@ -419,10 +442,11 @@ class Workflow:
     def _decision(self, state: RunState) -> Command[Literal["publish", "__end__"]]:
         # Pauses the run; `decide` resumes it with the merchant's answer.
         answer = interrupt({"productId": state["productId"], "question": "Publish this listing?"})
-        if answer is True:
-            return Command(
-                goto="publish", update={"events": [_event("merchant", "Approved the listing")]}
-            )
+        if answer is True or (isinstance(answer, dict) and answer.get("approved") is True):
+            update: RunState = {"events": [_event("merchant", "Approved the listing")]}
+            if isinstance(answer, dict) and isinstance(answer.get("product"), ProductRecord):
+                update["product"] = answer["product"]
+            return Command(goto="publish", update=update)
         rejected = _event("merchant", "Rejected the listing; nothing was published")
         # "__end__" is END spelled as the literal that the return annotation allows.
         return Command(goto="__end__", update={"approval": "rejected", "events": [rejected]})
@@ -434,6 +458,20 @@ class Workflow:
             return _failed("product", "Could not publish the listing", PUBLISH_FAILED, error)
         published = _event("product", "Published the product to the Online Store")
         return {"product": record, "approval": "approved", "events": [published]}
+
+
+def _answer(state: RunState, approved: bool, price: Decimal | str | None) -> bool | dict[str, Any]:
+    """The resume value for `_decision`; raises before anything is sent to Shopify."""
+    if not approved:
+        return False
+    record = state["product"]
+    if price is not None:
+        # Validated like any ProductRecord price: a non-negative amount with two decimals.
+        record = ProductRecord.model_validate({**record.model_dump(), "price": price})
+        return {"approved": True, "product": record}
+    if record.price is None:
+        raise MissingPriceError(MISSING_PRICE)
+    return True
 
 
 def _config(product_id: str) -> RunnableConfig:
@@ -497,8 +535,14 @@ def start(
     )
 
 
-def decide(product_id: str, approved: bool, *, reason: str | None = None) -> RunState:
-    return default_workflow().decide(product_id, approved, reason=reason)
+def decide(
+    product_id: str,
+    approved: bool,
+    *,
+    reason: str | None = None,
+    price: Decimal | str | None = None,
+) -> RunState:
+    return default_workflow().decide(product_id, approved, reason=reason, price=price)
 
 
 def snapshot(product_id: str) -> RunState | None:
