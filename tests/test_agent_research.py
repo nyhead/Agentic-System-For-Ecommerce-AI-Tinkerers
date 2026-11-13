@@ -309,3 +309,34 @@ def test_classify_keeps_reference_mismatch_as_related() -> None:
     )
     kept, _ = classify([comp], identify(request), request)
     assert kept[0].match == "related"
+
+
+def test_without_a_model_the_title_is_the_query_and_matching_uses_title_words() -> None:
+    request = watch_request(
+        title="Vintage Omega Seamaster De Ville automatic wristwatch",
+        imageSuggestions=[{"name": "Brand", "value": "Omega"}],
+    )
+    identity = identify(request)
+    assert identity.query == "Vintage Omega Seamaster De Ville automatic wristwatch"
+
+    def comp(ref: str, title: str) -> Comparable:
+        return Comparable.model_validate(
+            {
+                "ref": ref,
+                "source": "ebay-sold",
+                "actorId": "a/b",
+                "sourceUrl": f"https://x/{ref}",
+                "retrievedAt": "2026-11-13",
+                "title": title,
+                "listingId": ref,
+                "price": {"amount": 800, "currency": "EUR"},
+                "priceType": "sold",
+            }
+        )
+
+    kept, _ = classify(
+        [comp("C1", "Omega Seamaster De Ville automatic 1960s"), comp("C2", "Omega Constellation")],
+        identity,
+        request,
+    )
+    assert [c.match for c in kept] == ["same_model", "related"]

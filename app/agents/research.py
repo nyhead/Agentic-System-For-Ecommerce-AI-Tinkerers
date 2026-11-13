@@ -183,7 +183,8 @@ def identify(request: ResearchRequest) -> Identity:
     reference = _fact(confirmed, "reference", "reference number", "model number", "mpn")
     condition = _fact(confirmed, "condition")
     parts = [p for p in (brand, model, reference) if p]
-    query = " ".join(parts) if parts else (request.title.strip() or None)
+    # Brand alone is too broad to search on; without a model, the draft title is the query.
+    query = " ".join(parts) if model else (request.title.strip()[:100] or brand or None)
     _, critical = _CATEGORY_ATTRIBUTES.get(category_key(request.category), _DEFAULT_ATTRIBUTES)
     known = {f.name.strip().lower() for f in confirmed}
     if reference:
@@ -266,12 +267,20 @@ def classify(
             theirs = [v for v in group if _contains(title, v) and v not in ours_has]
             if ours_has and theirs:
                 differences.append(f"Listed as {theirs[0]}; ours is {ours_has[0]}")
-        model_ok = identity.model is None or _contains(title, identity.model)
+        model_ok = (
+            _contains(title, identity.model)
+            if identity.model
+            else _title_overlap(identity.query or "", title) >= TITLE_OVERLAP
+        )
         ref_ok = identity.reference is None or _contains(title, identity.reference)
         match = "same_model" if model_ok and ref_ok and not differences else "related"
         reasons = [f"names {identity.brand}" if identity.brand else "matches the query"]
         if identity.model:
             reasons.append(f"{'names' if model_ok else 'does not name'} {identity.model}")
+        else:
+            reasons.append(
+                f"shares {_title_overlap(identity.query or '', title):.0%} of our title words"
+            )
         if identity.reference:
             reasons.append(f"reference {identity.reference} {'stated' if ref_ok else 'absent'}")
         if not identity.reference:
@@ -289,6 +298,18 @@ def classify(
             )
         )
     return kept, excluded
+
+
+TITLE_OVERLAP = 0.6
+
+
+def _title_overlap(query: str, title_norm: str) -> float:
+    """Share of our significant query words found in a comparable title (no model known)."""
+    words = {w for w in _norm(query).split() if w not in _STOPWORDS and len(w) > 2}
+    if not words:
+        return 0.0
+    compact = title_norm.replace(" ", "")
+    return sum(1 for w in words if w in compact) / len(words)
 
 
 def observed_terms(comps: Sequence[Comparable], identity: Identity) -> list[ObservedTerm]:
