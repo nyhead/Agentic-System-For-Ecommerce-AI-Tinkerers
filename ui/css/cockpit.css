@@ -41,7 +41,7 @@
   --danger-soft: #FCEEEC;
 
   /* Type: one family, six sizes */
-  --font: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font: "Hanken Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --fs-12: 12px;
   --fs-13: 13px;
   --fs-14: 14px;
@@ -797,6 +797,7 @@ select.input {
   .popover--down, .popover--up { right: auto; width: 240px; }
   .detail-grid { grid-template-columns: minmax(0, 1fr); }
   .gallery { max-width: 520px; }
+  .inbox-layout { grid-template-columns: 272px minmax(0, 1fr); }
 }
 
 @media (max-width: 768px) {
