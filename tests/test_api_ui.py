@@ -26,3 +26,9 @@ def test_unknown_paths_are_not_found():
 def test_paths_outside_the_ui_folder_are_not_served():
     assert client.get("/../app/main.py").status_code == 404
     assert client.get("/%2e%2e/app/main.py").status_code == 404
+
+
+def test_cockpit_files_are_revalidated_on_every_load():
+    assert client.get("/js/demo.js").headers["cache-control"] == "no-cache"
+    assert client.get("/").headers["cache-control"] == "no-cache"
+    assert "cache-control" not in client.get("/api/health").headers

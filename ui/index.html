@@ -279,7 +279,7 @@
             </div>
           </sc-if>
         </div>
-        <p class="note"><cc-icon name="info" size="14"></cc-icon><span>Inventory is read-only after creation in this prototype. Publishing updates the demo catalog only.</span></p>
+        <p class="note"><cc-icon name="info" size="14"></cc-icon><span>Products you add are saved in your Shopify store; the sample products are demo data. Inventory is read-only in this prototype.</span></p>
       </div>
     </sc-if>
     <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
@@ -1550,9 +1550,11 @@ class Component extends DCLogic {
   useSample() { const g = window.CCDemo.watchGallery(); this.setM({ images: g, coverId: 'w-cover', errors: [], err: '' }); }
   removeImg(id) { this.setM(m => { const images = m.images.filter(i => i.id !== id); return { images, coverId: m.coverId === id ? (images[0] ? images[0].id : null) : m.coverId }; }); }
   isSample(m) { return m.images.length > 0 && m.images.every(i => String(i.id).startsWith('w-')); }
+  // The notes box itself, as well as the bound state: what the merchant typed is what gets sent.
+  modalNotes() { const el = document.getElementById('am-notes'); return ((el && el.value) || (this.state.modal && this.state.modal.notes) || '').trim(); }
   modalNext() {
     const m = this.state.modal;
-    if (!m.images.length && !(m.notes || '').trim()) return this.setM({ err: 'Add a photo, a few notes, or both.' });
+    if (!m.images.length && !this.modalNotes()) return this.setM({ err: 'Add a photo, a few notes, or both.' });
     if (m.busy) return this.setM({ err: 'Hold on — previews are still being prepared.' });
     this.generate();
   }
@@ -1568,10 +1570,10 @@ class Component extends DCLogic {
   }
   generate() {
     const C = window.CCDemo;
-    const m = this.state.modal; const sample = this.isSample(m); const actId = C.uid('a'); const n = m.images.length;
+    const m = this.state.modal; const sample = this.isSample(m); const actId = C.uid('a'); const n = m.images.length; const notes = this.modalNotes();
     this.mut(d => { d.activity.unshift({ id: actId, ts: Date.now(), agent: 'product', title: 'Preparing a listing', desc: 'Reading ' + n + ' photo' + (n === 1 ? '' : 's') + ' for a new product.', status: 'working', details: ['Started from Add product'] }); });
-    this.setM({ step: 2, gen: 0, genError: null, err: '' });
-    C.agents.generateListing({ images: m.images, coverId: m.coverId, sample, notes: m.notes || '', productId: m.apiId }, i => this.setM({ gen: i })).then(p => {
+    this.setM({ step: 2, gen: 0, genError: null, err: '', notes });
+    C.agents.generateListing({ images: m.images, coverId: m.coverId, sample, notes, productId: m.apiId }, i => this.setM({ gen: i })).then(p => {
       this.setM({ gen: C.GEN_STEPS.length });
       setTimeout(() => {
         const decId = C.uid('d'); const r = p.research;
@@ -1723,7 +1725,9 @@ class Component extends DCLogic {
         dirty, clean: !dirty, save: () => { const b = s.detailBuf; if (!b.name.trim()) return; this.mut(dd => { const p = this.P(dp.id, dd); Object.assign(p, { name: b.name, description: b.description, price: b.price, updated: Date.now() }); if (b.name !== dp.name) p.nameSrc = 'you'; if (String(b.price) !== String(dp.price)) p.priceSrc = 'you'; if (b.description !== dp.description) p.descSrc = 'you'; p.history.unshift({ ts: Date.now(), who: 'You', text: 'Edited listing information' }); }); this.setState({ detailBuf: null }); this.toast({ title: 'Changes saved', body: dp.status === 'published' ? 'Updated in the demo catalog only.' : 'Saved to the draft.' }); },
         discard: () => this.setState({ detailBuf: null }), nameEmpty: !buf.name.trim(),
         tasks, hasTasks: tasks.length > 0, noTasks: !tasks.length,
-        statusNote: { draft: 'Not visible to shoppers yet.', needs_review: 'Waiting for your review — not visible to shoppers.', published: 'Visible in the demo catalog. Nothing is sent to Shopify.' }[dp.status],
+        statusNote: (dp.apiId
+          ? { draft: 'Hidden draft in your Shopify store — not visible to shoppers.', needs_review: 'Saved in Shopify as a hidden draft — waiting for your approval.', published: 'Published to your Shopify Online Store.' }
+          : { draft: 'Not visible to shoppers yet.', needs_review: 'Waiting for your review — not visible to shoppers.', published: 'Visible in the demo catalog. Nothing is sent to Shopify.' })[dp.status],
         canReview: dp.status !== 'published' && !tasks.some(t => t.disabled), reviewLabel: dp.status === 'draft' ? 'Continue draft' : 'Open review',
         openReview: () => { const x = d.decisions.find(y => y.kind === 'listing' && y.productId === dp.id && y.status === 'pending'); if (x) this.openDecision(x.id); else this.openListing(dp.id); },
         back: () => this.go('products'), stockRaw: (dp.stock === '' || dp.stock == null) ? 'Not provided' : String(dp.stock),
