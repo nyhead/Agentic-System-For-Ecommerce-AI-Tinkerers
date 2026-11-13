@@ -170,7 +170,8 @@
   // Publication requirements — proportionate, never blocked by optional specs.
   function requirements(p) {
     // Live listings: the service holds the draft and checks it, so price, quantity and claims never
-    // block approval here. Keep every key: the review drawer looks each one up by name.
+    // block approval here. The price in the review drawer goes with the approval (0.00 when empty).
+    // Keep every key: the drawer looks each one up by name.
     if (p.apiId) return [
       { key: 'title', label: 'title', ok: !!(p.name || '').trim() },
       { key: 'description', label: 'description', ok: !!(p.description || '').trim() },
@@ -258,7 +259,7 @@
       } finally { clearInterval(tick); }
     },
     // Live: POST /api/products/{productId}/approval. Resolves with the WorkflowView; `error` may be set.
-    decideListing(apiId, approved) { return window.CCApi.decide(apiId, approved); },
+    decideListing(apiId, approved, price) { return window.CCApi.decide(apiId, approved, price); },
     // The original simulation, kept for reference; nothing calls it.
     async simulateListing(input, onStep) {
       for (let i = 0; i < GEN_STEPS.length; i++) { onStep && onStep(i); await wait(850); }
