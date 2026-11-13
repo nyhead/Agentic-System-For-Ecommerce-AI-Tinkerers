@@ -1310,7 +1310,8 @@ class Component extends DCLogic {
   }
   researchRequest(p) {
     const seen = [], confirmed = [];
-    (p.details || []).forEach(x => { if (!x.k || !x.v || x.k === 'Category') return; (x.src === 'you' ? confirmed : seen).push({ name: x.k, value: String(x.v) }); });
+    const SKIP = ['Category', 'SEO title', 'Shopify', 'Tags'];
+    (p.details || []).forEach(x => { if (!x.k || !x.v || SKIP.includes(x.k)) return; const name = x.k === 'Vendor' ? 'Brand' : x.k; (x.src === 'you' ? confirmed : seen).push({ name, value: String(x.v) }); });
     const opt = p.optional || {};
     const optNames = { reference: 'Reference number', year: 'Year of manufacture', diameter: 'Case diameter', calibre: 'Movement calibre' };
     const missing = [];
