@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chat with Atelier Store</title>
+<meta name="description" content="Ask the shop about a product, shipping and returns, or an order.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..600&amp;display=swap">
+<link rel="stylesheet" href="chat.css">
+</head>
+<!-- The customer-facing chat. It shows only what the public support routes return:
+     no merchant notes, evidence, review items or controls ever reach this page. -->
+<body data-store="Atelier Store">
+<div class="chat">
+  <header class="chat-head">
+    <span class="store-mark" aria-hidden="true">A</span>
+    <div class="head-text">
+      <h1 class="store-name">Atelier Store</h1>
+      <p class="head-sub" id="connection" aria-live="polite">Connecting…</p>
+    </div>
+    <span class="demo-tag" title="This chat runs on the store's demo channel">Demo chat</span>
+  </header>
+
+  <section class="product" id="product" hidden aria-label="Product you're asking about">
+    <span class="eyebrow">Asking about</span>
+    <span class="product-title" id="product-title"></span>
+    <a class="product-link" id="product-link" target="_blank" rel="noopener noreferrer" hidden>
+      View product
+      <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+    </a>
+  </section>
+
+  <div class="log" id="log">
+    <div class="intro">
+      <p class="intro-title">How can we help?</p>
+      <p>Ask about a product, shipping and returns, or an order. An automated assistant answers first, and checks with the shop team when it isn't sure.</p>
+    </div>
+    <ol class="messages" id="messages" role="log" aria-label="Conversation" aria-live="polite"></ol>
+    <div class="typing" id="typing" hidden>
+      <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span>The assistant is replying…</span>
+    </div>
+    <p class="delayed" id="delayed" role="status" hidden>The shop's reply is on its way and will show up here.</p>
+  </div>
+
+  <div class="unavailable" id="unavailable" hidden>
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+    <div>
+      <p class="unavailable-title">Chat isn't available right now</p>
+      <p>Please try again in a few minutes.</p>
+    </div>
+    <button type="button" class="btn-secondary" id="reconnect">Try again</button>
+  </div>
+
+  <div class="waiting" id="waiting" role="status" hidden>
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span id="waiting-text"></span>
+  </div>
+
+  <form class="composer" id="composer" novalidate>
+    <label class="sr-only" for="input">Message</label>
+    <textarea id="input" rows="1" maxlength="2000" placeholder="Write a message…" autocomplete="off" disabled></textarea>
+    <span class="counter" id="counter" aria-live="polite" hidden></span>
+    <button type="submit" class="send" id="send" aria-label="Send message" disabled>
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+    </button>
+  </form>
+</div>
+<script src="chat.js"></script>
+</body>
+</html>
