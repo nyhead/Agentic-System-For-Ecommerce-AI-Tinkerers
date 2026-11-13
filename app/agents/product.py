@@ -37,12 +37,22 @@ owner's notes state them. If the notes and the photo disagree, follow the notes:
 has the product in hand. If a detail is unknown, leave it out. Do not guess, estimate or hint \
 at it, and never write placeholders such as [size] or TBD.
 
+Two things follow from that. Words printed or engraved on the product itself, such as the \
+brand and model name on a watch dial or a label, are visible features: read them and use them. \
+Colour is visible, but what something is made of is not: write "silver-toned case" or "brown \
+strap", not "stainless steel", "gold" or "genuine leather", unless the notes say so. The \
+product's age, condition and whether it works are not visible either.
+
 Write:
 - title: the product's name as a shopper would search for it, at most {MAX_TITLE_LENGTH} \
-characters, without the shop name, the price or promotional words.
+characters, without the shop name, the price or promotional words. Start with the brand and \
+model when the notes name them or they are legibly written on the product, because that is \
+what shoppers type into a search.
 - description: two to four plain sentences that a customer reads on the product page, about \
-what the product is, what it looks like and what the notes say about it. Plain text only: no \
-markdown, bullet points, headings, emoji or hashtags.
+what the product is, what it looks like and what the notes say about it. Describe the \
+product, not the photograph: leave out the background, the surface it lies on and the \
+lighting. Describe; do not praise: no words such as elegant, timeless, stunning or high \
+quality. Plain text only: no markdown, bullet points, headings, emoji or hashtags.
 - price: only when the owner's notes state a price. Copy that amount as a plain number string \
 such as "24.90", without a currency symbol or code. A photo never shows a price. Never \
 estimate, suggest or round a price; if the notes give none, use null.
