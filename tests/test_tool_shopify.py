@@ -79,6 +79,7 @@ def test_create_draft_sends_draft_product_with_image():
     assert create["timeout"] == 7.0
     assert create["headers"]["X-Shopify-Access-Token"] == TOKEN
     assert create["headers"]["Content-Type"] == "application/json"
+    assert create["headers"]["User-Agent"] == "commercecrew/0.1"
     assert fake.request(0)["variables"] == {"handle": "commercecrew-demo-mug-001"}
     sent = fake.request(1)
     assert "productCreate(product: $product, media: $media)" in sent["query"]

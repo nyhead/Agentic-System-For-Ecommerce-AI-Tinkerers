@@ -1,6 +1,7 @@
 """Shopify Admin GraphQL tool: idempotent draft products, publishing and image uploads."""
 
 import html
+import http.client
 import json
 import os
 import re
@@ -18,6 +19,8 @@ DEFAULT_API_VERSION = "2026-10"
 PRODUCT_TAG = "commercecrew"
 HANDLE_PREFIX = "commercecrew-"
 ONLINE_STORE_CATALOG = "Online Store"
+# CDNs often reject urllib's default "Python-urllib" agent with 403.
+USER_AGENT = "commercecrew/0.1"
 
 # (method, url, headers, body, timeout seconds) -> (HTTP status, response body)
 Transport = Callable[[str, str, Mapping[str, str], bytes, float], tuple[int, bytes]]
@@ -224,9 +227,11 @@ class ShopifyClient:
     def _send(
         self, method: str, url: str, headers: Mapping[str, str], body: bytes
     ) -> tuple[int, bytes]:
+        headers = {**headers, "User-Agent": USER_AGENT}
         try:
             return self._transport(method, url, headers, body, self._timeout)
-        except OSError as error:  # URLError, socket timeouts and connection failures
+        # URLError, socket timeouts and connection failures; truncated or malformed responses
+        except (OSError, http.client.HTTPException) as error:
             raise self._error(f"Shopify request failed: {error}") from None
 
     def _error(self, message: str) -> ShopifyError:
