@@ -25,6 +25,7 @@ from app.state import (
     SocialAd,
     WorkflowState,
 )
+from app.tools import lessons
 from app.tools.llm import Image, LLMClient, LLMError
 from app.tools.posthog import PostHogClient
 from app.tools.shopify import ShopifyClient, ShopifyError
@@ -54,6 +55,8 @@ _run: contextvars.ContextVar[tuple[Capture, str] | None] = contextvars.ContextVa
 
 # The checkpointer only restores these classes from a checkpoint, and no other.
 STATE_TYPES = (ProductRecord, MarketingResult, SocialAd, MetricsRecord, AnalyticsResult)
+# A rejection reason kept as a lesson; the approval route is public, so it stays short.
+MAX_REASON_LENGTH = 200
 
 DRAFT_MODEL_FAILED = (
     "The product agent could not write the listing because the AI model gave no usable answer. "
@@ -273,8 +276,12 @@ class Workflow:
             self._invoke(product_id, seed, config)
             return _public(self._graph.get_state(config).values)
 
-    def decide(self, product_id: str, approved: bool) -> RunState:
-        """Record the merchant's decision; publish only when `approved` is True."""
+    def decide(self, product_id: str, approved: bool, *, reason: str | None = None) -> RunState:
+        """Record the merchant's decision; publish only when `approved` is True.
+
+        A `reason` given with a rejection is remembered for this product only, and used if
+        the product agent drafts this product again.
+        """
         if not isinstance(approved, bool):
             raise TypeError("approved must be True or False")
         with self._lock(product_id):
@@ -287,6 +294,16 @@ class Workflow:
                     f"Product {product_id!r} is not waiting for approval"
                 )
             self._invoke(product_id, Command(resume=approved), config)
+            # Scoped to this product: a reason about one item ("no box with this one") must
+            # never become an instruction for other listings. Capped, as the route is public.
+            reason = " ".join((reason or "").split())[:MAX_REASON_LENGTH]
+            if not approved and reason:
+                lessons.record(
+                    product.AGENT,
+                    "The shop owner rejected an earlier draft of this listing and said: "
+                    f'"{reason}"',
+                    scope=product_id,
+                )
             return _public(self._graph.get_state(config).values)
 
     def snapshot(self, product_id: str) -> RunState | None:
@@ -480,8 +497,8 @@ def start(
     )
 
 
-def decide(product_id: str, approved: bool) -> RunState:
-    return default_workflow().decide(product_id, approved)
+def decide(product_id: str, approved: bool, *, reason: str | None = None) -> RunState:
+    return default_workflow().decide(product_id, approved, reason=reason)
 
 
 def snapshot(product_id: str) -> RunState | None:

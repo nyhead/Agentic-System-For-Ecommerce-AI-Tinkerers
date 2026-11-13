@@ -9,6 +9,15 @@ from pydantic import BaseModel
 from app.state import MarketingResult
 from app.tools.llm import Image, LLMClient, LLMError
 
+
+@pytest.fixture(autouse=True)
+def lessons_path(tmp_path, monkeypatch):
+    # Never write to the real lessons file; each test starts with an empty memory.
+    path = tmp_path / "lessons.json"
+    monkeypatch.setenv("LESSONS_PATH", str(path))
+    return path
+
+
 KEY = "sk-test-secret-123"
 
 
@@ -258,3 +267,22 @@ def test_default_transport_returns_http_errors_for_retry(monkeypatch):
     client = LLMClient("https://llm.example/v1", KEY, "m", sleep=lambda seconds: None)
     assert client.complete("Hi") == "ok"
     assert seen == [("https://llm.example/v1/chat/completions", "POST", f"Bearer {KEY}")] * 2
+
+
+def test_on_retry_hook_gets_the_validation_error_and_its_failure_is_ignored():
+    seen = []
+
+    def hook(error):
+        seen.append(error)
+        raise RuntimeError("hook broke")
+
+    client, _ = make_client(reply('{"title": "Mug"}'), reply('{"title": "Mug", "price": 9}'))
+    assert client.structured("List it.", Listing, on_retry=hook) == Listing(title="Mug", price=9)
+    assert seen == ["price: Field required"]
+
+
+def test_on_retry_hook_is_not_called_for_a_valid_first_reply():
+    seen = []
+    client, _ = make_client(reply('{"title": "Mug", "price": 9}'))
+    client.structured("List it.", Listing, on_retry=seen.append)
+    assert seen == []

@@ -16,8 +16,18 @@ from app.graph import (
     WorkflowExistsError,
 )
 from app.state import MetricsRecord
+from app.tools import lessons
 from app.tools.llm import LLMClient
 from app.tools.shopify import ShopifyClient, ShopifyConfig
+
+
+@pytest.fixture(autouse=True)
+def lessons_path(tmp_path, monkeypatch):
+    # Never write to the real lessons file; each test starts with an empty memory.
+    path = tmp_path / "lessons.json"
+    monkeypatch.setenv("LESSONS_PATH", str(path))
+    return path
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PRODUCT_ID = "demo-mug-001"
@@ -701,3 +711,41 @@ def test_a_capture_that_raises_does_not_change_the_run():
     )
     state = workflow.start(PRODUCT_ID, "Blue mug.")
     assert state["approval"] == "pending" and "error" not in state
+
+
+def test_rejection_reason_is_a_lesson_for_that_product_only():
+    workflow, _, _ = pending_workflow()
+    state = workflow.decide(PRODUCT_ID, False, reason="  Never call it  handmade. ")
+    assert state["approval"] == "rejected"
+    lesson = (
+        "The shop owner rejected an earlier draft of this listing and said: "
+        '"Never call it handmade."'
+    )
+    assert lessons.recall("product", scope=PRODUCT_ID) == [lesson]
+    # Not shop-wide: other listings never see one item's rejection reason.
+    assert lessons.recall("product") == []
+    assert lessons.recall("product", scope="another-product") == []
+    assert "handmade" not in lessons.prompt_block("product", scope="another-product")
+
+
+def test_rejection_reason_is_capped():
+    workflow, _, _ = pending_workflow()
+    workflow.decide(PRODUCT_ID, False, reason="x" * 1000)
+    [lesson] = lessons.recall("product", scope=PRODUCT_ID)
+    assert "x" * graph.MAX_REASON_LENGTH + '"' in lesson
+    assert "x" * (graph.MAX_REASON_LENGTH + 1) not in lesson
+
+
+def test_decide_without_a_reason_records_nothing():
+    workflow, _, _ = pending_workflow()
+    assert workflow.decide(PRODUCT_ID, False)["approval"] == "rejected"
+    assert lessons.recall("product", scope=PRODUCT_ID) == []
+
+
+def test_module_decide_passes_the_reason(monkeypatch):
+    workflow, _, _ = pending_workflow()
+    monkeypatch.setattr(graph, "_default", workflow)
+    graph.decide(PRODUCT_ID, False, reason="Too long.")
+    assert lessons.recall("product", scope=PRODUCT_ID) == [
+        'The shop owner rejected an earlier draft of this listing and said: "Too long."'
+    ]
