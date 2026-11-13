@@ -290,7 +290,10 @@
             <h2 class="h2">{{ DT.name }}</h2>
             <p class="hint">{{ DT.category }} · SKU {{ DT.sku }}</p>
           </div>
-          <sc-if value="{{ DT.canReview }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary" onClick="{{ DT.openReview }}">{{ DT.reviewLabel }}<cc-icon name="arrow-right" size="16"></cc-icon></button></sc-if>
+          <div class="detail-actions">
+            <button class="btn btn-secondary" onClick="{{ MK.openAndStart }}" disabled="{{ MK.busy }}"><cc-icon name="search" size="16"></cc-icon>{{ MK.startLabel }}</button>
+            <sc-if value="{{ DT.canReview }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary" onClick="{{ DT.openReview }}">{{ DT.reviewLabel }}<cc-icon name="arrow-right" size="16"></cc-icon></button></sc-if>
+          </div>
         </div>
         <div class="detail-grid">
           <div class="gallery">
@@ -329,6 +332,12 @@
                 <sc-if value="{{ DT.noTasks }}" hint-placeholder-val="{{ false }}"><div class="hint">No open agent tasks for this product.</div></sc-if>
               </div>
             </div>
+            <div role="tablist" aria-label="Product views" class="tabs">
+              <sc-for list="{{ MK.tabs }}" as="t" hint-placeholder-count="2">
+                <button role="tab" class="tab" aria-selected="{{ t.active }}" onClick="{{ t.pick }}">{{ t.label }}</button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ MK.tabListing }}" hint-placeholder-val="{{ true }}">
             <section class="form-section">
               <div class="sub-head">
                 <h3 class="sub-title">Listing information</h3>
@@ -383,6 +392,129 @@
                   </sc-for>
                 </div>
               </section>
+            </sc-if>
+            </sc-if>
+            <sc-if value="{{ MK.tabMarket }}" hint-placeholder-val="{{ false }}">
+              <section class="form-section">
+                <div class="sub-head">
+                  <h3 class="sub-title">Market research</h3>
+                  <sc-if value="{{ MK.hasReport }}" hint-placeholder-val="{{ false }}"><button class="btn btn-ghost btn-sm" onClick="{{ MK.refresh }}" disabled="{{ MK.busy }}">Refresh research</button></sc-if>
+                </div>
+                <div class="grid-3">
+                  <div class="field">
+                    <label for="mk-market" class="label">Market</label>
+                    <select id="mk-market" class="input" value="{{ MK.market }}" onChange="{{ MK.onMarket }}">
+                      <sc-for list="{{ MK.markets }}" as="m" hint-placeholder-count="3"><option value="{{ m.v }}">{{ m.l }}</option></sc-for>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="mk-goal" class="label">Pricing goal</label>
+                    <select id="mk-goal" class="input" value="{{ MK.goal }}" onChange="{{ MK.onGoal }}">
+                      <option value="faster_sale">Faster sale</option>
+                      <option value="balanced">Balanced</option>
+                      <option value="preserve_margin">Preserve margin</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <span class="label">Status</span>
+                    <span class="status"><span class="status-dot" style="background:{{ MK.statusDot }}"></span>{{ MK.statusLabel }}</span>
+                    <span class="hint">{{ MK.modeLabel }}</span>
+                  </div>
+                </div>
+                <sc-if value="{{ MK.hasSteps }}" hint-placeholder-val="{{ false }}">
+                  <ol class="mk-steps" aria-label="Research progress">
+                    <sc-for list="{{ MK.steps }}" as="st" hint-placeholder-count="6">
+                      <li class="mk-step" data-state="{{ st.state }}"><span class="mk-step-dot"></span>{{ st.label }}</li>
+                    </sc-for>
+                  </ol>
+                </sc-if>
+                <sc-if value="{{ MK.hasError }}" hint-placeholder-val="{{ false }}"><div class="mk-note mk-note--warn" role="alert">{{ MK.error }}</div></sc-if>
+                <sc-if value="{{ MK.noReport }}" hint-placeholder-val="{{ true }}"><div class="hint">Choose a market, then Research market. The Research agent compares live eBay listings through Apify and proposes a price and listing edits for you to review. Nothing changes until you approve.</div></sc-if>
+              </section>
+
+              <sc-if value="{{ MK.hasRec }}" hint-placeholder-val="{{ false }}">
+                <section class="form-section form-section--tight">
+                  <div class="sub-head"><h3 class="sub-title">Pricing recommendation</h3><span class="chip">{{ MK.rec.statusLabel }}</span></div>
+                  <div class="mk-price">
+                    <div><div class="fact-label">Starting price</div><div class="mk-price-value">{{ MK.rec.start }}</div></div>
+                    <div><div class="fact-label">Supported range</div><div class="mk-price-range">{{ MK.rec.range }}</div></div>
+                    <div><div class="fact-label">Confidence</div><div class="mk-price-range">{{ MK.rec.confidence }}</div></div>
+                  </div>
+                  <ul class="mk-list"><sc-for list="{{ MK.rec.rationale }}" as="r" hint-placeholder-count="3"><li>{{ r }}</li></sc-for></ul>
+                  <div class="fact-label">Why this confidence</div>
+                  <ul class="mk-list mk-list--muted"><sc-for list="{{ MK.rec.reasons }}" as="r" hint-placeholder-count="3"><li>{{ r }}</li></sc-for></ul>
+                  <div class="hint">Profitability: {{ MK.profit }}</div>
+                </section>
+              </sc-if>
+
+              <sc-if value="{{ MK.hasChanges }}" hint-placeholder-val="{{ false }}">
+                <section class="form-section form-section--tight">
+                  <div class="sub-head"><h3 class="sub-title">Proposed changes</h3></div>
+                  <div class="hint">Approve each change on its own. Approving copy never changes the price.</div>
+                  <sc-for list="{{ MK.changes }}" as="c" hint-placeholder-count="3">
+                    <div class="mk-change">
+                      <div class="mk-change-head">
+                        <span class="w500">{{ c.field }}</span>
+                        <sc-if value="{{ c.confirm }}" hint-placeholder-val="{{ false }}"><span class="chip">Needs your confirmation</span></sc-if>
+                        <span class="grow"></span>
+                        <sc-if value="{{ c.open }}" hint-placeholder-val="{{ true }}">
+                          <button class="btn btn-ghost btn-sm" onClick="{{ c.reject }}">Dismiss</button>
+                          <button class="btn btn-primary btn-sm" onClick="{{ c.approve }}">{{ c.approveLabel }}</button>
+                        </sc-if>
+                        <sc-if value="{{ c.done }}" hint-placeholder-val="{{ false }}"><span class="hint">{{ c.doneLabel }}</span></sc-if>
+                      </div>
+                      <div class="mk-diff"><span class="fact-label">Now</span><span>{{ c.current }}</span></div>
+                      <div class="mk-diff"><span class="fact-label">Proposed</span><span>{{ c.proposed }}</span></div>
+                      <div class="hint">{{ c.rationale }}</div>
+                    </div>
+                  </sc-for>
+                </section>
+              </sc-if>
+
+              <sc-if value="{{ MK.hasQuestions }}" hint-placeholder-val="{{ false }}">
+                <section class="form-section form-section--tight">
+                  <div class="sub-head"><h3 class="sub-title">Questions for you</h3></div>
+                  <ul class="mk-list"><sc-for list="{{ MK.questions }}" as="q" hint-placeholder-count="3"><li>{{ q }}</li></sc-for></ul>
+                </section>
+              </sc-if>
+
+              <sc-if value="{{ MK.hasComps }}" hint-placeholder-val="{{ false }}">
+                <section class="form-section form-section--tight">
+                  <div class="sub-head"><h3 class="sub-title">Comparable listings</h3><span class="hint">{{ MK.compsNote }}</span></div>
+                  <div class="table-scroll">
+                    <table class="table">
+                      <thead><tr><th>Ref</th><th>Listing</th><th>Price</th><th>Type</th><th>Match</th><th>Shipping</th></tr></thead>
+                      <tbody>
+                        <sc-for list="{{ MK.comps }}" as="c" hint-placeholder-count="5">
+                          <tr>
+                            <td>{{ c.ref }}</td>
+                            <td><a href="{{ c.url }}" target="_blank" rel="noopener noreferrer">{{ c.title }}</a><div class="hint">{{ c.meta }}</div></td>
+                            <td>{{ c.price }}</td>
+                            <td>{{ c.type }}</td>
+                            <td>{{ c.match }}</td>
+                            <td>{{ c.shipping }}</td>
+                          </tr>
+                        </sc-for>
+                      </tbody>
+                    </table>
+                  </div>
+                  <sc-if value="{{ MK.hasExcluded }}" hint-placeholder-val="{{ false }}">
+                    <div class="fact-label">Left out ({{ MK.excludedCount }})</div>
+                    <ul class="mk-list mk-list--muted"><sc-for list="{{ MK.excluded }}" as="x" hint-placeholder-count="3"><li><a href="{{ x.url }}" target="_blank" rel="noopener noreferrer">{{ x.ref }}</a> · {{ x.reason }}</li></sc-for></ul>
+                  </sc-if>
+                </section>
+              </sc-if>
+
+              <sc-if value="{{ MK.hasReport }}" hint-placeholder-val="{{ false }}">
+                <section class="form-section form-section--tight">
+                  <div class="sub-head"><h3 class="sub-title">Sources, cost and limits</h3></div>
+                  <ul class="mk-list mk-list--muted">
+                    <sc-for list="{{ MK.sources }}" as="x" hint-placeholder-count="2"><li>{{ x }}</li></sc-for>
+                    <li>{{ MK.cost }}</li>
+                    <sc-for list="{{ MK.limitations }}" as="x" hint-placeholder-count="3"><li>{{ x }}</li></sc-for>
+                  </ul>
+                </section>
+              </sc-if>
             </sc-if>
           </div>
         </div>
@@ -1060,7 +1192,9 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;overview&quot;,&quot;products&quot;,&quot;review&quot;,&quot;conversations&quot;,&quot;activity&quot;],&quot;default&quot;:&quot;overview&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;fastSimulation&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
 class Component extends DCLogic {
-  state = { ready: false, data: null, route: 'overview', productId: null, search: '', filter: 'all', actAgent: 'all', actStatus: 'all', queueTab: 'pending', convoId: 'c1', composer: '', expanded: {}, drawer: null, gIdx: 0, dIdx: 0, lightbox: null, modal: null, menu: null, confirmReset: false, toast: null, fbOpen: false, fb: '', fbErr: false, optOpen: false, histOpen: false, supErr: '', campErr: '', detailBuf: null, now: Date.now() };
+  state = { ready: false, data: null, route: 'overview', productId: null, search: '', filter: 'all', actAgent: 'all', actStatus: 'all', queueTab: 'pending', convoId: 'c1', composer: '', expanded: {}, drawer: null, gIdx: 0, dIdx: 0, lightbox: null, modal: null, menu: null, confirmReset: false, toast: null, fbOpen: false, fb: '', fbErr: false, optOpen: false, histOpen: false, supErr: '', campErr: '', detailBuf: null, now: Date.now(), dTab: 'listing', research: {}, mkBusy: false, mkErr: '', mkMarket: '', mkGoal: 'balanced' };
+  MARKETS = [{ v: 'DE', l: 'Germany · EUR', cur: 'EUR' }, { v: 'FR', l: 'France · EUR', cur: 'EUR' }, { v: 'IT', l: 'Italy · EUR', cur: 'EUR' }, { v: 'ES', l: 'Spain · EUR', cur: 'EUR' }, { v: 'GB', l: 'United Kingdom · GBP', cur: 'GBP' }, { v: 'US', l: 'United States · USD', cur: 'USD' }, { v: 'CA', l: 'Canada · CAD', cur: 'CAD' }, { v: 'AU', l: 'Australia · AUD', cur: 'AUD' }];
+  RUNNING = ['queued', 'finding_comparables', 'checking_matches', 'analyzing_prices', 'preparing_improvements'];
   KEY = 'commercecrew-demo-v4';
   R = { drawer: React.createRef(), modal: React.createRef(), lightbox: React.createRef(), confirm: React.createRef() };
   mainRef = React.createRef();
@@ -1093,12 +1227,13 @@ class Component extends DCLogic {
       this.setState({ ready: true, data: data || window.CCDemo.seed(), route: ['overview', 'products', 'review', 'conversations', 'activity'].includes(st) ? st : 'overview' });
     };
     boot();
+    try { this.setState({ mkMarket: localStorage.getItem('cc-research-market') || '' }); } catch (e) {}
     this._kd = e => this.onKey(e);
     document.addEventListener('keydown', this._kd);
     this._iv = setInterval(() => this.setState({ now: Date.now() }), 30000);
     this._ev = setInterval(() => this.syncEvents(), 4000);
   }
-  componentWillUnmount() { clearTimeout(this._bt); clearInterval(this._iv); clearInterval(this._ev); clearTimeout(this._tt); clearTimeout(this._pt); document.removeEventListener('keydown', this._kd); }
+  componentWillUnmount() { clearTimeout(this._bt); clearInterval(this._iv); clearInterval(this._ev); clearTimeout(this._tt); clearTimeout(this._pt); clearTimeout(this._rt); document.removeEventListener('keydown', this._kd); }
   componentDidUpdate(pp) {
     // dc-runtime passes only prevProps, so keep our own snapshot of the previous state.
     const ps = this._prevState || {};
@@ -1164,7 +1299,85 @@ class Component extends DCLogic {
   toast(t) { clearTimeout(this._tt); this.setState({ toast: t }); this._tt = setTimeout(() => this.setState({ toast: null }), 6500); }
   go(route, extra) { this.setState(Object.assign({ route, menu: null, drawer: null }, extra || {})); const m = this.mainRef.current; if (m) m.scrollTop = 0; }
   uiReset() { return { gIdx: 0, fbOpen: false, fb: '', fbErr: false, optOpen: false, histOpen: false, supErr: '', campErr: '', menu: null }; }
-  openProduct(id) { this.go('product', { productId: id, dIdx: 0, detailBuf: null }); }
+  openProduct(id) { this.go('product', { productId: id, dIdx: 0, detailBuf: null, dTab: 'listing', mkErr: '' }); this.loadResearch(id); }
+  // ---- Market research: live calls to the service's /api routes (no credentials in the browser).
+  async api(path, opts) {
+    const res = await fetch(path, Object.assign({ headers: { 'Content-Type': 'application/json', Accept: 'application/json' } }, opts || {}));
+    let body = null;
+    try { body = await res.json(); } catch (e) {}
+    if (!res.ok) { const err = new Error((body && (typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail))) || 'The service returned ' + res.status); err.status = res.status; throw err; }
+    return body;
+  }
+  researchRequest(p) {
+    const seen = [], confirmed = [];
+    const SKIP = ['Category', 'SEO title', 'Shopify', 'Tags'];
+    (p.details || []).forEach(x => { if (!x.k || !x.v || SKIP.includes(x.k)) return; const name = x.k === 'Vendor' ? 'Brand' : x.k; (x.src === 'you' ? confirmed : seen).push({ name, value: String(x.v) }); });
+    const opt = p.optional || {};
+    const optNames = { reference: 'Reference number', year: 'Year of manufacture', diameter: 'Case diameter', calibre: 'Movement calibre' };
+    const missing = [];
+    Object.keys(optNames).forEach(k => { if (String(opt[k] || '').trim()) confirmed.push({ name: optNames[k], value: String(opt[k]).trim() }); else missing.push(optNames[k]); });
+    if ((p.condition || '').trim()) confirmed.push({ name: 'Condition', value: p.condition.trim() });
+    const mk = this.MARKETS.find(m => m.v === this.state.mkMarket);
+    const price = Number(p.price);
+    return {
+      title: p.name || '', description: p.description || '', category: p.category || null,
+      confirmedFacts: confirmed, imageSuggestions: seen, missingAttributes: missing,
+      country: mk ? mk.v : null, currency: mk ? mk.cur : null,
+      currentPrice: price > 0 ? { amount: price, currency: p.currency || 'EUR' } : null,
+      goal: this.state.mkGoal || 'balanced',
+    };
+  }
+  setResearch(pid, report) { this.setState(st => ({ research: Object.assign({}, st.research, { [pid]: report }) })); }
+  async loadResearch(pid) {
+    // Reconnect to research already running or finished on the server; never starts a paid run.
+    try { const r = await this.api('/api/products/' + encodeURIComponent(pid) + '/research'); this.setResearch(pid, r); this.pollResearch(pid, r); } catch (e) {}
+  }
+  async startResearch(pid, refresh) {
+    const p = this.P(pid);
+    if (!p) return;
+    this.setState({ mkBusy: true, mkErr: '', dTab: 'market' });
+    try {
+      const r = await this.api('/api/products/' + encodeURIComponent(pid) + '/research', { method: 'POST', body: JSON.stringify(Object.assign(this.researchRequest(p), { refresh: !!refresh })) });
+      this.setResearch(pid, r);
+      this.pollResearch(pid, r);
+    } catch (e) {
+      this.setState({ mkErr: 'Could not start research: ' + e.message });
+    } finally { this.setState({ mkBusy: false }); }
+  }
+  pollResearch(pid, r) {
+    clearTimeout(this._rt);
+    if (!r || !this.RUNNING.includes(r.status)) return;
+    this._rt = setTimeout(async () => {
+      try { const next = await this.api('/api/research/' + encodeURIComponent(r.researchId)); this.setResearch(pid, next); this.pollResearch(pid, next); }
+      catch (e) { this.setState({ mkErr: 'Lost contact with the research job; it keeps running on the server. ' + e.message }); }
+    }, 2500);
+  }
+  async decideChange(pid, change, approved) {
+    const r = this.state.research[pid], p = this.P(pid);
+    if (!r || !p) return;
+    if (approved && change.kind === 'price') {
+      const cur = (change.proposedValue.split(' ')[1] || '');
+      if (cur && cur !== (p.currency || 'EUR')) { this.setState({ mkErr: 'This price is in ' + cur + ' but the product is priced in ' + (p.currency || 'EUR') + '. Research the market that uses your currency.' }); return; }
+    }
+    this.setState({ mkErr: '' });
+    try {
+      const next = await this.api('/api/research/' + encodeURIComponent(r.researchId) + '/decisions', { method: 'POST', body: JSON.stringify({ kind: change.kind, changeIds: [change.id], approved, current: { title: p.name || '', description: p.description || '' } }) });
+      this.setResearch(pid, next);
+      if (!approved) return;
+      this.mut(dd => {
+        const q = this.P(pid, dd);
+        if (change.id === 'title') { q.name = change.proposedValue; q.nameSrc = 'you'; q.nameNote = 'Approved from market research'; }
+        if (change.id === 'description') { q.description = change.proposedValue; q.descSrc = 'you'; }
+        if (change.id === 'tags') { q.details = (q.details || []).filter(x => x.k !== 'Tags').concat([{ k: 'Tags', v: change.proposedValue, src: 'you' }]); }
+        if (change.id === 'price') { q.price = Number(change.proposedValue.split(' ')[0]); q.priceSrc = 'research'; }
+        q.updated = Date.now();
+        q.history.unshift({ ts: Date.now(), who: 'You', text: 'Approved the ' + change.field + ' proposed by the Research agent (draft only; nothing sent to Shopify)' });
+      });
+      this.toast({ title: change.kind === 'price' ? 'Price approved' : 'Change applied to the draft', body: change.kind === 'price' ? 'Only the price changed. Nothing was sent to Shopify.' : 'Your price is unchanged. Nothing was sent to Shopify.' });
+    } catch (e) {
+      this.setState({ mkErr: e.status === 409 ? e.message + ' Use Refresh research to compare against your latest draft.' : 'Could not record your decision: ' + e.message });
+    }
+  }
   openListing(pid) { const d = this.state.data.decisions.find(x => x.kind === 'listing' && x.productId === pid && x.status === 'pending'); this.setState(Object.assign({ drawer: { type: 'listing', productId: pid, decisionId: d ? d.id : null } }, this.uiReset())); }
   openDecision(id) {
     const d = this.state.data.decisions.find(x => x.id === id); if (!d) return;
@@ -1518,6 +1731,71 @@ class Component extends DCLogic {
         history: (dp.history || []).map((h, i) => ({ i, who: h.who, text: h.text, time: this.rel(h.ts) })), hasHistory: !!(dp.history && dp.history.length),
         conditionLabel: dp.condition || 'Not provided', hasPhotos: (dp.images || []).length > 0,
       });
+      // Market insights tab (live research report from /api; null fields mean "not supported by evidence").
+      {
+        const r = s.research[dp.id] || null;
+        const STEP_KEYS = ['queued', 'finding_comparables', 'checking_matches', 'analyzing_prices', 'preparing_improvements', 'ready_for_review'];
+        const STEP_LABELS = ['Queued', 'Finding comparables', 'Checking matches', 'Analyzing prices', 'Preparing improvements', 'Ready for review'];
+        const STATUS = { needs_information: ['Needs information', 'var(--warning, #b7791f)'], partial_results: ['Partial results', 'var(--warning, #b7791f)'], failed: ['Failed', 'var(--danger, #c53030)'], ready_for_review: ['Ready for review', 'var(--success, #2f855a)'] };
+        const idx = r ? STEP_KEYS.indexOf(r.status) : -1;
+        const running = !!r && this.RUNNING.includes(r.status);
+        const fmt = (v, cur) => (v == null ? 'Not supported by evidence' : (this.money(v, cur) || String(v)));
+        const rec = r && r.recommendation;
+        const TYPE = { sold: 'Sold (completed sale)', asking: 'Asking price', auction_bid: 'Live bid', unknown: 'Price not disclosed' };
+        const decided = id => r && (r.decisions || []).filter(x => x.changeIds.includes(id) && x.outcome === 'recorded').slice(-1)[0];
+        const prof = r && r.profitability;
+        const PROFIT = { unchecked: 'unchecked — add your costs to check margin', passes: 'meets your costs and minimum margin', below_minimum_margin: 'starting price is below your minimum margin', floor_above_market_range: 'your minimum price is above the market range' };
+        out.MK = {
+          tabs: [['listing', 'Listing'], ['market', 'Market insights']].map(([k, l]) => ({ label: l, active: s.dTab === k, pick: () => this.setState({ dTab: k }) })),
+          tabListing: s.dTab !== 'market', tabMarket: s.dTab === 'market',
+          busy: s.mkBusy || running, startLabel: running ? 'Researching…' : 'Research market',
+          openAndStart: () => this.startResearch(dp.id, false), refresh: () => this.startResearch(dp.id, true),
+          market: s.mkMarket, markets: [{ v: '', l: 'Choose market…' }].concat(this.MARKETS.map(m => ({ v: m.v, l: m.l }))),
+          onMarket: e => { const v = e.target.value; this.setState({ mkMarket: v }); try { localStorage.setItem('cc-research-market', v); } catch (err) {} },
+          goal: s.mkGoal, onGoal: e => this.setState({ mkGoal: e.target.value }),
+          hasReport: !!r, noReport: !r,
+          statusLabel: !r ? 'Not researched yet' : (STATUS[r.status] || [STEP_LABELS[idx] || r.status])[0],
+          statusDot: !r ? 'var(--text-3)' : ((STATUS[r.status] || [])[1] || 'var(--accent)'),
+          modeLabel: !r ? '' : (r.dataMode === 'live' ? 'Live eBay data via Apify' : 'FIXTURE DATA — not live research') + ' · ' + this.rel(Date.parse(r.updatedAt)),
+          hasSteps: idx >= 0, steps: idx < 0 ? [] : STEP_LABELS.map((l, i) => ({ label: l, state: i < idx || r.status === 'ready_for_review' ? 'done' : i === idx ? 'active' : 'todo' })),
+          hasError: !!(s.mkErr || (r && r.error)), error: s.mkErr || (r && r.error) || '',
+          hasRec: !!rec && !running,
+          rec: rec ? {
+            statusLabel: { recommended: 'Recommended', provisional: 'Provisional', insufficient_evidence: 'Insufficient evidence' }[rec.status],
+            start: fmt(rec.startingPrice, rec.currency),
+            range: rec.rangeLow == null ? 'Not supported by evidence' : fmt(rec.rangeLow, rec.currency) + ' – ' + fmt(rec.rangeHigh, rec.currency),
+            confidence: rec.confidence ? rec.confidence[0].toUpperCase() + rec.confidence.slice(1) : 'Not rated',
+            rationale: rec.rationale || [], reasons: rec.confidenceReasons || [],
+          } : {},
+          profit: prof ? PROFIT[prof.status] + (prof.minimumPrice != null ? ' (minimum ' + fmt(prof.minimumPrice, rec && rec.currency) + ')' : '') : 'unchecked',
+          hasChanges: !!r && !running && (r.proposedChanges || []).length > 0,
+          changes: (r && !running ? r.proposedChanges : []).map(c => {
+            const d0 = decided(c.id);
+            return {
+              field: c.field[0].toUpperCase() + c.field.slice(1), confirm: c.requiresConfirmation,
+              current: c.currentValue || 'Not set', proposed: c.proposedValue, rationale: c.rationale + (c.evidenceRefs.length ? ' Evidence: ' + c.evidenceRefs.join(', ') + '.' : ''),
+              open: !d0, done: !!d0, doneLabel: d0 ? (d0.approved ? 'Approved' : 'Dismissed') : '',
+              approveLabel: c.kind === 'price' ? 'Approve price' : 'Apply to draft',
+              approve: () => this.decideChange(dp.id, c, true), reject: () => this.decideChange(dp.id, c, false),
+            };
+          }),
+          hasQuestions: !!r && (r.merchantQuestions || []).length > 0, questions: r ? r.merchantQuestions : [],
+          hasComps: !!r && (r.comparables || []).length > 0,
+          compsNote: r ? (r.comparables || []).length + ' kept · ' + (r.excluded || []).length + ' left out · ' + (r.queries || []).map(q => '“' + q + '”').join(', ') : '',
+          comps: (r ? r.comparables : []).map(c => ({
+            ref: c.ref, url: c.sourceUrl, title: c.title,
+            meta: [c.condition, c.endedAt ? 'ended ' + c.endedAt.slice(0, 10) : 'retrieved ' + c.retrievedAt.slice(0, 10), c.source].concat(c.differences || []).filter(Boolean).join(' · '),
+            price: c.price ? (this.money(c.price.amount, c.price.currency) || c.price.amount + ' ' + c.price.currency) : 'Unknown',
+            type: TYPE[c.priceType] || c.priceType, match: c.match === 'same_model' ? 'Same model' : 'Related',
+            shipping: c.shipping ? (c.shipping.amount === 0 ? 'Free' : this.money(c.shipping.amount, c.shipping.currency)) : (c.shippingNote || 'Unknown'),
+          })),
+          hasExcluded: !!r && (r.excluded || []).length > 0, excludedCount: r ? (r.excluded || []).length : 0,
+          excluded: (r ? r.excluded : []).slice(0, 12).map(x => ({ ref: x.ref, url: x.sourceUrl, reason: x.reason })),
+          sources: (r ? r.sources : []).map(x => x.actorId + ' — ' + x.status + ', ' + x.itemCount + ' items' + (x.apifyRunId ? ', run ' + x.apifyRunId : '') + (x.reportedUsd != null ? ', reported $' + x.reportedUsd.toFixed(3) : '') + (x.error ? ' — ' + x.error : '')),
+          cost: r && r.usage ? 'Estimated cap $' + r.usage.estimatedMaxUsd.toFixed(3) + (r.usage.reportedUsd != null ? ' · reported actual $' + r.usage.reportedUsd.toFixed(3) : ' · actual cost not reported yet') : '',
+          limitations: r ? r.limitations || [] : [],
+        };
+      }
     }
 
     // review queue
