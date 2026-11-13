@@ -882,8 +882,24 @@ select.input {
 .brand-a { fill: var(--ink); }
 .brand-b { fill: none; stroke: var(--accent); stroke-width: 1.5; }
 
-/* Legacy keyframe names still referenced by screens awaiting conversion */
-@keyframes ccFade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes ccDrawer { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes ccPop { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes ccSpin { to { transform: rotate(360deg); } }
+.vstack { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.min0 { min-width: 0; }
+.text-warn { color: var(--warning-text); }
+.inline-row { display: inline-flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.gap-2 { gap: var(--s-2); }
+.gap-3 { gap: var(--s-3); }
+.gap-4 { gap: var(--s-4); }
+.prov--warn { color: var(--warning-text); }
+.prov--accent { color: var(--accent-text); }
+.prov--ok { color: var(--success-text); }
+.prov--muted { color: var(--text-2); }
+.foot-row--end { justify-content: flex-end; }
+.choice { position: relative; }
+.stage--tall { aspect-ratio: 3 / 4; }
+.cover-ring { position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 2px var(--accent); pointer-events: none; z-index: 1; }
+.modal-head .close-btn { margin-left: auto; }
+.modal-foot { flex-wrap: wrap; }
+.foot-msg:empty { display: none; }
+@media (max-width: 768px) {
+  .table-scroll .prod-cell { min-width: 240px; }
+}

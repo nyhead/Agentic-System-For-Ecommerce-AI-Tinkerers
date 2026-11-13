@@ -563,442 +563,439 @@
   </main>
 </div>
 <sc-if value="{{ isListing }}" hint-placeholder-val="{{ false }}">
-  <div style="position:fixed;inset:0;z-index:40">
-    <div onClick="{{ closeDrawer }}" style="position:absolute;inset:0;background:rgba(32,35,33,0.32);animation:ccFade 180ms ease-out"></div>
-    <div ref="{{ drawerRef }}" role="dialog" aria-modal="true" aria-labelledby="ld-title" style="position:absolute;top:8px;right:8px;bottom:8px;width:min(688px,calc(100vw - 96px));background:#FFFFFF;border-radius:12px;box-shadow:0 16px 48px rgba(32,35,33,0.22);display:flex;flex-direction:column;overflow:hidden;animation:ccDrawer 180ms ease-out">
-      <div style="flex:none;display:flex;align-items:flex-start;gap:12px;padding:18px 24px 16px;border-bottom:1px solid #E3E6E0">
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64"><cc-icon name="package" size="13"></cc-icon>Product agent · {{ L.kicker }}</div>
-          <h2 id="ld-title" style="margin:6px 0 0;font-size:19px;font-weight:600;line-height:1.3;letter-spacing:-0.01em">{{ L.name }}</h2>
+  <div class="overlay">
+    <div class="backdrop" onClick="{{ closeDrawer }}"></div>
+    <div ref="{{ drawerRef }}" role="dialog" aria-modal="true" aria-labelledby="ld-title" class="drawer">
+      <div class="drawer-head">
+        <div class="drawer-heading">
+          <h2 id="ld-title" class="drawer-title">{{ L.name }}</h2>
+          <div class="meta"><cc-icon name="package" size="14"></cc-icon><strong>Product agent</strong><span aria-hidden="true">·</span><span>{{ L.kicker }}</span></div>
         </div>
-        <span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;white-space:nowrap;margin-top:4px;background:{{ L.st.bg }};color:{{ L.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ L.st.dot }}"></span>{{ L.st.label }}</span>
-        <button data-autofocus="true" aria-label="Close review" onClick="{{ closeDrawer }}" style="width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:#3E4641;display:grid;place-items:center;cursor:pointer" style-hover="background:#F3F2EE"><cc-icon name="x" size="18"></cc-icon></button>
+        <span class="status"><span class="status-dot" style="background:{{ L.st.dot }}"></span>{{ L.st.label }}</span>
+        <button data-autofocus="true" aria-label="Close review" onClick="{{ closeDrawer }}" class="btn btn-ghost btn-icon close-btn"><cc-icon name="x" size="18"></cc-icon></button>
       </div>
-      <div style="flex:1;min-height:0;overflow:auto;padding:20px 24px 28px;display:flex;flex-direction:column;gap:28px">
+      <div class="drawer-body">
         <sc-if value="{{ L.isWorking }}" hint-placeholder-val="{{ false }}">
-          <div role="status" style="display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:8px;background:#ECEEEA;font-size:13px;color:#3E4A44"><span style="display:inline-flex;animation:ccSpin 1s linear infinite"><cc-icon name="loader" size="14"></cc-icon></span>Product agent is revising this listing from your feedback.</div>
+          <div role="status" class="working"><span class="spin"><cc-icon name="loader" size="14"></cc-icon></span>Product agent is revising this listing from your feedback.</div>
         </sc-if>
-        <div style="display:grid;grid-template-columns:236px minmax(0,1fr);gap:24px;align-items:start">
-          <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="drawer-grid">
+          <div class="gallery">
             <sc-if value="{{ L.hasImages }}" hint-placeholder-val="{{ false }}">
-              <div style="position:relative;aspect-ratio:3/4;background:#EFEDE8;border-radius:10px;overflow:hidden;border:1px solid #E3E6E0">
-                <img src="{{ L.main.src }}" alt="{{ L.main.label }}" style="width:100%;height:100%;object-fit:contain">
-                <button aria-label="Enlarge photo" onClick="{{ L.enlarge }}" style="position:absolute;top:8px;right:8px;width:32px;height:32px;border:0;border-radius:8px;background:rgba(255,255,255,0.94);color:#202522;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 3px rgba(32,35,33,.18)" style-hover="background:#FFFFFF"><cc-icon name="maximize" size="14"></cc-icon></button>
+              <div class="stage">
+                <img src="{{ L.main.src }}" alt="{{ L.main.label }}">
+                <button class="float-btn" aria-label="Enlarge photo" onClick="{{ L.enlarge }}"><cc-icon name="maximize" size="14"></cc-icon></button>
               </div>
-              <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#626A64"><span style="min-width:0"><span style="font-weight:500;color:#202522">{{ L.main.role }}</span> · {{ L.main.label }}</span><span style="white-space:nowrap">{{ L.idxLabel }}</span></div>
-              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">
+              <div class="caption"><span class="min0"><strong>{{ L.main.role }}</strong> · {{ L.main.label }}</span><span class="nowrap">{{ L.idxLabel }}</span></div>
+              <div class="thumbs thumbs--3">
                 <sc-for list="{{ L.images }}" as="im" hint-placeholder-count="6">
-                  <button onClick="{{ im.select }}" aria-label="{{ im.label }}" aria-pressed="{{ im.active }}" style="aspect-ratio:1;padding:0;border-radius:7px;overflow:hidden;border:2px solid {{ im.border }};background:#EFEDE8;cursor:pointer"><img src="{{ im.src }}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:{{ im.pos }}"></button>
+                  <button class="thumb-btn" onClick="{{ im.select }}" aria-label="{{ im.label }}" aria-pressed="{{ im.active }}"><img src="{{ im.src }}" alt="" loading="lazy" decoding="async" style="object-position:{{ im.pos }}"></button>
                 </sc-for>
               </div>
             </sc-if>
             <sc-if value="{{ L.noImages }}" hint-placeholder-val="{{ false }}">
-              <div style="aspect-ratio:3/4;background:#EEECE7;border-radius:10px;border:1px solid #E3E6E0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#7D847F"><cc-icon name="{{ L.icon }}" size="32" stroke="1.25"></cc-icon><span style="font-size:12px;color:#626A64">No photos yet</span></div>
+              <div class="stage stage--empty stage--tall"><cc-icon name="{{ L.icon }}" size="32" stroke="1.25"></cc-icon><span>No photos yet</span></div>
             </sc-if>
           </div>
-          <section aria-labelledby="cfd-h" style="display:flex;flex-direction:column;gap:14px">
+          <section aria-labelledby="cfd-h" class="block">
             <div>
-              <h3 id="cfd-h" style="margin:0;font-size:15px;font-weight:600;letter-spacing:-0.005em">Confirm a few details</h3>
-              <p style="margin:4px 0 0;font-size:13px;color:#626A64;text-wrap:pretty">{{ L.intro }}</p>
+              <h3 id="cfd-h" class="block-title">Confirm a few details</h3>
+              <p class="block-lede">{{ L.intro }}</p>
             </div>
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-                <label for="ld-price" style="font-size:13px;font-weight:500">Price</label>
-                <sc-if value="{{ L.priceMiss }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:500;color:#7A4A00;display:inline-flex;align-items:center;gap:4px"><cc-icon name="alert-circle" size="12"></cc-icon>Needed to publish</span></sc-if>
-                <sc-if value="{{ L.priceByResearch }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:500;color:#8C321A;display:inline-flex;align-items:center;gap:4px"><cc-icon name="search" size="12"></cc-icon>Market research</span></sc-if>
-                <sc-if value="{{ L.priceByYou }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:500;color:#235A3A;display:inline-flex;align-items:center;gap:4px"><cc-icon name="user" size="12"></cc-icon>Provided by you</span></sc-if>
+            <div class="field">
+              <div class="field-head">
+                <label for="ld-price" class="label">Price</label>
+                <sc-if value="{{ L.priceMiss }}" hint-placeholder-val="{{ false }}"><span class="prov prov--warn"><cc-icon name="alert-circle" size="14"></cc-icon>Needed to publish</span></sc-if>
+                <sc-if value="{{ L.priceByResearch }}" hint-placeholder-val="{{ false }}"><span class="prov prov--accent"><cc-icon name="search" size="14"></cc-icon>Market research</span></sc-if>
+                <sc-if value="{{ L.priceByYou }}" hint-placeholder-val="{{ false }}"><span class="prov prov--ok"><cc-icon name="user" size="14"></cc-icon>Provided by you</span></sc-if>
               </div>
-              <div style="display:grid;grid-template-columns:84px minmax(0,1fr);gap:6px">
-                <select aria-label="Currency" value="{{ L.currency }}" onChange="{{ L.onCurrency }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:7px 8px;color:#202522"><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="USD">USD</option></select>
-                <input id="ld-price" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Not provided" value="{{ L.price }}" onChange="{{ L.onPrice }}" class="input" style="background:{{ L.priceBg }};border:1px solid {{ L.priceBorder }};border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px;color:#202522;width:100%">
+              <div class="price-row">
+                <select aria-label="Currency" value="{{ L.currency }}" onChange="{{ L.onCurrency }}" class="input"><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="USD">USD</option></select>
+                <input id="ld-price" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Not provided" value="{{ L.price }}" onChange="{{ L.onPrice }}" class="input" style="background:{{ L.priceBg }};border-color:{{ L.priceBorder }}">
               </div>
-              <sc-if value="{{ L.hasResearch }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#626A64;text-wrap:pretty">{{ L.researchNote }}</span></sc-if>
+              <sc-if value="{{ L.hasResearch }}" hint-placeholder-val="{{ false }}"><span class="hint">{{ L.researchNote }}</span></sc-if>
             </div>
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-                <label for="ld-stock" style="font-size:13px;font-weight:500">Quantity in stock</label>
-                <sc-if value="{{ L.stockMiss }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:500;color:#7A4A00;display:inline-flex;align-items:center;gap:4px"><cc-icon name="alert-circle" size="12"></cc-icon>Needed to publish</span></sc-if>
-                <sc-if value="{{ L.stockByDefault }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:500;color:#4A524D;display:inline-flex;align-items:center;gap:4px"><cc-icon name="info" size="12"></cc-icon>Default quantity</span></sc-if>
-                <sc-if value="{{ L.stockByYou }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:500;color:#235A3A;display:inline-flex;align-items:center;gap:4px"><cc-icon name="user" size="12"></cc-icon>Provided by you</span></sc-if>
+            <div class="field">
+              <div class="field-head">
+                <label for="ld-stock" class="label">Quantity in stock</label>
+                <sc-if value="{{ L.stockMiss }}" hint-placeholder-val="{{ false }}"><span class="prov prov--warn"><cc-icon name="alert-circle" size="14"></cc-icon>Needed to publish</span></sc-if>
+                <sc-if value="{{ L.stockByDefault }}" hint-placeholder-val="{{ false }}"><span class="prov prov--muted"><cc-icon name="info" size="14"></cc-icon>Default quantity</span></sc-if>
+                <sc-if value="{{ L.stockByYou }}" hint-placeholder-val="{{ false }}"><span class="prov prov--ok"><cc-icon name="user" size="14"></cc-icon>Provided by you</span></sc-if>
               </div>
-              <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px">
-                <input id="ld-stock" type="number" min="0" step="1" placeholder="Not provided" value="{{ L.stock }}" onChange="{{ L.onStock }}" class="input" style="background:{{ L.stockBg }};border:1px solid {{ L.stockBorder }};border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px;color:#202522;width:100%">
-                <button class="btn btn-secondary" onClick="{{ L.setSingle }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:12.5px;padding:6px 10px;border-radius:8px;color:#202522;white-space:nowrap" style-hover="background:#F3F2EE">Single piece</button>
+              <div class="stock-row">
+                <input id="ld-stock" type="number" min="0" step="1" placeholder="Not provided" value="{{ L.stock }}" onChange="{{ L.onStock }}" class="input" style="background:{{ L.stockBg }};border-color:{{ L.stockBorder }}">
+                <button class="btn btn-secondary" onClick="{{ L.setSingle }}">Single piece</button>
               </div>
-              <span style="font-size:11.5px;color:#626A64">Inventory is locked after publishing in this prototype.</span>
+              <span class="hint">Inventory is locked after publishing in this prototype.</span>
             </div>
-            <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px">
-              <div style="display:flex;flex-direction:column;gap:6px">
-                <label for="ld-cond" style="font-size:13px;font-weight:500">Condition</label>
-                <select id="ld-cond" value="{{ L.condition }}" onChange="{{ L.onCondition }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:13.5px;min-height:38px;padding:7px 8px;color:#202522"><option value="">Not provided</option><option>New</option><option>Pre-owned — excellent</option><option>Pre-owned — good</option><option>Pre-owned — fair</option><option>For parts or repair</option></select>
+            <div class="grid-2">
+              <div class="field">
+                <label for="ld-cond" class="label">Condition</label>
+                <select id="ld-cond" value="{{ L.condition }}" onChange="{{ L.onCondition }}" class="input"><option value="">Not provided</option><option>New</option><option>Pre-owned — excellent</option><option>Pre-owned — good</option><option>Pre-owned — fair</option><option>For parts or repair</option></select>
               </div>
               <sc-if value="{{ L.isWatch }}" hint-placeholder-val="{{ false }}">
-                <div style="display:flex;flex-direction:column;gap:6px">
-                  <label for="ld-work" style="font-size:13px;font-weight:500">Working condition</label>
-                  <select id="ld-work" value="{{ L.working }}" onChange="{{ L.onWorking }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:13.5px;min-height:38px;padding:7px 8px;color:#202522"><option value="">Not provided</option><option>Running, keeps time</option><option>Running, not timed</option><option>Not tested</option><option>Not running</option></select>
+                <div class="field">
+                  <label for="ld-work" class="label">Working condition</label>
+                  <select id="ld-work" value="{{ L.working }}" onChange="{{ L.onWorking }}" class="input"><option value="">Not provided</option><option>Running, keeps time</option><option>Running, not timed</option><option>Not tested</option><option>Not running</option></select>
                 </div>
               </sc-if>
             </div>
             <sc-if value="{{ L.isWatch }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;flex-direction:column;gap:6px">
-                <span id="ld-box" style="font-size:13px;font-weight:500">Presentation box</span>
-                <div role="group" aria-labelledby="ld-box" style="display:inline-flex;align-self:flex-start;border:1px solid #D3D7D0;border-radius:8px;overflow:hidden">
-                  <sc-for list="{{ L.boxOpts }}" as="b" hint-placeholder-count="3"><button aria-pressed="{{ b.active }}" onClick="{{ b.pick }}" style="border:0;border-left:{{ b.bl }};background:{{ b.bg }};color:{{ b.fg }};padding:7px 12px;font-size:13px;font-weight:500;cursor:pointer">{{ b.label }}</button></sc-for>
+              <div class="field">
+                <span id="ld-box" class="label">Presentation box</span>
+                <div role="group" aria-labelledby="ld-box" class="seg">
+                  <sc-for list="{{ L.boxOpts }}" as="b" hint-placeholder-count="3"><button class="seg-btn" aria-pressed="{{ b.active }}" onClick="{{ b.pick }}">{{ b.label }}</button></sc-for>
                 </div>
               </div>
             </sc-if>
           </section>
         </div>
-        <section style="display:flex;flex-direction:column;gap:14px">
-          <h3 style="margin:0;padding-bottom:8px;border-bottom:1px solid #E3E6E0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Listing copy</h3>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-              <label for="ld-title-in" style="font-size:13px;font-weight:500">Title</label>
-              <span style="font-size:11.5px;font-weight:500;color:{{ L.nameS.fg }};display:inline-flex;align-items:center;gap:4px"><cc-icon name="{{ L.nameS.icon }}" size="12"></cc-icon>{{ L.nameS.label }}</span>
+        <section class="form-section">
+          <div class="sub-head"><h3 class="sub-title">Listing copy</h3></div>
+          <div class="field">
+            <div class="field-head">
+              <label for="ld-title-in" class="label">Title</label>
+              <span class="prov" style="color:{{ L.nameS.fg }}"><cc-icon name="{{ L.nameS.icon }}" size="14"></cc-icon>{{ L.nameS.label }}</span>
             </div>
-            <input id="ld-title-in" value="{{ L.title }}" onChange="{{ L.onTitle }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px;color:#202522;width:100%">
-            <sc-if value="{{ L.hasNameNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#626A64">{{ L.nameNote }}</span></sc-if>
-            <sc-if value="{{ L.titleMiss }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#7A4A00">A title is needed to publish.</span></sc-if>
+            <input id="ld-title-in" value="{{ L.title }}" onChange="{{ L.onTitle }}" class="input">
+            <sc-if value="{{ L.hasNameNote }}" hint-placeholder-val="{{ false }}"><span class="hint">{{ L.nameNote }}</span></sc-if>
+            <sc-if value="{{ L.titleMiss }}" hint-placeholder-val="{{ false }}"><span class="hint-warn">A title is needed to publish.</span></sc-if>
           </div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-              <label for="ld-desc" style="font-size:13px;font-weight:500">Description</label>
-              <span style="font-size:11.5px;font-weight:500;color:{{ L.descS.fg }};display:inline-flex;align-items:center;gap:4px"><cc-icon name="{{ L.descS.icon }}" size="12"></cc-icon>{{ L.descS.label }}</span>
+          <div class="field">
+            <div class="field-head">
+              <label for="ld-desc" class="label">Description</label>
+              <span class="prov" style="color:{{ L.descS.fg }}"><cc-icon name="{{ L.descS.icon }}" size="14"></cc-icon>{{ L.descS.label }}</span>
             </div>
-            <textarea id="ld-desc" rows="6" value="{{ L.desc }}" onChange="{{ L.onDesc }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;line-height:1.55;padding:9px 10px;color:#202522;width:100%;min-height:140px"></textarea>
-            <sc-if value="{{ L.descMiss }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#7A4A00">Add a short description (at least a sentence) to publish.</span></sc-if>
+            <textarea id="ld-desc" rows="6" value="{{ L.desc }}" onChange="{{ L.onDesc }}" class="input" style="min-height:140px"></textarea>
+            <sc-if value="{{ L.descMiss }}" hint-placeholder-val="{{ false }}"><span class="hint-warn">Add a short description (at least a sentence) to publish.</span></sc-if>
           </div>
         </section>
         <sc-if value="{{ L.hasClaims }}" hint-placeholder-val="{{ false }}">
-          <section style="display:flex;flex-direction:column;gap:10px">
-            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding-bottom:8px;border-bottom:1px solid #E3E6E0">
-              <h3 style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Claims to check</h3>
-              <span style="font-size:12px;color:#626A64">{{ L.claimsLabel }}</span>
-            </div>
+          <section class="form-section gap-3">
+            <div class="sub-head"><h3 class="sub-title">Claims to check</h3><span class="sub-aside">{{ L.claimsLabel }}</span></div>
             <sc-for list="{{ L.claims }}" as="c" hint-placeholder-count="2">
-              <div style="border:1px solid {{ c.border }};background:{{ c.bg }};border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px">
-                <div style="font-size:14px;font-weight:500">“{{ c.text }}”</div>
-                <div style="font-size:12.5px;color:#626A64;text-wrap:pretty">{{ c.why }}</div>
+              <div class="claim" style="border-color:{{ c.border }};background:{{ c.bg }}">
+                <div class="claim-text">“{{ c.text }}”</div>
+                <div class="claim-why">{{ c.why }}</div>
                 <sc-if value="{{ c.open }}" hint-placeholder-val="{{ false }}">
-                  <div style="display:flex;gap:8px;flex-wrap:wrap">
-                    <button class="btn btn-secondary" onClick="{{ c.remove }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:12.5px;padding:5px 10px;border-radius:7px;color:#202522" style-hover="background:#F3F2EE">Remove from listing</button>
-                    <button class="btn btn-ghost" onClick="{{ c.verify }}" style="font-weight:500;font-size:12.5px;padding:5px 8px;border-radius:7px;color:#8C321A">Keep — I’ve verified this</button>
+                  <div class="claim-actions">
+                    <button class="btn btn-secondary btn-sm" onClick="{{ c.remove }}">Remove from listing</button>
+                    <button class="btn btn-ghost btn-sm" onClick="{{ c.verify }}">Keep — I’ve verified this</button>
                   </div>
                 </sc-if>
                 <sc-if value="{{ c.done }}" hint-placeholder-val="{{ false }}">
-                  <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:{{ c.doneFg }}"><cc-icon name="{{ c.doneIcon }}" size="14"></cc-icon><span style="font-weight:500;flex:1">{{ c.doneLabel }}</span><button onClick="{{ c.undo }}" class="btn btn-ghost" style="font-size:12px;font-weight:500;padding:2px 6px;border-radius:6px;color:#3E4641">Undo</button></div>
+                  <div class="claim-done" style="color:{{ c.doneFg }}"><cc-icon name="{{ c.doneIcon }}" size="14"></cc-icon><span>{{ c.doneLabel }}</span><button onClick="{{ c.undo }}" class="btn btn-ghost btn-sm">Undo</button></div>
                 </sc-if>
               </div>
             </sc-for>
           </section>
         </sc-if>
         <sc-if value="{{ L.hasObs }}" hint-placeholder-val="{{ false }}">
-          <section style="display:flex;flex-direction:column;gap:4px">
-            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding-bottom:8px;border-bottom:1px solid #E3E6E0;margin-bottom:4px">
-              <h3 style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">What the photos show</h3>
-              <span style="font-size:11.5px;font-weight:500;color:#4A524D;display:inline-flex;align-items:center;gap:4px"><cc-icon name="eye" size="12"></cc-icon>Transcribed, not verified</span>
+          <section class="form-section form-section--tight">
+            <div class="sub-head"><h3 class="sub-title">What the photos show</h3><span class="prov prov--muted"><cc-icon name="eye" size="14"></cc-icon>Transcribed, not verified</span></div>
+            <div class="kv kv--narrow">
+              <sc-for list="{{ L.obs }}" as="o" hint-placeholder-count="4">
+                <div class="kv-row">
+                  <span class="kv-k">{{ o.area }}</span>
+                  <span class="vstack"><span>{{ o.text }}</span><sc-if value="{{ o.hasNote }}" hint-placeholder-val="{{ false }}"><span class="hint-warn">{{ o.note }}</span></sc-if></span>
+                  <sc-if value="{{ o.hasImg }}" hint-placeholder-val="{{ false }}"><button onClick="{{ o.view }}" class="btn btn-link btn-sm">View photo</button></sc-if>
+                </div>
+              </sc-for>
             </div>
-            <sc-for list="{{ L.obs }}" as="o" hint-placeholder-count="4">
-              <div style="display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:7px 0;border-bottom:1px solid #EDEFEA">
-                <span style="font-size:12.5px;color:#626A64">{{ o.area }}</span>
-                <span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13.5px">{{ o.text }}</span><sc-if value="{{ o.hasNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#7A4A00">{{ o.note }}</span></sc-if></span>
-                <sc-if value="{{ o.hasImg }}" hint-placeholder-val="{{ false }}"><button onClick="{{ o.view }}" class="btn btn-ghost" style="font-size:12px;font-weight:500;padding:2px 6px;border-radius:6px;color:#8C321A">View photo</button></sc-if>
-              </div>
-            </sc-for>
           </section>
         </sc-if>
         <sc-if value="{{ L.hasDetails }}" hint-placeholder-val="{{ false }}">
-          <section style="display:flex;flex-direction:column;gap:4px">
-            <h3 style="margin:0 0 4px;padding-bottom:8px;border-bottom:1px solid #E3E6E0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Product details</h3>
-            <sc-for list="{{ L.details }}" as="x" hint-placeholder-count="5">
-              <div style="display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:7px 0;border-bottom:1px solid #EDEFEA;font-size:13.5px">
-                <span style="color:#626A64;font-size:12.5px">{{ x.k }}</span><span>{{ x.v }}</span>
-                <span style="display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:500;color:{{ x.s.fg }}"><cc-icon name="{{ x.s.icon }}" size="12"></cc-icon>{{ x.s.label }}</span>
-              </div>
-            </sc-for>
+          <section class="form-section form-section--tight">
+            <div class="sub-head"><h3 class="sub-title">Product details</h3></div>
+            <div class="kv kv--narrow">
+              <sc-for list="{{ L.details }}" as="x" hint-placeholder-count="5">
+                <div class="kv-row">
+                  <span class="kv-k">{{ x.k }}</span><span>{{ x.v }}</span>
+                  <span class="prov" style="color:{{ x.s.fg }}"><cc-icon name="{{ x.s.icon }}" size="14"></cc-icon>{{ x.s.label }}</span>
+                </div>
+              </sc-for>
+            </div>
           </section>
         </sc-if>
         <sc-if value="{{ L.isWatch }}" hint-placeholder-val="{{ false }}">
-          <section style="display:flex;flex-direction:column;gap:10px">
-            <button onClick="{{ L.toggleOpt }}" aria-expanded="{{ L.optOpen }}" style="display:flex;align-items:center;gap:8px;padding:0 0 8px;border:0;border-bottom:1px solid #E3E6E0;background:none;cursor:pointer;text-align:left;color:#202522">
-              <span style="flex:1;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">Optional specifications</span>
-              <span style="font-size:12px;color:#626A64">{{ L.optLabel }}</span><cc-icon name="{{ L.optChev }}" size="15"></cc-icon>
+          <section class="form-section gap-3">
+            <button class="toggle-head" onClick="{{ L.toggleOpt }}" aria-expanded="{{ L.optOpen }}">
+              <span class="sub-title">Optional specifications</span>
+              <span class="sub-aside">{{ L.optLabel }}</span><cc-icon name="{{ L.optChev }}" size="16"></cc-icon>
             </button>
             <sc-if value="{{ L.optOpen }}" hint-placeholder-val="{{ false }}">
-              <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px">
+              <div class="grid-2">
                 <sc-for list="{{ L.optFields }}" as="o" hint-placeholder-count="4">
-                  <div style="display:flex;flex-direction:column;gap:5px">
-                    <label for="{{ o.id }}" style="font-size:13px;font-weight:500">{{ o.label }}</label>
-                    <input id="{{ o.id }}" value="{{ o.value }}" onChange="{{ o.on }}" placeholder="{{ o.ph }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:13.5px;min-height:36px;padding:7px 10px;color:#202522;width:100%">
-                    <sc-if value="{{ o.hasHint }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#626A64">{{ o.hint }}</span></sc-if>
+                  <div class="field">
+                    <label for="{{ o.id }}" class="label">{{ o.label }}</label>
+                    <input id="{{ o.id }}" value="{{ o.value }}" onChange="{{ o.on }}" placeholder="{{ o.ph }}" class="input">
+                    <sc-if value="{{ o.hasHint }}" hint-placeholder-val="{{ false }}"><span class="hint">{{ o.hint }}</span></sc-if>
                   </div>
                 </sc-for>
               </div>
             </sc-if>
           </section>
         </sc-if>
-        <section style="display:flex;flex-direction:column;gap:4px">
-          <button onClick="{{ L.toggleHist }}" aria-expanded="{{ L.histOpen }}" style="display:flex;align-items:center;gap:8px;padding:0 0 8px;margin-bottom:4px;border:0;border-bottom:1px solid #E3E6E0;background:none;cursor:pointer;text-align:left;color:#202522">
-            <span style="flex:1;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">Activity history</span>
-            <sc-if value="{{ L.histMore }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#626A64">{{ L.histLabel }}</span></sc-if><cc-icon name="{{ L.histChev }}" size="15"></cc-icon>
+        <section class="form-section form-section--tight">
+          <button class="toggle-head" onClick="{{ L.toggleHist }}" aria-expanded="{{ L.histOpen }}">
+            <span class="sub-title">Activity history</span>
+            <sc-if value="{{ L.histMore }}" hint-placeholder-val="{{ false }}"><span class="sub-aside">{{ L.histLabel }}</span></sc-if><cc-icon name="{{ L.histChev }}" size="16"></cc-icon>
           </button>
-          <sc-for list="{{ L.history }}" as="h" hint-placeholder-count="3">
-            <div style="display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:12px;padding:5px 0;font-size:13px">
-              <span style="font-weight:500">{{ h.who }}</span><span style="color:#3E4641">{{ h.text }}</span><span style="color:#626A64;white-space:nowrap;font-size:12px">{{ h.time }}</span>
-            </div>
-          </sc-for>
+          <div class="kv">
+            <sc-for list="{{ L.history }}" as="h" hint-placeholder-count="3">
+              <div class="hist-row"><span class="hist-who">{{ h.who }}</span><span class="hist-text">{{ h.text }}</span><span class="hist-time">{{ h.time }}</span></div>
+            </sc-for>
+          </div>
         </section>
       </div>
-      <div style="flex:none;border-top:1px solid #E3E6E0;background:#FFFFFF;padding:14px 24px;display:flex;flex-direction:column;gap:12px">
+      <div class="drawer-foot">
         <sc-if value="{{ L.fbOpen }}" hint-placeholder-val="{{ false }}">
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <label for="ld-fb" style="font-size:13px;font-weight:500">What should the Product agent change?</label>
-            <textarea id="ld-fb" rows="3" value="{{ L.fb }}" onChange="{{ L.onFb }}" placeholder="e.g. Shorter description, and mention the strap is a replacement." class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;padding:8px 10px;color:#202522;width:100%;min-height:72px"></textarea>
-            <sc-if value="{{ L.fbErr }}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size:12px;color:#A0281C">Add a short note so the agent knows what to change.</span></sc-if>
-            <div style="display:flex;gap:8px;justify-content:flex-end">
-              <button class="btn btn-ghost" onClick="{{ L.cancelFb }}" style="font-weight:500;font-size:13px;color:#3E4641;padding:7px 10px;border-radius:8px">Cancel</button>
-              <button class="btn btn-primary" onClick="{{ L.sendFb }}" style="font-weight:500;font-size:13px;padding:7px 12px;border-radius:8px;color:#FFFFFF"><cc-icon name="send" size="14"></cc-icon>Send to Product agent</button>
+          <div class="field">
+            <label for="ld-fb" class="label">What should the Product agent change?</label>
+            <textarea id="ld-fb" rows="3" value="{{ L.fb }}" onChange="{{ L.onFb }}" placeholder="e.g. Shorter description, and mention the strap is a replacement." class="input" style="min-height:72px"></textarea>
+            <sc-if value="{{ L.fbErr }}" hint-placeholder-val="{{ false }}"><span role="alert" class="error-text">Add a short note so the agent knows what to change.</span></sc-if>
+            <div class="foot-row foot-row--end">
+              <button class="btn btn-ghost" onClick="{{ L.cancelFb }}">Cancel</button>
+              <button class="btn btn-secondary" onClick="{{ L.sendFb }}"><cc-icon name="send" size="14"></cc-icon>Send to Product agent</button>
             </div>
           </div>
         </sc-if>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="flex:1;min-width:0;font-size:12.5px">
-            <sc-if value="{{ L.ready }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:6px;color:#235A3A;font-weight:500"><cc-icon name="check-circle" size="14"></cc-icon>Ready to publish</span></sc-if>
-            <sc-if value="{{ L.notReady }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:flex-start;gap:6px;color:#7A4A00"><cc-icon name="alert-circle" size="14"></cc-icon><span>Before publishing, still needed: {{ L.missText }}.</span></span></sc-if>
+        <div class="foot-row">
+          <div class="foot-msg">
+            <sc-if value="{{ L.ready }}" hint-placeholder-val="{{ false }}"><span class="foot-ok"><cc-icon name="check-circle" size="14"></cc-icon>Ready to publish</span></sc-if>
+            <sc-if value="{{ L.notReady }}" hint-placeholder-val="{{ false }}"><span class="foot-warn"><cc-icon name="alert-circle" size="14"></cc-icon><span>Before publishing, still needed: {{ L.missText }}.</span></span></sc-if>
           </div>
-          <button class="btn btn-ghost" onClick="{{ L.save }}" style="font-weight:500;font-size:13px;color:#3E4641;padding:8px 10px;border-radius:8px">Save draft</button>
-          <sc-if value="{{ L.canFeedback }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary" onClick="{{ L.toggleFb }}" aria-expanded="{{ L.fbOpen }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:13px;padding:8px 12px;border-radius:8px;color:#202522" style-hover="background:#F3F2EE">Request changes</button></sc-if>
-          <button class="btn btn-primary" onClick="{{ L.publish }}" disabled="{{ L.publishDisabled }}" style="font-weight:500;font-size:13px;padding:8px 14px;border-radius:8px;color:#FFFFFF"><cc-icon name="check" size="15"></cc-icon>Approve &amp; publish</button>
+          <button class="btn btn-ghost" onClick="{{ L.save }}">Save draft</button>
+          <sc-if value="{{ L.canFeedback }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary" onClick="{{ L.toggleFb }}" aria-expanded="{{ L.fbOpen }}">Request changes</button></sc-if>
+          <button class="btn btn-primary" onClick="{{ L.publish }}" disabled="{{ L.publishDisabled }}"><cc-icon name="check" size="16"></cc-icon>Approve &amp; publish</button>
         </div>
       </div>
     </div>
   </div>
 </sc-if>
 <sc-if value="{{ isSupport }}" hint-placeholder-val="{{ false }}">
-  <div style="position:fixed;inset:0;z-index:40">
-    <div onClick="{{ closeDrawer }}" style="position:absolute;inset:0;background:rgba(32,35,33,0.32);animation:ccFade 180ms ease-out"></div>
-    <div ref="{{ drawerRef }}" role="dialog" aria-modal="true" aria-labelledby="sd-title" style="position:absolute;top:8px;right:8px;bottom:8px;width:min(648px,calc(100vw - 96px));background:#FFFFFF;border-radius:12px;box-shadow:0 16px 48px rgba(32,35,33,0.22);display:flex;flex-direction:column;overflow:hidden;animation:ccDrawer 180ms ease-out">
-      <div style="flex:none;display:flex;align-items:flex-start;gap:12px;padding:18px 24px 16px;border-bottom:1px solid #E3E6E0">
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64"><cc-icon name="message-square" size="13"></cc-icon>Support agent · Response review</div>
-          <h2 id="sd-title" style="margin:6px 0 0;font-size:19px;font-weight:600;line-height:1.3;letter-spacing:-0.01em">Customer asked about water resistance</h2>
+  <div class="overlay">
+    <div class="backdrop" onClick="{{ closeDrawer }}"></div>
+    <div ref="{{ drawerRef }}" role="dialog" aria-modal="true" aria-labelledby="sd-title" class="drawer drawer--sm">
+      <div class="drawer-head">
+        <div class="drawer-heading">
+          <h2 id="sd-title" class="drawer-title">Customer asked about water resistance</h2>
+          <div class="meta"><cc-icon name="message-square" size="14"></cc-icon><strong>Support agent</strong><span aria-hidden="true">·</span><span>Response review</span></div>
         </div>
-        <button data-autofocus="true" aria-label="Close review" onClick="{{ closeDrawer }}" style="width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:#3E4641;display:grid;place-items:center;cursor:pointer" style-hover="background:#F3F2EE"><cc-icon name="x" size="18"></cc-icon></button>
+        <button data-autofocus="true" aria-label="Close review" onClick="{{ closeDrawer }}" class="btn btn-ghost btn-icon close-btn"><cc-icon name="x" size="18"></cc-icon></button>
       </div>
-      <div style="flex:1;min-height:0;overflow:auto;padding:20px 24px 28px;display:flex;flex-direction:column;gap:24px">
-        <section style="display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="width:30px;height:30px;border-radius:50%;background:#E7E5DF;display:grid;place-items:center;font-size:11px;font-weight:600;color:#3E4641">{{ S.initials }}</span>
-            <div style="flex:1;font-size:13px"><span style="font-weight:600">{{ S.customer }}</span><span style="color:#626A64"> · {{ S.channel }} · {{ S.time }}</span></div>
-          </div>
-          <div style="background:#F3F2EE;border-radius:12px;padding:12px 14px;font-size:14.5px;line-height:1.55">{{ S.msg }}</div>
+      <div class="drawer-body">
+        <section class="block gap-2">
+          <div class="person"><span class="avatar avatar-sm">{{ S.initials }}</span><div class="grow"><strong>{{ S.customer }}</strong><span class="muted"> · {{ S.channel }} · {{ S.time }}</span></div></div>
+          <div class="quote">{{ S.msg }}</div>
         </section>
         <sc-if value="{{ S.hasFirstReply }}" hint-placeholder-val="{{ false }}">
-          <section style="display:flex;flex-direction:column;gap:8px">
-            <h3 style="margin:0;padding-bottom:8px;border-bottom:1px solid #E3E6E0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">What the agent already answered</h3>
-            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#626A64"><cc-icon name="message-square" size="13"></cc-icon><span style="font-weight:500;color:#3E4641">Support agent</span><span aria-hidden="true">·</span><span>{{ S.firstReplyTime }}</span><span aria-hidden="true">·</span><span>sent</span></div>
-            <div style="background:#F1F3EF;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.55">{{ S.firstReply }}</div>
+          <section class="form-section gap-2">
+            <div class="sub-head"><h3 class="sub-title">What the agent already answered</h3></div>
+            <div class="meta"><cc-icon name="message-square" size="14"></cc-icon><strong>Support agent</strong><span aria-hidden="true">·</span><span>{{ S.firstReplyTime }}</span><span aria-hidden="true">·</span><span>sent</span></div>
+            <div class="quote quote--agent">{{ S.firstReply }}</div>
           </section>
         </sc-if>
-        <section style="display:flex;flex-direction:column;gap:8px">
-          <h3 style="margin:0;padding-bottom:8px;border-bottom:1px solid #E3E6E0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Product context</h3>
-          <div style="display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center">
-            <div style="width:52px;height:52px;border-radius:8px;overflow:hidden;background:#EEECE7;border:1px solid #E3E6E0;display:grid;place-items:center">
-              <sc-if value="{{ S.pthumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ S.pthumb.src }}" alt="" style="width:100%;height:100%;object-fit:cover;transform:{{ S.pthumb.t }};transform-origin:{{ S.pthumb.o }}"></sc-if>
+        <section class="form-section gap-2">
+          <div class="sub-head"><h3 class="sub-title">Product context</h3></div>
+          <div class="ctx-row">
+            <div class="thumb thumb-52">
+              <sc-if value="{{ S.pthumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ S.pthumb.src }}" alt="" loading="lazy" decoding="async" style="transform:{{ S.pthumb.t }};transform-origin:{{ S.pthumb.o }}"></sc-if>
             </div>
-            <div style="min-width:0"><div style="font-size:14px;font-weight:500">{{ S.pname }}</div><div style="font-size:12.5px;color:#626A64">Listing status: {{ S.pst.label }}</div></div>
-            <button onClick="{{ S.openProduct }}" class="btn btn-ghost" style="font-size:12.5px;font-weight:500;padding:3px 6px;border-radius:6px;color:#8C321A">Open product</button>
+            <div class="min0"><div class="ctx-name">{{ S.pname }}</div><div class="hint">Listing status: {{ S.pst.label }}</div></div>
+            <button onClick="{{ S.openProduct }}" class="btn btn-link btn-sm">Open product</button>
           </div>
-          <div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;padding:8px 0 0;font-size:13.5px">
-            <span style="color:#626A64;font-size:12.5px">Seen in photo</span>
-            <span>Case back marked “SEAMASTER · WATERPROOF”. <span style="color:#7A4A00">A marking from manufacture — not a tested rating.</span></span>
-          </div>
+          <div class="kv kv--narrow"><div class="kv-row"><span class="kv-k">Seen in photo</span><span>Case back marked “SEAMASTER · WATERPROOF”. <span class="text-warn">A marking from manufacture — not a tested rating.</span></span></div></div>
         </section>
-        <section style="display:flex;flex-direction:column;gap:10px">
+        <section class="block">
           <div>
-            <h3 style="margin:0;font-size:15px;font-weight:600">What the agent needs from you</h3>
-            <p style="margin:4px 0 0;font-size:13px;color:#626A64">Has this watch been pressure-tested? The agent couldn’t verify it, and its follow-up will only say what you confirm.</p>
+            <h3 class="block-title">What the agent needs from you</h3>
+            <p class="block-lede">Has this watch been pressure-tested? The agent couldn’t verify it, and its follow-up will only say what you confirm.</p>
           </div>
-          <div role="radiogroup" aria-label="Water resistance" style="display:flex;flex-direction:column;gap:8px">
+          <div role="radiogroup" aria-label="Water resistance" class="vstack gap-2">
             <sc-for list="{{ S.options }}" as="o" hint-placeholder-count="3">
-              <label class="radio" for="{{ o.id }}" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid {{ o.border }};background:{{ o.bg }};border-radius:10px;cursor:pointer;transition:border-color 160ms,background 160ms">
+              <label class="choice" for="{{ o.id }}">
                 <input type="radio" id="{{ o.id }}" name="wr" checked="{{ o.checked }}" onChange="{{ o.pick }}">
-                <span class="dot" style="margin-top:2px"></span>
-                <span style="display:flex;flex-direction:column"><span style="font-size:14px;font-weight:500">{{ o.label }}</span><span style="font-size:12.5px;color:#626A64">{{ o.hint }}</span></span>
+                <span class="dot"></span>
+                <span class="vstack"><span class="choice-title">{{ o.label }}</span><span class="choice-hint">{{ o.hint }}</span></span>
               </label>
             </sc-for>
           </div>
           <sc-if value="{{ S.isTested }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <label for="sd-rating" style="font-size:13px;font-weight:500">Tested rating and date</label>
-              <input id="sd-rating" value="{{ S.rating }}" onChange="{{ S.onRating }}" placeholder="e.g. 3 ATM in March 2026" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px;color:#202522;width:100%">
+            <div class="field">
+              <label for="sd-rating" class="label">Tested rating and date</label>
+              <input id="sd-rating" value="{{ S.rating }}" onChange="{{ S.onRating }}" placeholder="e.g. 3 ATM in March 2026" class="input">
             </div>
           </sc-if>
         </section>
-        <section style="display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-            <label for="sd-reply" style="font-size:15px;font-weight:600">Proposed follow-up</label>
-            <span style="display:inline-flex;align-items:center;gap:10px">
-              <sc-if value="{{ S.edited }}" hint-placeholder-val="{{ false }}"><button onClick="{{ S.regen }}" class="btn btn-ghost" style="font-size:12px;font-weight:500;padding:2px 6px;border-radius:6px;color:#8C321A">Rebuild from my answer</button></sc-if>
-              <span style="font-size:11.5px;font-weight:500;color:{{ S.replyS.fg }};display:inline-flex;align-items:center;gap:4px"><cc-icon name="{{ S.replyS.icon }}" size="12"></cc-icon>{{ S.replyS.label }}</span>
+        <section class="block gap-2">
+          <div class="field-head">
+            <label for="sd-reply" class="block-title">Proposed follow-up</label>
+            <span class="inline-row">
+              <sc-if value="{{ S.edited }}" hint-placeholder-val="{{ false }}"><button onClick="{{ S.regen }}" class="btn btn-link btn-sm">Rebuild from my answer</button></sc-if>
+              <span class="prov" style="color:{{ S.replyS.fg }}"><cc-icon name="{{ S.replyS.icon }}" size="14"></cc-icon>{{ S.replyS.label }}</span>
             </span>
           </div>
-          <textarea id="sd-reply" rows="7" value="{{ S.reply }}" onChange="{{ S.onReply }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;line-height:1.55;padding:10px 12px;color:#202522;width:100%;min-height:150px"></textarea>
-          <span style="font-size:12px;color:#626A64">Sending is simulated — no message reaches a real customer.</span>
+          <textarea id="sd-reply" rows="7" value="{{ S.reply }}" onChange="{{ S.onReply }}" class="input" style="min-height:150px"></textarea>
+          <span class="hint">Sending is simulated — no message reaches a real customer.</span>
         </section>
       </div>
-      <div style="flex:none;border-top:1px solid #E3E6E0;padding:14px 24px;display:flex;align-items:center;gap:8px">
-        <div style="flex:1;min-width:0;font-size:12.5px">
-          <sc-if value="{{ S.hasErr }}" hint-placeholder-val="{{ false }}"><span role="alert" style="display:inline-flex;gap:6px;align-items:flex-start;color:#A0281C"><cc-icon name="alert-circle" size="14"></cc-icon>{{ S.err }}</span></sc-if>
+      <div class="drawer-foot">
+        <div class="foot-row">
+          <div class="foot-msg">
+            <sc-if value="{{ S.hasErr }}" hint-placeholder-val="{{ false }}"><span role="alert" class="foot-err"><cc-icon name="alert-circle" size="14"></cc-icon>{{ S.err }}</span></sc-if>
+          </div>
+          <button class="btn btn-ghost" onClick="{{ S.save }}">Save draft</button>
+          <button class="btn btn-primary" onClick="{{ S.approve }}"><cc-icon name="send" size="14"></cc-icon>Approve &amp; send reply</button>
         </div>
-        <button class="btn btn-ghost" onClick="{{ S.save }}" style="font-weight:500;font-size:13px;color:#3E4641;padding:8px 10px;border-radius:8px">Save draft</button>
-        <button class="btn btn-primary" onClick="{{ S.approve }}" style="font-weight:500;font-size:13px;padding:8px 14px;border-radius:8px;color:#FFFFFF"><cc-icon name="send" size="14"></cc-icon>Approve &amp; send reply</button>
       </div>
     </div>
   </div>
 </sc-if>
 <sc-if value="{{ isCampaign }}" hint-placeholder-val="{{ false }}">
-  <div style="position:fixed;inset:0;z-index:40">
-    <div onClick="{{ closeDrawer }}" style="position:absolute;inset:0;background:rgba(32,35,33,0.32);animation:ccFade 180ms ease-out"></div>
-    <div ref="{{ drawerRef }}" role="dialog" aria-modal="true" aria-labelledby="cd-title" style="position:absolute;top:8px;right:8px;bottom:8px;width:min(688px,calc(100vw - 96px));background:#FFFFFF;border-radius:12px;box-shadow:0 16px 48px rgba(32,35,33,0.22);display:flex;flex-direction:column;overflow:hidden;animation:ccDrawer 180ms ease-out">
-      <div style="flex:none;display:flex;align-items:flex-start;gap:12px;padding:18px 24px 16px;border-bottom:1px solid #E3E6E0">
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64"><cc-icon name="megaphone" size="13"></cc-icon>Marketing agent · Campaign draft</div>
-          <h2 id="cd-title" style="margin:6px 0 0;font-size:19px;font-weight:600;line-height:1.3;letter-spacing:-0.01em">Campaign draft ready</h2>
+  <div class="overlay">
+    <div class="backdrop" onClick="{{ closeDrawer }}"></div>
+    <div ref="{{ drawerRef }}" role="dialog" aria-modal="true" aria-labelledby="cd-title" class="drawer">
+      <div class="drawer-head">
+        <div class="drawer-heading">
+          <h2 id="cd-title" class="drawer-title">Campaign draft ready</h2>
+          <div class="meta"><cc-icon name="megaphone" size="14"></cc-icon><strong>Marketing agent</strong><span aria-hidden="true">·</span><span>Campaign draft</span></div>
         </div>
-        <button data-autofocus="true" aria-label="Close review" onClick="{{ closeDrawer }}" style="width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:#3E4641;display:grid;place-items:center;cursor:pointer" style-hover="background:#F3F2EE"><cc-icon name="x" size="18"></cc-icon></button>
+        <button data-autofocus="true" aria-label="Close review" onClick="{{ closeDrawer }}" class="btn btn-ghost btn-icon close-btn"><cc-icon name="x" size="18"></cc-icon></button>
       </div>
-      <div style="flex:1;min-height:0;overflow:auto;padding:20px 24px 28px;display:flex;flex-direction:column;gap:24px">
-        <div style="display:grid;grid-template-columns:236px minmax(0,1fr);gap:24px;align-items:start">
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <div style="position:relative;aspect-ratio:3/4;background:#EFEDE8;border-radius:10px;overflow:hidden;border:1px solid #E3E6E0">
-              <img src="{{ K.src }}" alt="{{ K.label }}" style="width:100%;height:100%;object-fit:contain">
-              <button aria-label="Enlarge photo" onClick="{{ K.enlarge }}" style="position:absolute;top:8px;right:8px;width:32px;height:32px;border:0;border-radius:8px;background:rgba(255,255,255,0.94);color:#202522;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 3px rgba(32,35,33,.18)"><cc-icon name="maximize" size="14"></cc-icon></button>
+      <div class="drawer-body">
+        <div class="drawer-grid">
+          <div class="gallery">
+            <div class="stage">
+              <img src="{{ K.src }}" alt="{{ K.label }}">
+              <button class="float-btn" aria-label="Enlarge photo" onClick="{{ K.enlarge }}"><cc-icon name="maximize" size="14"></cc-icon></button>
             </div>
-            <div style="font-size:12px;color:#626A64"><span style="font-weight:500;color:#202522">Selected image</span> · {{ K.label }}<sc-if value="{{ K.isAgentPick }}" hint-placeholder-val="{{ false }}"> · agent’s pick</sc-if></div>
-            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">
+            <div class="caption"><span><strong>Selected image</strong> · {{ K.label }}<sc-if value="{{ K.isAgentPick }}" hint-placeholder-val="{{ false }}"> · agent’s pick</sc-if></span></div>
+            <div class="thumbs thumbs--3">
               <sc-for list="{{ K.images }}" as="im" hint-placeholder-count="6">
-                <button onClick="{{ im.pick }}" aria-label="Use {{ im.label }}" aria-pressed="{{ im.active }}" style="aspect-ratio:1;padding:0;border-radius:7px;overflow:hidden;border:2px solid {{ im.border }};background:#EFEDE8;cursor:pointer"><img src="{{ im.src }}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:{{ im.pos }}"></button>
+                <button class="thumb-btn" onClick="{{ im.pick }}" aria-label="Use {{ im.label }}" aria-pressed="{{ im.active }}"><img src="{{ im.src }}" alt="" loading="lazy" decoding="async" style="object-position:{{ im.pos }}"></button>
               </sc-for>
             </div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:14px">
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <label for="cd-channel" style="font-size:13px;font-weight:500">Intended channel</label>
-              <select id="cd-channel" value="{{ K.channel }}" onChange="{{ K.onChannel }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:7px 8px;color:#202522"><option>Instagram post</option><option>Email newsletter</option><option>Facebook post</option></select>
+          <div class="block">
+            <div class="field">
+              <label for="cd-channel" class="label">Intended channel</label>
+              <select id="cd-channel" value="{{ K.channel }}" onChange="{{ K.onChannel }}" class="input"><option>Instagram post</option><option>Email newsletter</option><option>Facebook post</option></select>
             </div>
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <div style="display:flex;justify-content:space-between;gap:8px"><label for="cd-head" style="font-size:13px;font-weight:500">Headline</label><span style="font-size:11.5px;color:#626A64">{{ K.hlen }}</span></div>
-              <input id="cd-head" maxlength="60" value="{{ K.headline }}" onChange="{{ K.onHeadline }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px;color:#202522;width:100%">
+            <div class="field">
+              <div class="field-head"><label for="cd-head" class="label">Headline</label><span class="hint">{{ K.hlen }}</span></div>
+              <input id="cd-head" maxlength="60" value="{{ K.headline }}" onChange="{{ K.onHeadline }}" class="input">
             </div>
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <div style="display:flex;justify-content:space-between;gap:8px"><label for="cd-body" style="font-size:13px;font-weight:500">Copy</label><span style="font-size:11.5px;color:#626A64">{{ K.blen }}</span></div>
-              <textarea id="cd-body" rows="6" value="{{ K.body }}" onChange="{{ K.onBody }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;line-height:1.55;padding:9px 10px;color:#202522;width:100%;min-height:140px"></textarea>
+            <div class="field">
+              <div class="field-head"><label for="cd-body" class="label">Copy</label><span class="hint">{{ K.blen }}</span></div>
+              <textarea id="cd-body" rows="6" value="{{ K.body }}" onChange="{{ K.onBody }}" class="input" style="min-height:140px"></textarea>
             </div>
-            <div style="display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:#3E4641;background:#F6F5F2;border-radius:8px;padding:10px 12px"><cc-icon name="info" size="14"></cc-icon><span>The agent kept the year and water resistance out of the copy — neither is verified yet.</span></div>
+            <p class="note"><cc-icon name="info" size="14"></cc-icon><span>The agent kept the year and water resistance out of the copy — neither is verified yet.</span></p>
           </div>
         </div>
-        <section style="display:flex;flex-direction:column;gap:6px">
-          <h3 style="margin:0;padding-bottom:8px;border-bottom:1px solid #E3E6E0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Linked product</h3>
-          <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;flex-wrap:wrap"><span style="font-weight:500">{{ K.pname }}</span><span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;background:{{ K.pst.bg }};color:{{ K.pst.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ K.pst.dot }}"></span>{{ K.pst.label }}</span></div>
-          <div style="font-size:12.5px;color:#626A64">{{ K.listingNote }}</div>
+        <section class="form-section gap-2">
+          <div class="sub-head"><h3 class="sub-title">Linked product</h3></div>
+          <div class="inline-row"><span class="w500">{{ K.pname }}</span><span class="status"><span class="status-dot" style="background:{{ K.pst.dot }}"></span>{{ K.pst.label }}</span></div>
+          <div class="hint">{{ K.listingNote }}</div>
         </section>
       </div>
-      <div style="flex:none;border-top:1px solid #E3E6E0;padding:14px 24px;display:flex;align-items:center;gap:8px">
-        <div style="flex:1;min-width:0;font-size:12.5px;color:#626A64">
-          <sc-if value="{{ K.hasErr }}" hint-placeholder-val="{{ false }}"><span role="alert" style="color:#A0281C">{{ K.err }}</span></sc-if>
-          <sc-if value="{{ K.notErr }}" hint-placeholder-val="{{ true }}"><span>Approving saves the draft. No ad is published.</span></sc-if>
+      <div class="drawer-foot">
+        <div class="foot-row">
+          <div class="foot-msg">
+            <sc-if value="{{ K.hasErr }}" hint-placeholder-val="{{ false }}"><span role="alert" class="foot-err">{{ K.err }}</span></sc-if>
+            <sc-if value="{{ K.notErr }}" hint-placeholder-val="{{ true }}"><span>Approving saves the draft. No ad is published.</span></sc-if>
+          </div>
+          <button class="btn btn-ghost" onClick="{{ K.save }}">Save draft</button>
+          <button class="btn btn-primary" onClick="{{ K.approve }}"><cc-icon name="check" size="16"></cc-icon>Approve draft</button>
         </div>
-        <button class="btn btn-ghost" onClick="{{ K.save }}" style="font-weight:500;font-size:13px;color:#3E4641;padding:8px 10px;border-radius:8px">Save draft</button>
-        <button class="btn btn-primary" onClick="{{ K.approve }}" style="font-weight:500;font-size:13px;padding:8px 14px;border-radius:8px;color:#FFFFFF"><cc-icon name="check" size="15"></cc-icon>Approve draft</button>
       </div>
     </div>
   </div>
 </sc-if>
 <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
-  <div style="position:fixed;inset:0;z-index:45;display:grid;place-items:center;padding:24px">
-    <div onClick="{{ M.close }}" style="position:absolute;inset:0;background:rgba(32,35,33,0.4);animation:ccFade 180ms ease-out"></div>
-    <div ref="{{ modalRef }}" role="dialog" aria-modal="true" aria-labelledby="am-title" style="position:relative;width:min(880px,100%);max-height:calc(100vh - 48px);background:#FFFFFF;border-radius:12px;box-shadow:0 20px 56px rgba(32,35,33,0.26);display:flex;flex-direction:column;overflow:hidden;animation:ccPop 180ms ease-out">
-      <div style="flex:none;display:flex;align-items:center;gap:16px;padding:18px 24px;border-bottom:1px solid #E3E6E0">
-        <h2 id="am-title" style="margin:0;font-size:18px;font-weight:600;letter-spacing:-0.01em">Add product</h2>
-        <ol aria-label="Steps" style="list-style:none;margin:0 0 0 12px;padding:0;display:flex;align-items:center;gap:10px;flex:1">
+  <div class="modal-wrap">
+    <div class="backdrop" onClick="{{ M.close }}"></div>
+    <div ref="{{ modalRef }}" role="dialog" aria-modal="true" aria-labelledby="am-title" class="modal">
+      <div class="modal-head">
+        <h2 id="am-title" class="modal-title">Add product</h2>
+        <ol aria-label="Steps" class="steps">
           <sc-for list="{{ M.steps }}" as="t" hint-placeholder-count="3">
-            <li style="display:flex;align-items:center;gap:8px">
-              <span style="width:22px;height:22px;border-radius:6px;background:{{ t.bg }};color:{{ t.fg }};border:1px solid {{ t.border }};display:grid;place-items:center;font-size:11.5px;font-weight:600">
+            <li class="step">
+              <span class="step-n" style="background:{{ t.bg }};color:{{ t.fg }};border-color:{{ t.border }}">
                 <sc-if value="{{ t.isDone }}" hint-placeholder-val="{{ false }}"><cc-icon name="check" size="12" stroke="2.5"></cc-icon></sc-if>
                 <sc-if value="{{ t.notDone }}" hint-placeholder-val="{{ true }}">{{ t.n }}</sc-if>
               </span>
-              <span style="font-size:13px;font-weight:500;color:{{ t.lfg }}">{{ t.label }}</span>
-              <sc-if value="{{ t.hasLine }}" hint-placeholder-val="{{ true }}"><span aria-hidden="true" style="width:28px;height:1px;background:#D3D7D0"></span></sc-if>
+              <span class="step-label" style="color:{{ t.lfg }}">{{ t.label }}</span>
+              <sc-if value="{{ t.hasLine }}" hint-placeholder-val="{{ true }}"><span aria-hidden="true" class="step-line"></span></sc-if>
             </li>
           </sc-for>
         </ol>
-        <sc-if value="{{ M.canClose }}" hint-placeholder-val="{{ true }}"><button aria-label="Close" onClick="{{ M.close }}" style="width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:#3E4641;display:grid;place-items:center;cursor:pointer" style-hover="background:#F3F2EE"><cc-icon name="x" size="18"></cc-icon></button></sc-if>
+        <sc-if value="{{ M.canClose }}" hint-placeholder-val="{{ true }}"><button aria-label="Close" onClick="{{ M.close }}" class="btn btn-ghost btn-icon close-btn"><cc-icon name="x" size="18"></cc-icon></button></sc-if>
       </div>
-      <div style="flex:1;min-height:0;overflow:auto;padding:24px">
+      <div class="modal-body">
         <sc-if value="{{ M.s1 }}" hint-placeholder-val="{{ true }}">
-          <div style="display:flex;flex-direction:column;gap:16px">
-            <div onDragOver="{{ M.onDragOver }}" onDragLeave="{{ M.onDragLeave }}" onDrop="{{ M.onDrop }}" style="border:1.5px dashed {{ M.dropBorder }};background:{{ M.dropBg }};border-radius:12px;padding:28px;display:flex;align-items:center;gap:20px;transition:border-color 160ms,background 160ms">
-              <span style="width:48px;height:48px;border-radius:12px;background:#FFFFFF;border:1px solid #E3E6E0;display:grid;place-items:center;color:#202522;flex:none"><cc-icon name="upload" size="22"></cc-icon></span>
-              <div style="flex:1;min-width:0">
-                <div style="font-size:15px;font-weight:600">{{ M.dropText }}</div>
-                <div style="font-size:13px;color:#626A64">JPG or PNG. Several photos become one product — choose which one shoppers see first.</div>
+          <div class="block gap-4">
+            <div class="dropzone" onDragOver="{{ M.onDragOver }}" onDragLeave="{{ M.onDragLeave }}" onDrop="{{ M.onDrop }}" style="border-color:{{ M.dropBorder }};background:{{ M.dropBg }}">
+              <span class="dropzone-icon"><cc-icon name="upload" size="20"></cc-icon></span>
+              <div class="dropzone-text">
+                <div class="block-title">{{ M.dropText }}</div>
+                <div class="row-text">JPG or PNG. Several photos become one product — choose which one shoppers see first.</div>
               </div>
-              <div style="display:flex;gap:8px;flex:none">
-                <button class="btn btn-secondary" onClick="{{ M.pick }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:13px;padding:8px 12px;border-radius:8px;color:#202522" style-hover="background:#F3F2EE"><cc-icon name="image" size="15"></cc-icon>Choose files</button>
-                <button class="btn btn-secondary" onClick="{{ M.useSample }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:13px;padding:8px 12px;border-radius:8px;color:#202522" style-hover="background:#F3F2EE"><cc-icon name="watch" size="15"></cc-icon>Use sample watch</button>
+              <div class="dropzone-actions">
+                <button class="btn btn-secondary" onClick="{{ M.pick }}"><cc-icon name="image" size="16"></cc-icon>Choose files</button>
+                <button class="btn btn-secondary" onClick="{{ M.useSample }}"><cc-icon name="watch" size="16"></cc-icon>Use sample watch</button>
               </div>
-              <input ref="{{ fileRef }}" type="file" accept="image/*" multiple="{{ true }}" onChange="{{ M.onFiles }}" aria-label="Choose product photos" tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
+              <input ref="{{ fileRef }}" type="file" accept="image/*" multiple="{{ true }}" onChange="{{ M.onFiles }}" aria-label="Choose product photos" tabindex="-1" class="sr-only">
             </div>
             <sc-if value="{{ M.hasErrors }}" hint-placeholder-val="{{ false }}">
-              <div role="alert" style="display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:8px;background:#FBE7E4;color:#7E2217;font-size:13px">
-                <sc-for list="{{ M.errors }}" as="e" hint-placeholder-count="1"><span style="display:flex;gap:6px;align-items:center"><cc-icon name="alert-circle" size="14"></cc-icon>{{ e.t }}</span></sc-for>
+              <div role="alert" class="alert">
+                <sc-for list="{{ M.errors }}" as="e" hint-placeholder-count="1"><span class="alert-line"><cc-icon name="alert-circle" size="14"></cc-icon>{{ e.t }}</span></sc-for>
               </div>
             </sc-if>
-            <sc-if value="{{ M.busy }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;gap:8px;font-size:13px;color:#3E4641"><span style="display:inline-flex;animation:ccSpin 1s linear infinite"><cc-icon name="loader" size="14"></cc-icon></span>{{ M.busyLabel }}</div></sc-if>
+            <sc-if value="{{ M.busy }}" hint-placeholder-val="{{ false }}"><div role="status" class="working"><span class="spin"><cc-icon name="loader" size="14"></cc-icon></span>{{ M.busyLabel }}</div></sc-if>
             <sc-if value="{{ M.hasImages }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;align-items:baseline;justify-content:space-between">
-                <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">{{ M.countLabel }}</span>
-                <span style="font-size:12px;color:#626A64">Select a photo’s star to make it the cover</span>
+              <div class="sub-head">
+                <span class="sub-title">{{ M.countLabel }}</span>
+                <span class="sub-aside">Select a photo’s star to make it the cover</span>
               </div>
-              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(124px,1fr));gap:12px">
+              <div class="photos">
                 <sc-for list="{{ M.images }}" as="im" hint-placeholder-count="6">
-                  <div style="display:flex;flex-direction:column;gap:6px">
-                    <div style="position:relative;aspect-ratio:3/4;border-radius:10px;overflow:hidden;border:2px solid {{ im.border }};background:#EFEDE8">
-                      <img src="{{ im.src }}" alt="{{ im.label }}" style="width:100%;height:100%;object-fit:cover">
-                      <button onClick="{{ im.remove }}" aria-label="{{ im.removeLabel }}" style="position:absolute;top:6px;right:6px;width:28px;height:28px;border:0;border-radius:7px;background:rgba(255,255,255,0.94);color:#202522;display:grid;place-items:center;cursor:pointer" style-hover="background:#FFFFFF;color:#A0281C"><cc-icon name="x" size="14"></cc-icon></button>
-                      <sc-if value="{{ im.isCover }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:6px;bottom:6px;display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:5px;background:#B84324;color:#FFFFFF;font-size:11.5px;font-weight:500"><cc-icon name="star" size="11"></cc-icon>Cover</span></sc-if>
-                      <sc-if value="{{ im.notCover }}" hint-placeholder-val="{{ false }}"><button onClick="{{ im.setCover }}" aria-label="{{ im.coverLabel }}" style="position:absolute;left:6px;bottom:6px;display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border:0;border-radius:5px;background:rgba(255,255,255,0.94);color:#202522;font-size:11.5px;font-weight:500;cursor:pointer" style-hover="background:#FFFFFF"><cc-icon name="star" size="11"></cc-icon>Set cover</button></sc-if>
+                  <div class="photo">
+                    <div class="photo-frame">
+                      <img src="{{ im.src }}" alt="{{ im.label }}">
+                      <sc-if value="{{ im.isCover }}" hint-placeholder-val="{{ false }}"><span class="cover-ring"></span></sc-if>
+                      <button class="float-btn photo-remove" onClick="{{ im.remove }}" aria-label="{{ im.removeLabel }}"><cc-icon name="x" size="14"></cc-icon></button>
+                      <sc-if value="{{ im.isCover }}" hint-placeholder-val="{{ false }}"><span class="cover-tag cover-tag--on"><cc-icon name="star" size="12"></cc-icon>Cover</span></sc-if>
+                      <sc-if value="{{ im.notCover }}" hint-placeholder-val="{{ false }}"><button class="cover-tag cover-tag--off" onClick="{{ im.setCover }}" aria-label="{{ im.coverLabel }}"><cc-icon name="star" size="12"></cc-icon>Set cover</button></sc-if>
                     </div>
-                    <span style="font-size:12px;color:#626A64;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ im.label }}</span>
+                    <span class="photo-name">{{ im.label }}</span>
                   </div>
                 </sc-for>
               </div>
             </sc-if>
-            <div style="display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:#3E4641;background:#F6F5F2;border-radius:8px;padding:10px 12px"><cc-icon name="info" size="14"></cc-icon><span>Photos are all the agents need. The Product agent writes the listing, the Research agent suggests a price from comparable listings, and quantity starts at 1. You can change anything when you review it.</span></div>
+            <p class="note"><cc-icon name="info" size="14"></cc-icon><span>Photos are all the agents need. The Product agent writes the listing, the Research agent suggests a price from comparable listings, and quantity starts at 1. You can change anything when you review it.</span></p>
           </div>
         </sc-if>
         <sc-if value="{{ M.sGen }}" hint-placeholder-val="{{ false }}">
-          <div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:32px;align-items:start;padding:8px 0 16px">
-            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">
-              <sc-for list="{{ M.thumbs }}" as="t" hint-placeholder-count="6"><div style="aspect-ratio:1;border-radius:7px;overflow:hidden;background:#EFEDE8;border:1px solid #E3E6E0"><img src="{{ t.src }}" alt="" style="width:100%;height:100%;object-fit:cover"></div></sc-for>
+          <div class="gen">
+            <div class="gen-thumbs">
+              <sc-for list="{{ M.thumbs }}" as="t" hint-placeholder-count="6"><div class="gen-thumb"><img src="{{ t.src }}" alt=""></div></sc-for>
             </div>
-            <div style="display:flex;flex-direction:column;gap:14px">
-              <div><div style="font-size:15px;font-weight:600">Your agents are preparing the listing</div><div style="font-size:13px;color:#626A64">Product agent writes the listing; Research agent prices it from comparable listings. Simulated in this demo — usually a few seconds.</div></div>
-              <ol role="status" aria-live="polite" style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px">
+            <div class="block">
+              <div><div class="block-title">Your agents are preparing the listing</div><div class="block-lede">Product agent writes the listing; Research agent prices it from comparable listings. Simulated in this demo — usually a few seconds.</div></div>
+              <ol role="status" aria-live="polite" class="gen-list">
                 <sc-for list="{{ M.gen }}" as="g" hint-placeholder-count="4">
-                  <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:{{ g.fg }};font-weight:{{ g.weight }}">
-                    <sc-if value="{{ g.done }}" hint-placeholder-val="{{ false }}"><span style="width:20px;height:20px;border-radius:6px;background:#E5EFE7;color:#235A3A;display:grid;place-items:center"><cc-icon name="check" size="13" stroke="2.5"></cc-icon></span></sc-if>
-                    <sc-if value="{{ g.active }}" hint-placeholder-val="{{ false }}"><span style="width:20px;height:20px;display:grid;place-items:center;color:#B84324"><span style="display:inline-flex;animation:ccSpin 1s linear infinite"><cc-icon name="loader" size="16" stroke="2"></cc-icon></span></span></sc-if>
-                    <sc-if value="{{ g.pending }}" hint-placeholder-val="{{ true }}"><span style="width:20px;height:20px;border-radius:6px;border:1.5px solid #D3D7D0"></span></sc-if>
+                  <li class="gen-item" style="color:{{ g.fg }};font-weight:{{ g.weight }}">
+                    <sc-if value="{{ g.done }}" hint-placeholder-val="{{ false }}"><span class="gen-mark gen-mark--done"><cc-icon name="check-circle" size="16"></cc-icon></span></sc-if>
+                    <sc-if value="{{ g.active }}" hint-placeholder-val="{{ false }}"><span class="gen-mark gen-mark--active"><span class="spin"><cc-icon name="loader" size="16" stroke="2"></cc-icon></span></span></sc-if>
+                    <sc-if value="{{ g.pending }}" hint-placeholder-val="{{ true }}"><span class="gen-mark gen-mark--pending"></span></sc-if>
                     {{ g.label }}
                   </li>
                 </sc-for>
               </ol>
               <sc-if value="{{ M.hasGenError }}" hint-placeholder-val="{{ false }}">
-                <div role="alert" style="display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:8px;background:#FBE7E4;color:#7E2217;font-size:13px">
+                <div role="alert" class="alert gap-2">
                   <span>{{ M.genError }}</span>
-                  <div style="display:flex;gap:8px"><button class="btn btn-primary" onClick="{{ M.retryGen }}" style="font-weight:500;font-size:12.5px;padding:6px 12px;border-radius:7px;color:#FFFFFF"><cc-icon name="refresh" size="13"></cc-icon>Try again</button><button class="btn btn-ghost" onClick="{{ M.backFromError }}" style="font-weight:500;font-size:12.5px;color:#3E4641">Back to photos</button></div>
+                  <div class="foot-row"><button class="btn btn-primary btn-sm" onClick="{{ M.retryGen }}"><cc-icon name="refresh" size="14"></cc-icon>Try again</button><button class="btn btn-ghost btn-sm" onClick="{{ M.backFromError }}">Back to photos</button></div>
                 </div>
               </sc-if>
             </div>
@@ -1006,38 +1003,38 @@
         </sc-if>
       </div>
       <sc-if value="{{ M.notGen }}" hint-placeholder-val="{{ true }}">
-        <div style="flex:none;border-top:1px solid #E3E6E0;padding:14px 24px;display:flex;align-items:center;gap:8px">
-          <div style="flex:1;min-width:0;font-size:12.5px">
-            <sc-if value="{{ M.hasErr }}" hint-placeholder-val="{{ false }}"><span role="alert" style="display:inline-flex;gap:6px;align-items:center;color:#A0281C"><cc-icon name="alert-circle" size="14"></cc-icon>{{ M.err }}</span></sc-if>
+        <div class="modal-foot">
+          <div class="foot-msg">
+            <sc-if value="{{ M.hasErr }}" hint-placeholder-val="{{ false }}"><span role="alert" class="foot-err"><cc-icon name="alert-circle" size="14"></cc-icon>{{ M.err }}</span></sc-if>
           </div>
-          <button class="btn btn-ghost" onClick="{{ M.saveDraft }}" style="font-weight:500;font-size:13px;color:#3E4641;padding:8px 10px;border-radius:8px">Save as draft</button>
-          <button class="btn btn-primary" onClick="{{ M.next }}" style="font-weight:500;font-size:13px;padding:8px 14px;border-radius:8px;color:#FFFFFF">{{ M.nextLabel }}<cc-icon name="arrow-right" size="14"></cc-icon></button>
+          <button class="btn btn-ghost" onClick="{{ M.saveDraft }}">Save as draft</button>
+          <button class="btn btn-primary" onClick="{{ M.next }}">{{ M.nextLabel }}<cc-icon name="arrow-right" size="14"></cc-icon></button>
         </div>
       </sc-if>
     </div>
   </div>
 </sc-if>
 <sc-if value="{{ lbOpen }}" hint-placeholder-val="{{ false }}">
-  <div ref="{{ lightboxRef }}" role="dialog" aria-modal="true" aria-label="Photo viewer" onClick="{{ LB.close }}" style="position:fixed;inset:0;z-index:60;background:rgba(20,22,21,0.92);display:flex;flex-direction:column;animation:ccFade 160ms ease-out">
-    <div onClick="{{ LB.stop }}" style="flex:none;display:flex;align-items:center;gap:12px;padding:14px 20px;color:#ECEDEA">
-      <span style="flex:1;font-size:13.5px"><span style="font-weight:600">{{ LB.label }}</span><span style="color:#9AA29C"> · {{ LB.idxLabel }}</span></span>
-      <button data-autofocus="true" aria-label="Close photo viewer" onClick="{{ LB.close }}" style="width:36px;height:36px;border:0;border-radius:8px;background:#2C302D;color:#FFFFFF;display:grid;place-items:center;cursor:pointer" style-hover="background:#3A3F3B"><cc-icon name="x" size="18"></cc-icon></button>
+  <div ref="{{ lightboxRef }}" role="dialog" aria-modal="true" aria-label="Photo viewer" onClick="{{ LB.close }}" class="lightbox">
+    <div onClick="{{ LB.stop }}" class="lb-bar">
+      <span class="lb-label"><strong>{{ LB.label }}</strong><span> · {{ LB.idxLabel }}</span></span>
+      <button data-autofocus="true" aria-label="Close photo viewer" onClick="{{ LB.close }}" class="lb-btn"><cc-icon name="x" size="18"></cc-icon></button>
     </div>
-    <div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:16px;padding:0 20px 24px">
-      <sc-if value="{{ LB.multi }}" hint-placeholder-val="{{ false }}"><button aria-label="Previous photo" onClick="{{ LB.prev }}" style="width:44px;height:44px;border:0;border-radius:10px;background:#2C302D;color:#FFFFFF;display:grid;place-items:center;cursor:pointer;flex:none" style-hover="background:#3A3F3B"><cc-icon name="chevron-left" size="20"></cc-icon></button></sc-if>
-      <img onClick="{{ LB.stop }}" src="{{ LB.src }}" alt="{{ LB.label }}" style="max-width:min(100%,1000px);max-height:100%;object-fit:contain;border-radius:8px;min-width:0">
-      <sc-if value="{{ LB.multi }}" hint-placeholder-val="{{ false }}"><button aria-label="Next photo" onClick="{{ LB.next }}" style="width:44px;height:44px;border:0;border-radius:10px;background:#2C302D;color:#FFFFFF;display:grid;place-items:center;cursor:pointer;flex:none" style-hover="background:#3A3F3B"><cc-icon name="chevron-right" size="20"></cc-icon></button></sc-if>
+    <div class="lb-stage">
+      <sc-if value="{{ LB.multi }}" hint-placeholder-val="{{ false }}"><button aria-label="Previous photo" onClick="{{ LB.prev }}" class="lb-btn"><cc-icon name="chevron-left" size="20"></cc-icon></button></sc-if>
+      <img onClick="{{ LB.stop }}" src="{{ LB.src }}" alt="{{ LB.label }}" class="lb-img">
+      <sc-if value="{{ LB.multi }}" hint-placeholder-val="{{ false }}"><button aria-label="Next photo" onClick="{{ LB.next }}" class="lb-btn"><cc-icon name="chevron-right" size="20"></cc-icon></button></sc-if>
     </div>
   </div>
 </sc-if>
 <sc-if value="{{ confirmOpen }}" hint-placeholder-val="{{ false }}">
-  <div class="dialog-backdrop" style="z-index:70;background:rgba(32,35,33,0.45);animation:ccFade 160ms ease-out">
-    <div ref="{{ confirmRef }}" class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="rs-title" aria-describedby="rs-body" style="background:#FFFFFF;border-radius:12px;padding:22px;gap:10px;width:min(420px,100%)">
-      <div id="rs-title" class="dialog-title" style="font-size:17px;font-weight:600">Reset the demo?</div>
-      <div id="rs-body" class="dialog-body" style="font-size:13.5px;color:#3E4641;opacity:1">This restores the original products, decisions, conversations and agent activity. Products you added will be removed.</div>
-      <div class="dialog-actions" style="gap:8px">
-        <button data-autofocus="true" class="btn btn-secondary" onClick="{{ cancelReset }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:13px;padding:8px 12px;border-radius:8px;color:#202522">Cancel</button>
-        <button class="btn btn-primary" onClick="{{ doReset }}" style="font-weight:500;font-size:13px;padding:8px 14px;border-radius:8px;color:#FFFFFF"><cc-icon name="rotate-ccw" size="14"></cc-icon>Reset demo</button>
+  <div class="dialog-wrap">
+    <div ref="{{ confirmRef }}" class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="rs-title" aria-describedby="rs-body">
+      <h2 id="rs-title" class="dialog-title">Reset the demo?</h2>
+      <p id="rs-body" class="dialog-body">This restores the original products, decisions, conversations and agent activity. Products you added will be removed.</p>
+      <div class="dialog-actions">
+        <button data-autofocus="true" class="btn btn-secondary" onClick="{{ cancelReset }}">Cancel</button>
+        <button class="btn btn-primary" onClick="{{ doReset }}"><cc-icon name="rotate-ccw" size="14"></cc-icon>Reset demo</button>
       </div>
     </div>
   </div>
