@@ -94,7 +94,7 @@ Nihad and Ibrahim confirm these routes in the first API PR. Request and response
 - Start with [the product fixture](fixtures/product.json). Keep `productId` stable across agents. The live listing fills in `shopifyProductId` and `imageUrl`.
 - Marketing returns `seoTitle`, `metaDescription`, and two `socialAds` entries, each with `channel` and `copy`.
 - Analytics joins [the sample metrics](fixtures/metrics.json) by `productId`. Divide orders by sessions and show no rate when sessions are zero. Keep synthetic data labeled.
-- Use local environment variables for credentials. Create the draft in a dev store with Shopify's [`productCreate` mutation](https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate), using `DRAFT` status and `write_products` access.
+- Use local environment variables for credentials. Create the draft in a dev store with Shopify's [`productCreate` mutation](https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate), using `DRAFT` status and Admin API version `2026-10`. The store's app needs the scopes `write_products` to create the draft, and `read_publications` and `write_publications` to publish it to the Online Store.
 
 ## Run the shared Python foundation
 
@@ -113,7 +113,7 @@ Open http://localhost:8000/docs. Copy `.env.example` to an ignored `.env` only w
 
 ## How we work
 
-One trunk. `main` is the only long-lived branch and always runs. Every task gets a short branch from `main` and one small PR, merged by squash within 30–45 minutes.
+One trunk. `main` is the only long-lived branch and always runs. Every task gets a short branch from `main` and one small PR, merged by squash within 30–45 minutes. GitHub allows only squash merges here and deletes the branch after the merge.
 
 ```bash
 git switch main
@@ -164,7 +164,6 @@ Paperclip, Jev and Harness² are not part of the MVP.
 
 ## Open items
 
-- **Nihad:** set the repository to squash-merge only and to delete branches on merge. It currently allows merge commits and rebase merges.
 - **Nihad:** the repository is private. Judges need to open the GitHub link, so make it public, or invite them, before 16:45.
 - **Nihad and Ibrahim:** decide whether the service serves the built UI (one URL) or the UI deploys separately (then the service needs CORS).
 - **Musa:** confirm with an organizer that the earlier listing-agent code may be reused.
