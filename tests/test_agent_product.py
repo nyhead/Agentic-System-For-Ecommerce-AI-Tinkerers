@@ -332,16 +332,20 @@ def test_publish_activates_and_publishes():
     activated = data(
         productUpdate={"product": {"id": PRODUCT_GID, "status": "ACTIVE"}, "userErrors": []}
     )
+    variant = {"id": "gid://shopify/ProductVariant/2001", "price": "0.00"}
+    facts = data(shop={"currencyCode": "EUR"}, product={"variants": {"nodes": [variant]}})
+    priced = data(productVariantsBulkUpdate={"productVariants": [variant], "userErrors": []})
     client, fake = make_shopify(
-        publications, data(publishablePublish={"userErrors": []}), activated
+        publications, facts, priced, data(publishablePublish={"userErrors": []}), activated
     )
-    draft = record(shopifyProductId=PRODUCT_GID)
+    draft = record(shopifyProductId=PRODUCT_GID, price=Decimal("24.90"))
 
     assert product.publish(draft, client=client) == draft
-    assert "publishablePublish" in fake.request(1)["query"]
-    assert fake.request(1)["variables"]["id"] == PRODUCT_GID
-    assert "productUpdate" in fake.request(2)["query"]
-    assert fake.request(2)["variables"] == {"product": {"id": PRODUCT_GID, "status": "ACTIVE"}}
+    assert fake.request(2)["variables"]["variants"][0]["price"] == "24.90"
+    assert "publishablePublish" in fake.request(3)["query"]
+    assert fake.request(3)["variables"]["id"] == PRODUCT_GID
+    assert "productUpdate" in fake.request(4)["query"]
+    assert fake.request(4)["variables"] == {"product": {"id": PRODUCT_GID, "status": "ACTIVE"}}
 
 
 def test_publish_failure_propagates():
