@@ -51,6 +51,7 @@ def test_complete_sends_openai_compatible_request():
     assert call["url"] == "https://llm.example/v1/chat/completions"
     assert call["headers"]["Authorization"] == f"Bearer {KEY}"
     assert call["headers"]["Content-Type"] == "application/json"
+    assert call["headers"]["User-Agent"] == "commercecrew/0.1"
     assert call["body"] == {
         "model": "some/model",
         "messages": [

@@ -157,6 +157,8 @@ class LLMClient:
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
             "Accept": "application/json",
+            # Providers behind a CDN often reject urllib's default "Python-urllib" agent with 403.
+            "User-Agent": "commercecrew/0.1",
         }
         body = json.dumps(payload).encode()
         try:
