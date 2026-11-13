@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.api import analytics, products
+from app.api import analytics, chat, products
 
 # Static cockpit with no build step; ui/index.html is the entry point.
 UI_DIR = Path(__file__).resolve().parents[1] / "ui"
@@ -13,6 +13,7 @@ UI_DIR = Path(__file__).resolve().parents[1] / "ui"
 app = FastAPI(title="CommerceCrew", version="0.1.0")
 app.include_router(analytics.router)
 app.include_router(products.router)
+app.include_router(chat.router)
 
 
 @app.get("/api")
