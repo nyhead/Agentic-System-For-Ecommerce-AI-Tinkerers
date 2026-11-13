@@ -7,7 +7,7 @@ import pytest
 from pydantic import BaseModel
 
 from app.state import MarketingResult
-from app.tools.llm import Image, LLMClient, LLMError
+from app.tools.llm import DEFAULT_MAX_TOKENS, Image, LLMClient, LLMError
 
 
 @pytest.fixture(autouse=True)
@@ -72,12 +72,14 @@ def test_complete_sends_openai_compatible_request():
     }
 
 
-def test_optional_parameters_are_omitted():
+def test_temperature_is_omitted_and_max_tokens_has_a_default():
+    # Without a limit, Featherless defaults max_tokens to the whole context and rejects the call.
     client, transport = make_client(reply("ok"))
     client.complete("Hi")
     assert transport.calls[0]["body"] == {
         "model": "some/model",
         "messages": [{"role": "user", "content": "Hi"}],
+        "max_tokens": DEFAULT_MAX_TOKENS,
     }
 
 
