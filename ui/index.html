@@ -388,167 +388,173 @@
       </div>
     </sc-if>
     <sc-if value="{{ isQueue }}" hint-placeholder-val="{{ false }}">
-      <div style="padding:24px 40px 48px;display:flex;flex-direction:column;gap:16px;max-width:1000px">
-        <p style="margin:0;font-size:14px;color:#626A64">Decisions your agents can’t make alone. Each one opens its full review.</p>
-        <div role="tablist" aria-label="Review queue" style="display:flex;gap:20px;border-bottom:1px solid #E3E6E0">
+      <div class="page page--tight page--narrow">
+        <p class="page-lede">Decisions your agents can’t make alone. Each one opens its full review.</p>
+        <div role="tablist" aria-label="Review queue" class="tabs">
           <sc-for list="{{ qTabs }}" as="t" hint-placeholder-count="2">
-            <button role="tab" aria-selected="{{ t.active }}" onClick="{{ t.pick }}" style="border:0;background:none;padding:8px 0 10px;margin-bottom:-1px;border-bottom:2px solid {{ t.border }};color:{{ t.fg }};font-size:13.5px;font-weight:500;cursor:pointer;display:inline-flex;gap:6px">{{ t.label }}<span style="color:#626A64;font-weight:400">{{ t.count }}</span></button>
+            <button role="tab" class="tab" aria-selected="{{ t.active }}" onClick="{{ t.pick }}">{{ t.label }}<span class="count">{{ t.count }}</span></button>
           </sc-for>
         </div>
         <sc-if value="{{ qPending }}" hint-placeholder-val="{{ false }}">
-          <div style="background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px;overflow:hidden">
+          <div class="panel">
             <sc-for list="{{ attention }}" as="d" hint-placeholder-count="3">
-              <div onClick="{{ d.open }}" style="display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:16px;align-items:center;padding:18px 20px;border-bottom:1px solid #EDEFEA;cursor:pointer;transition:background 160ms" style-hover="background:#FBFAF7">
-                <div style="width:64px;height:64px;border-radius:10px;overflow:hidden;background:{{ d.thumb.bg }};display:grid;place-items:center;color:#202522;border:1px solid #E3E6E0">
-                  <sc-if value="{{ d.thumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ d.thumb.src }}" alt="" style="width:100%;height:100%;object-fit:cover;transform:{{ d.thumb.t }};transform-origin:{{ d.thumb.o }}"></sc-if>
-                  <sc-if value="{{ d.thumb.noPhoto }}" hint-placeholder-val="{{ false }}"><cc-icon name="{{ d.thumb.icon }}" size="22"></cc-icon></sc-if>
+              <div class="task-row" onClick="{{ d.open }}">
+                <div class="thumb thumb-64" style="background:{{ d.thumb.bg }}">
+                  <sc-if value="{{ d.thumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ d.thumb.src }}" alt="" loading="lazy" decoding="async" style="transform:{{ d.thumb.t }};transform-origin:{{ d.thumb.o }}"></sc-if>
+                  <sc-if value="{{ d.thumb.noPhoto }}" hint-placeholder-val="{{ false }}"><cc-icon name="{{ d.thumb.icon }}" size="20"></cc-icon></sc-if>
                 </div>
-                <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
-                  <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#626A64"><cc-icon name="{{ d.agentIcon }}" size="13"></cc-icon><span style="font-weight:500;color:#3E4641">{{ d.agentName }}</span><span aria-hidden="true">·</span><span>{{ d.time }}</span></div>
-                  <div style="font-size:15px;font-weight:600">{{ d.title }}</div>
-                  <div style="font-size:13px;color:#626A64;text-wrap:pretty">{{ d.text }}</div>
+                <div class="task-body">
+                  <div class="meta"><cc-icon name="{{ d.agentIcon }}" size="14"></cc-icon><strong>{{ d.agentName }}</strong><span aria-hidden="true">·</span><span>{{ d.time }}</span></div>
+                  <div class="row-title-lg">{{ d.title }}</div>
+                  <div class="row-text">{{ d.text }}</div>
                 </div>
-                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
-                  <span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;white-space:nowrap;background:{{ d.st.bg }};color:{{ d.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ d.st.dot }}"></span>{{ d.st.label }}</span>
-                  <button class="btn btn-primary" onClick="{{ d.open }}" disabled="{{ d.working }}" style="font-weight:500;font-size:13px;padding:7px 12px;border-radius:8px;color:#FFFFFF;white-space:nowrap">{{ d.action }}<cc-icon name="arrow-right" size="14"></cc-icon></button>
+                <div class="task-aside">
+                  <span class="status"><span class="status-dot" style="background:{{ d.st.dot }}"></span>{{ d.st.label }}</span>
+                  <button class="btn btn-secondary" onClick="{{ d.open }}" disabled="{{ d.working }}">{{ d.action }}<cc-icon name="arrow-right" size="14"></cc-icon></button>
                 </div>
               </div>
             </sc-for>
             <sc-if value="{{ noAttention }}" hint-placeholder-val="{{ false }}">
-              <div style="padding:40px 24px;display:flex;align-items:center;gap:14px">
-                <span style="width:40px;height:40px;border-radius:10px;background:#E5EFE7;color:#235A3A;display:grid;place-items:center"><cc-icon name="check" size="20"></cc-icon></span>
-                <div><div style="font-size:15px;font-weight:600">You’re all caught up.</div><div style="font-size:13px;color:#626A64">Resolved decisions stay in the Resolved tab.</div></div>
+              <div class="empty">
+                <span class="empty-icon ok"><cc-icon name="check-circle" size="20"></cc-icon></span>
+                <div class="empty-title">You’re all caught up.</div>
+                <div class="empty-body">Resolved decisions stay in the Resolved tab.</div>
               </div>
             </sc-if>
           </div>
         </sc-if>
         <sc-if value="{{ qResolved }}" hint-placeholder-val="{{ false }}">
-          <div style="background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px;overflow:hidden">
+          <div class="panel">
             <sc-for list="{{ resolvedList }}" as="d" hint-placeholder-count="2">
-              <div style="display:grid;grid-template-columns:28px minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:14px 20px;border-bottom:1px solid #EDEFEA">
-                <span style="width:28px;height:28px;border-radius:7px;background:#E5EFE7;color:#235A3A;display:grid;place-items:center"><cc-icon name="check" size="14"></cc-icon></span>
-                <div style="min-width:0"><div style="font-size:14px;font-weight:600">{{ d.title }}</div><div style="font-size:12.5px;color:#626A64">{{ d.agentName }} · {{ d.outcome }}</div></div>
-                <span style="font-size:12.5px;color:#626A64;white-space:nowrap">{{ d.resolvedTime }}</span>
-                <button class="btn btn-secondary" onClick="{{ d.open }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:12.5px;padding:5px 10px;border-radius:7px;color:#202522">View</button>
+              <div class="done-row">
+                <cc-icon name="check-circle" size="16"></cc-icon>
+                <div class="task-body"><div class="row-title">{{ d.title }}</div><div class="row-text">{{ d.agentName }} · {{ d.outcome }}</div></div>
+                <span class="hint nowrap">{{ d.resolvedTime }}</span>
+                <button class="btn btn-secondary btn-sm" onClick="{{ d.open }}">View</button>
               </div>
             </sc-for>
-            <sc-if value="{{ noResolved }}" hint-placeholder-val="{{ false }}"><div style="padding:32px 24px;font-size:13.5px;color:#626A64">Nothing resolved yet. Approved and published items will appear here.</div></sc-if>
+            <sc-if value="{{ noResolved }}" hint-placeholder-val="{{ false }}">
+              <div class="empty">
+                <div class="empty-title">Nothing resolved yet.</div>
+                <div class="empty-body">Approved and published items will appear here.</div>
+              </div>
+            </sc-if>
           </div>
         </sc-if>
       </div>
     </sc-if>
     <sc-if value="{{ isConvos }}" hint-placeholder-val="{{ false }}">
-      <div style="display:grid;grid-template-columns:320px minmax(0,1fr);height:100%;min-height:0">
-        <div style="border-right:1px solid #E3E6E0;overflow:auto;display:flex;flex-direction:column">
-          <div style="padding:16px 20px 10px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64">Inbox</div>
+      <div class="inbox-layout">
+        <div class="inbox">
+          <h2 class="inbox-head">Inbox</h2>
           <sc-for list="{{ convos }}" as="c" hint-placeholder-count="4">
-            <button onClick="{{ c.pick }}" aria-current="{{ c.cur }}" style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;width:100%;text-align:left;padding:14px 20px 14px 17px;border:0;border-left:3px solid {{ c.bar }};border-top:1px solid #EAEBE6;background:{{ c.bg }};cursor:pointer;color:#202522;transition:background 160ms" style-hover="background:#FFFFFF">
-              <span style="width:32px;height:32px;border-radius:50%;background:#E7E5DF;display:grid;place-items:center;font-size:11.5px;font-weight:600;color:#3E4641">{{ c.initials }}</span>
-              <span style="display:flex;flex-direction:column;gap:3px;min-width:0">
-                <span style="display:flex;gap:8px;align-items:baseline"><span style="font-size:13.5px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.customer }}</span><span style="font-size:11.5px;color:#626A64;white-space:nowrap">{{ c.time }}</span></span>
-                <span style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.subject }}</span>
-                <span style="font-size:12.5px;color:#626A64;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.preview }}</span>
-                <span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;color:{{ c.st.fg }};margin-top:2px"><span style="width:6px;height:6px;border-radius:50%;background:{{ c.st.dot }}"></span>{{ c.st.label }}</span>
+            <button class="inbox-item" onClick="{{ c.pick }}" aria-current="{{ c.cur }}">
+              <span class="avatar avatar-sm">{{ c.initials }}</span>
+              <span class="inbox-text">
+                <span class="inbox-top"><span class="inbox-name">{{ c.customer }}</span><span class="inbox-time">{{ c.time }}</span></span>
+                <span class="inbox-subject">{{ c.subject }}</span>
+                <span class="inbox-preview">{{ c.preview }}</span>
+                <span class="status"><span class="status-dot" style="background:{{ c.st.dot }}"></span>{{ c.st.label }}</span>
               </span>
             </button>
           </sc-for>
         </div>
-        <div style="display:flex;flex-direction:column;min-height:0;background:#FFFFFF">
-          <div style="flex:none;display:flex;align-items:center;gap:14px;padding:14px 24px;border-bottom:1px solid #E3E6E0;flex-wrap:wrap">
-            <div style="flex:1;min-width:200px">
-              <div style="font-size:15px;font-weight:600">{{ CV.customer }}</div>
-              <div style="font-size:12.5px;color:#626A64">{{ CV.subject }} · {{ CV.channel }}</div>
+        <div class="thread">
+          <div class="thread-head">
+            <div class="thread-who">
+              <div class="thread-name">{{ CV.customer }}</div>
+              <div class="thread-sub">{{ CV.subject }} · {{ CV.channel }}</div>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#3E4641"><span style="color:#626A64">Assigned</span><cc-icon name="{{ CV.agentIcon }}" size="14"></cc-icon><span style="font-weight:500">{{ CV.agentName }}</span></div>
-            <span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;background:{{ CV.st.bg }};color:{{ CV.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ CV.st.dot }}"></span>{{ CV.st.label }}</span>
-            <sc-if value="{{ CV.canHandBack }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary" onClick="{{ CV.handBack }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:12.5px;padding:5px 10px;border-radius:7px;color:#202522">Hand back to agent</button></sc-if>
+            <div class="assigned"><span class="muted">Assigned</span><cc-icon name="{{ CV.agentIcon }}" size="14"></cc-icon><span class="w500">{{ CV.agentName }}</span></div>
+            <span class="status"><span class="status-dot" style="background:{{ CV.st.dot }}"></span>{{ CV.st.label }}</span>
+            <sc-if value="{{ CV.canHandBack }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary btn-sm" onClick="{{ CV.handBack }}">Hand back to agent</button></sc-if>
           </div>
           <sc-if value="{{ CV.waiting }}" hint-placeholder-val="{{ false }}">
-            <div style="flex:none;display:flex;align-items:center;gap:12px;padding:12px 24px;background:#FFF8EA;border-bottom:1px solid #F0DDB0">
-              <span style="color:#7A4A00"><cc-icon name="alert-circle" size="16"></cc-icon></span>
-              <div style="flex:1;font-size:13px;color:#5C3A00"><strong style="font-weight:600">{{ CV.agentName }} answered first, then handed this to you.</strong> {{ CV.handoff }}</div>
-              <sc-if value="{{ CV.hasDecision }}" hint-placeholder-val="{{ false }}"><button class="btn btn-primary" onClick="{{ CV.openDecision }}" style="font-weight:500;font-size:12.5px;padding:6px 12px;border-radius:7px;color:#FFFFFF;white-space:nowrap">Review proposed reply</button></sc-if>
+            <div class="handoff">
+              <cc-icon name="alert-circle" size="16"></cc-icon>
+              <div class="grow"><strong>{{ CV.agentName }} answered first, then handed this to you.</strong> {{ CV.handoff }}</div>
+              <sc-if value="{{ CV.hasDecision }}" hint-placeholder-val="{{ false }}"><button class="btn btn-primary btn-sm" onClick="{{ CV.openDecision }}">Review proposed reply</button></sc-if>
             </div>
           </sc-if>
-          <div style="flex:1;min-height:0;overflow:auto;padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+          <div class="messages">
             <sc-if value="{{ CV.hasProduct }}" hint-placeholder-val="{{ false }}">
-              <button onClick="{{ CV.openProduct }}" style="align-self:flex-start;display:flex;align-items:center;gap:10px;padding:6px 12px 6px 6px;border:1px solid #E3E6E0;border-radius:10px;background:#FBFAF8;cursor:pointer;color:#202522" style-hover="border-color:#BCC2BA">
-                <span style="width:32px;height:32px;border-radius:6px;overflow:hidden;background:#EEECE7;display:grid;place-items:center;color:#7D847F">
-                  <sc-if value="{{ CV.pthumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ CV.pthumb.src }}" alt="" style="width:100%;height:100%;object-fit:cover;transform:{{ CV.pthumb.t }};transform-origin:{{ CV.pthumb.o }}"></sc-if>
+              <button class="context-chip" onClick="{{ CV.openProduct }}">
+                <span class="thumb thumb-32">
+                  <sc-if value="{{ CV.pthumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ CV.pthumb.src }}" alt="" loading="lazy" decoding="async" style="transform:{{ CV.pthumb.t }};transform-origin:{{ CV.pthumb.o }}"></sc-if>
                   <sc-if value="{{ CV.pthumb.noPhoto }}" hint-placeholder-val="{{ false }}"><cc-icon name="{{ CV.pthumb.icon }}" size="14"></cc-icon></sc-if>
                 </span>
-                <span style="font-size:12.5px"><span style="color:#626A64">About </span><span style="font-weight:500">{{ CV.productName }}</span></span>
+                <span><span class="muted">About </span><span class="w500">{{ CV.productName }}</span></span>
               </button>
             </sc-if>
             <sc-for list="{{ CV.messages }}" as="m" hint-placeholder-count="3">
               <sc-if value="{{ m.isSystem }}" hint-placeholder-val="{{ false }}">
-                <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#626A64;padding:2px 0"><cc-icon name="corner-down-right" size="13"></cc-icon><span>{{ m.text }}</span><span>· {{ m.time }}</span></div>
+                <div class="sys-msg"><cc-icon name="corner-down-right" size="14"></cc-icon><span>{{ m.text }}</span><span>· {{ m.time }}</span></div>
               </sc-if>
               <sc-if value="{{ m.isCustomer }}" hint-placeholder-val="{{ false }}">
-                <div style="max-width:72%;align-self:flex-start;display:flex;flex-direction:column;gap:4px">
-                  <span style="font-size:12px;color:#626A64"><span style="font-weight:500;color:#3E4641">{{ m.who }}</span> · {{ m.time }}</span>
-                  <div style="background:#F3F2EE;border-radius:12px;padding:10px 14px;font-size:14px;line-height:1.5">{{ m.text }}</div>
+                <div class="msg msg--in">
+                  <span class="msg-meta"><strong>{{ m.who }}</strong> · {{ m.time }}</span>
+                  <div class="bubble">{{ m.text }}</div>
                 </div>
               </sc-if>
               <sc-if value="{{ m.isOut }}" hint-placeholder-val="{{ false }}">
-                <div style="max-width:72%;align-self:flex-end;display:flex;flex-direction:column;gap:4px;align-items:flex-end">
-                  <span style="font-size:12px;color:#626A64"><span style="font-weight:500;color:#3E4641">{{ m.who }}</span> · {{ m.time }}</span>
-                  <div style="background:{{ m.outBg }};border-radius:12px;padding:10px 14px;font-size:14px;line-height:1.5">{{ m.text }}</div>
-                  <sc-if value="{{ m.hasNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#626A64">{{ m.note }}</span></sc-if>
+                <div class="msg msg--out">
+                  <span class="msg-meta"><strong>{{ m.who }}</strong> · {{ m.time }}</span>
+                  <div class="bubble" style="background:{{ m.outBg }}">{{ m.text }}</div>
+                  <sc-if value="{{ m.hasNote }}" hint-placeholder-val="{{ false }}"><span class="hint">{{ m.note }}</span></sc-if>
                 </div>
               </sc-if>
             </sc-for>
           </div>
           <sc-if value="{{ CV.agentHandling }}" hint-placeholder-val="{{ false }}">
-            <div style="flex:none;border-top:1px solid #E3E6E0;padding:14px 24px;display:flex;align-items:center;gap:12px;background:#FBFAF8">
-              <span style="width:32px;height:32px;border-radius:8px;background:#ECEEEA;color:#3E4A44;display:grid;place-items:center;flex:none"><cc-icon name="{{ CV.agentIcon }}" size="16"></cc-icon></span>
-              <div style="flex:1;min-width:0;font-size:13px;color:#3E4641"><strong style="font-weight:600;color:#202522">{{ CV.agentName }} is answering this customer.</strong> If it can’t answer, it hands the conversation to you.</div>
-              <button class="btn btn-secondary" onClick="{{ CV.take }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:12.5px;padding:6px 12px;border-radius:7px;color:#202522;white-space:nowrap" style-hover="background:#F3F2EE">Take over</button>
+            <div class="agent-bar">
+              <cc-icon name="{{ CV.agentIcon }}" size="16"></cc-icon>
+              <div class="grow"><strong>{{ CV.agentName }} is answering this customer.</strong> If it can’t answer, it hands the conversation to you.</div>
+              <button class="btn btn-secondary btn-sm" onClick="{{ CV.take }}">Take over</button>
             </div>
           </sc-if>
           <sc-if value="{{ CV.canCompose }}" hint-placeholder-val="{{ true }}">
-            <form onSubmit="{{ sendMsg }}" style="flex:none;border-top:1px solid #E3E6E0;padding:14px 24px;display:flex;gap:10px;align-items:flex-end">
-              <div style="flex:1;display:flex;flex-direction:column;gap:4px">
-                <label for="composer" style="font-size:12px;color:#626A64">Reply as Atelier Store · sending is simulated</label>
-                <textarea id="composer" rows="2" value="{{ composer }}" onChange="{{ onComposer }}" onKeyDown="{{ composerKey }}" placeholder="Write a reply…" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;padding:8px 10px;color:#202522;width:100%;min-height:44px;resize:none"></textarea>
+            <form class="composer" onSubmit="{{ sendMsg }}">
+              <div class="field">
+                <label for="composer" class="hint">Reply as Atelier Store · sending is simulated</label>
+                <textarea id="composer" rows="2" value="{{ composer }}" onChange="{{ onComposer }}" onKeyDown="{{ composerKey }}" placeholder="Write a reply…" class="input"></textarea>
               </div>
-              <button type="submit" class="btn btn-primary" disabled="{{ cantSend }}" style="font-weight:500;font-size:13px;padding:9px 14px;border-radius:8px;color:#FFFFFF"><cc-icon name="send" size="14"></cc-icon>Send</button>
+              <button type="submit" class="btn btn-primary" disabled="{{ cantSend }}"><cc-icon name="send" size="14"></cc-icon>Send</button>
             </form>
           </sc-if>
         </div>
       </div>
     </sc-if>
     <sc-if value="{{ isActivity }}" hint-placeholder-val="{{ false }}">
-      <div style="padding:24px 40px 48px;display:flex;flex-direction:column;gap:16px">
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-          <label for="act-agent" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Filter by agent</label>
-          <select id="act-agent" value="{{ actAgent }}" onChange="{{ onActAgent }}" class="input" style="width:200px;background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:13.5px;min-height:38px;padding:7px 10px;color:#202522">
+      <div class="page page--tight">
+        <div class="toolbar">
+          <label for="act-agent" class="sr-only">Filter by agent</label>
+          <select id="act-agent" value="{{ actAgent }}" onChange="{{ onActAgent }}" class="input" style="width:200px">
             <sc-for list="{{ agentOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.k }}">{{ o.l }}</option></sc-for>
           </select>
-          <div role="group" aria-label="Filter by status" style="display:inline-flex;border:1px solid #D3D7D0;border-radius:8px;overflow:hidden;background:#FFFFFF">
+          <div role="group" aria-label="Filter by status" class="seg">
             <sc-for list="{{ statusOpts }}" as="f" hint-placeholder-count="5">
-              <button aria-pressed="{{ f.active }}" onClick="{{ f.pick }}" style="border:0;border-left:{{ f.bl }};background:{{ f.bg }};color:{{ f.fg }};padding:8px 12px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background 160ms">{{ f.label }}<span style="color:{{ f.cfg }};font-weight:400">{{ f.count }}</span></button>
+              <button class="seg-btn" aria-pressed="{{ f.active }}" onClick="{{ f.pick }}">{{ f.label }}<span class="count">{{ f.count }}</span></button>
             </sc-for>
           </div>
         </div>
-        <div style="background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px;overflow:hidden">
+        <div class="panel">
           <sc-for list="{{ arows }}" as="a" hint-placeholder-count="6">
-            <div style="display:grid;grid-template-columns:72px 170px minmax(0,1fr) 150px 130px;gap:16px;align-items:start;padding:14px 20px;border-bottom:1px solid #EDEFEA">
-              <div style="display:flex;flex-direction:column;font-size:12.5px"><span style="font-weight:500">{{ a.clock }}</span><span style="color:#626A64;font-size:12px">{{ a.time }}</span></div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;min-width:0"><span style="width:26px;height:26px;border-radius:7px;background:#F0EFEA;display:grid;place-items:center;flex:none"><cc-icon name="{{ a.icon }}" size="13"></cc-icon></span>{{ a.agentName }}</div>
-              <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
-                <span style="font-size:14px;font-weight:600">{{ a.title }}</span>
-                <span style="font-size:13px;color:#626A64;text-wrap:pretty">{{ a.desc }}</span>
-                <sc-if value="{{ a.hasTarget }}" hint-placeholder-val="{{ false }}"><button onClick="{{ a.openTarget }}" style="align-self:flex-start;display:inline-flex;align-items:center;gap:6px;border:1px solid #E3E6E0;background:#FFFFFF;border-radius:6px;padding:2px 8px;font-size:12px;color:#202522;cursor:pointer;margin-top:2px" style-hover="border-color:#BCC2BA"><cc-icon name="{{ a.targetIcon }}" size="12"></cc-icon>{{ a.targetLabel }}</button></sc-if>
+            <div class="act-row">
+              <div class="act-time"><span>{{ a.clock }}</span><span>{{ a.time }}</span></div>
+              <div class="act-agent"><cc-icon name="{{ a.icon }}" size="14"></cc-icon>{{ a.agentName }}</div>
+              <div class="act-body">
+                <span class="row-title">{{ a.title }}</span>
+                <span class="row-text">{{ a.desc }}</span>
+                <sc-if value="{{ a.hasTarget }}" hint-placeholder-val="{{ false }}"><button class="chip" onClick="{{ a.openTarget }}" style="margin-top:4px"><cc-icon name="{{ a.targetIcon }}" size="14"></cc-icon>{{ a.targetLabel }}</button></sc-if>
               </div>
-              <div><span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;white-space:nowrap;background:{{ a.st.bg }};color:{{ a.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ a.st.dot }}"></span>{{ a.st.label }}</span></div>
-              <div style="text-align:right"><sc-if value="{{ a.hasNext }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary" onClick="{{ a.doNext }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:12.5px;padding:5px 10px;border-radius:7px;color:#202522;white-space:nowrap">{{ a.next }}</button></sc-if></div>
+              <div class="act-status"><span class="status"><span class="status-dot" style="background:{{ a.st.dot }}"></span>{{ a.st.label }}</span></div>
+              <div class="act-end"><sc-if value="{{ a.hasNext }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary btn-sm" onClick="{{ a.doNext }}">{{ a.next }}</button></sc-if></div>
             </div>
           </sc-for>
           <sc-if value="{{ noArows }}" hint-placeholder-val="{{ false }}">
-            <div style="padding:40px 24px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
-              <div style="font-size:15px;font-weight:600">No activity matches these filters.</div>
-              <button class="btn btn-secondary" onClick="{{ clearAct }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:13px;padding:7px 12px;border-radius:8px;color:#202522">Show all activity</button>
+            <div class="empty">
+              <div class="empty-title">No activity matches these filters.</div>
+              <button class="btn btn-secondary" onClick="{{ clearAct }}">Show all activity</button>
             </div>
           </sc-if>
         </div>
