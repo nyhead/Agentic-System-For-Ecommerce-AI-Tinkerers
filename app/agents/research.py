@@ -332,11 +332,19 @@ def _write_copy(
     confirmed = [f"{f.name}: {f.value}" for f in request.confirmedFacts]
     suggested = [f"{f.name}: {f.value} (TO CONFIRM)" for f in request.imageSuggestions]
     title_parts = [p for p in (identity.brand, identity.model, identity.reference) if p]
-    for name in ("movement", "strap", "material", "color", "colour", "size"):
+    extras: list[str] = []
+    for name in ("movement", "material", "color", "colour", "size", "strap"):
         value = _fact(request.confirmedFacts, name) or _fact(request.imageSuggestions, name)
-        if value and len(" ".join(title_parts + [value])) <= 80:
-            title_parts.append(value)
-    template_title = " ".join(title_parts) or request.title or "Product"
+        if not value:
+            continue
+        value = value.split(",")[0].strip()  # "Automatic, per dial text" -> "Automatic"
+        if name == "strap" and "strap" not in value.lower():
+            value = f"{value} strap"
+        if len(" ".join(title_parts + extras + [value])) <= 80:
+            extras.append(value)
+    if extras:
+        title_parts = [" ".join(title_parts + extras[:1])] + extras[1:]
+    template_title = ", ".join(title_parts) or request.title or "Product"
     lines = [f"{template_title}."]
     if confirmed:
         lines.append("Details: " + "; ".join(confirmed) + ".")
