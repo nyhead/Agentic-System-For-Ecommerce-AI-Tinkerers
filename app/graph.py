@@ -25,6 +25,7 @@ from app.state import (
     SocialAd,
     WorkflowState,
 )
+from app.tools import lessons
 from app.tools.llm import Image, LLMClient, LLMError
 from app.tools.posthog import PostHogClient
 from app.tools.shopify import ShopifyClient, ShopifyError
@@ -273,8 +274,11 @@ class Workflow:
             self._invoke(product_id, seed, config)
             return _public(self._graph.get_state(config).values)
 
-    def decide(self, product_id: str, approved: bool) -> RunState:
-        """Record the merchant's decision; publish only when `approved` is True."""
+    def decide(self, product_id: str, approved: bool, *, reason: str | None = None) -> RunState:
+        """Record the merchant's decision; publish only when `approved` is True.
+
+        A `reason` given with a rejection is remembered as a lesson for the product agent.
+        """
         if not isinstance(approved, bool):
             raise TypeError("approved must be True or False")
         with self._lock(product_id):
@@ -287,6 +291,12 @@ class Workflow:
                     f"Product {product_id!r} is not waiting for approval"
                 )
             self._invoke(product_id, Command(resume=approved), config)
+            reason = " ".join((reason or "").split())
+            if not approved and reason:
+                lessons.record(
+                    product.AGENT,
+                    f'The shop owner rejected an earlier listing and said: "{reason}"',
+                )
             return _public(self._graph.get_state(config).values)
 
     def snapshot(self, product_id: str) -> RunState | None:
@@ -480,8 +490,8 @@ def start(
     )
 
 
-def decide(product_id: str, approved: bool) -> RunState:
-    return default_workflow().decide(product_id, approved)
+def decide(product_id: str, approved: bool, *, reason: str | None = None) -> RunState:
+    return default_workflow().decide(product_id, approved, reason=reason)
 
 
 def snapshot(product_id: str) -> RunState | None:

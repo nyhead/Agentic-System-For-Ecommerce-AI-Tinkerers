@@ -113,8 +113,12 @@ class LLMClient:
         images: Sequence[Image] = (),
         temperature: float | None = None,
         max_tokens: int | None = None,
+        on_retry: Callable[[str], None] | None = None,
     ) -> T:
-        """Return the reply parsed into `schema`, retrying once with the validation error."""
+        """Return the reply parsed into `schema`, retrying once with the validation error.
+
+        `on_retry`, when given, is called with that error before the retry; its errors are ignored.
+        """
         schema_json = json.dumps(schema.model_json_schema())
         instruction = (
             f"{prompt}\n\nReply with a single JSON object that conforms to this JSON Schema. "
@@ -129,6 +133,11 @@ class LLMClient:
                 f"That reply was invalid: {error}\n"
                 "Reply again with only the corrected JSON object."
             )
+            if on_retry is not None:
+                try:
+                    on_retry(str(error))
+                except Exception:
+                    pass
         messages += [
             {"role": "assistant", "content": reply},
             {"role": "user", "content": feedback},

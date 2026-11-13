@@ -8,8 +8,18 @@ import pytest
 
 from app.agents import product
 from app.state import ProductRecord
+from app.tools import lessons
 from app.tools.llm import Image, LLMClient, LLMError
 from app.tools.shopify import ShopifyClient, ShopifyConfig, ShopifyError
+
+
+@pytest.fixture(autouse=True)
+def lessons_path(tmp_path, monkeypatch):
+    # Never write to the real lessons file; each test starts with an empty memory.
+    path = tmp_path / "lessons.json"
+    monkeypatch.setenv("LESSONS_PATH", str(path))
+    return path
+
 
 PRODUCT_GID = "gid://shopify/Product/1001"
 GRAPHQL_URL = "https://demo-shop.myshopify.com/admin/api/2026-10/graphql.json"
@@ -344,3 +354,48 @@ def test_publish_failure_propagates():
 def test_import_needs_no_credentials():
     env = {k: v for k, v in os.environ.items() if k not in CREDENTIAL_VARS}
     subprocess.run([sys.executable, "-c", "import app.agents.product"], env=env, check=True)
+
+
+def listing_reply(**fields):
+    content = json.dumps({"title": "Blue Mug", "description": "A blue mug.", **fields})
+    return 200, json.dumps({"choices": [{"message": {"content": content}}]}).encode()
+
+
+def user_text(call):
+    content = call["messages"][-1]["content"]
+    return content if isinstance(content, str) else content[0]["text"]
+
+
+def test_no_lessons_leaves_the_prompt_unchanged():
+    llm, fake = make_llm(listing_reply())
+    product.draft_listing("p1", "A blue mug.", llm=llm)
+    expected = product._user_prompt("A blue mug.", has_image=False)
+    assert user_text(fake.calls[0]).startswith(expected + "\n\nReply with a single JSON")
+
+
+def test_dropped_price_and_cut_title_are_recorded_and_fed_back():
+    llm, fake = make_llm(listing_reply(price="about 25 EUR", title="Mug " * 30), listing_reply())
+    product.draft_listing("p1", "A blue mug for 25 EUR.", llm=llm)
+    found = lessons.recall("product")
+    assert len(found) == 2
+    assert any("plain number string" in text for text in found)
+    assert any(f"at most {product.MAX_TITLE_LENGTH} characters" in text for text in found)
+    assert not any("25 EUR" in text for text in found)
+
+    product.draft_listing("p2", "Another mug.", llm=llm)
+    prompt = user_text(fake.calls[1])
+    assert "Lessons from earlier listings in this shop" in prompt
+    assert all(f"\n- {text}" in prompt for text in found)
+
+
+def test_plain_price_records_nothing():
+    llm, _ = make_llm(listing_reply(price="24.90"))
+    assert product.draft_listing("p1", "24.90", llm=llm).price == Decimal("24.90")
+    assert lessons.recall("product") == []
+
+
+def test_validation_retry_records_a_lesson():
+    llm, _ = make_llm(listing_reply(title=""), listing_reply())
+    product.draft_listing("p1", "A blue mug.", llm=llm)
+    [lesson] = lessons.recall("product")
+    assert "first reply was invalid" in lesson

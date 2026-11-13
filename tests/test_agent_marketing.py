@@ -14,7 +14,17 @@ from app.agents.marketing import (
     write_marketing,
 )
 from app.state import MarketingResult, ProductRecord
+from app.tools import lessons
 from app.tools.llm import LLMClient, LLMError
+
+
+@pytest.fixture(autouse=True)
+def lessons_path(tmp_path, monkeypatch):
+    # Never write to the real lessons file; each test starts with an empty memory.
+    path = tmp_path / "lessons.json"
+    monkeypatch.setenv("LESSONS_PATH", str(path))
+    return path
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -200,3 +210,46 @@ def test_import_needs_no_credentials():
     )
     assert done.returncode == 0, done.stderr
     assert done.stdout.strip() == "write_marketing"
+
+
+def test_no_lessons_leaves_the_prompt_unchanged():
+    client, transport = make_client(reply(GOOD_COPY))
+    write_marketing(fixture_product(), llm=client)
+    prompt = transport.calls[0]["body"]["messages"][-1]["content"]
+    assert "Lessons from earlier" not in prompt
+    assert prompt.split("</product>")[1].startswith("\n\nReply with a single JSON")
+
+
+def test_trimmed_copy_is_recorded_and_fed_back_next_time():
+    long_ads = with_ads(("Instagram", "Blue " * 60), ("Facebook", "Handy mug."))
+    client, transport = make_client(reply(long_ads), reply(GOOD_COPY))
+    write_marketing(fixture_product(), llm=client)
+    [lesson] = lessons.recall("marketing")
+    assert f"within {AD_COPY_MAX - 5} characters" in lesson
+
+    write_marketing(fixture_product(), llm=client)
+    prompt = transport.calls[1]["body"]["messages"][-1]["content"]
+    assert "Lessons from earlier listings in this shop" in prompt
+    assert f"\n- {lesson}" in prompt
+
+
+@pytest.mark.parametrize(
+    ("ads", "phrase"),
+    [
+        ((("Instagram", "One."), ("instagram", "Two.")), "same channel"),
+        ((("Instagram", "Same."), ("Facebook", "Same.")), "repeated the same ad"),
+    ],
+)
+def test_rejected_replies_are_recorded(ads, phrase):
+    client, _ = make_client(reply(with_ads(*ads)))
+    with pytest.raises(LLMError):
+        write_marketing(fixture_product(), llm=client)
+    [lesson] = lessons.recall("marketing")
+    assert phrase in lesson
+
+
+def test_validation_retry_records_a_marketing_lesson():
+    client, _ = make_client(reply({"seoTitle": "x"}), reply(GOOD_COPY))
+    write_marketing(fixture_product(), llm=client)
+    [lesson] = lessons.recall("marketing")
+    assert "first reply was invalid" in lesson

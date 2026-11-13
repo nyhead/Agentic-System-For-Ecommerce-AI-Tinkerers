@@ -7,6 +7,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.state import ProductRecord
+from app.tools import lessons
 from app.tools.llm import Image, LLMClient
 from app.tools.shopify import ShopifyClient, create_draft_product, publish_product, upload_image
 
@@ -23,6 +24,8 @@ MAX_TAG_LENGTH = 30
 MAX_LABEL_LENGTH = 60
 # A plain amount: digits, optionally a dot and one or two decimals. No symbol, sign or exponent.
 _AMOUNT = re.compile(r"\d{1,9}(\.\d{1,2})?")
+# The name this agent's lessons are stored under.
+AGENT = "product"
 
 SYSTEM_PROMPT = f"""\
 You write product listings for a small independent shop. The shop owner publishes what you \
@@ -103,17 +106,32 @@ def draft_listing(
         raise ValueError("nothing to draft from: give the merchant's notes, a photo, or both")
     llm = llm or LLMClient(timeout=DRAFT_TIMEOUT_SECONDS)
     draft = llm.structured(
-        _user_prompt(notes, has_image=image is not None),
+        _user_prompt(notes, has_image=image is not None) + lessons.prompt_block(AGENT),
         _ListingDraft,
         system=SYSTEM_PROMPT,
         images=[image] if image is not None else [],
         temperature=DRAFT_TEMPERATURE,
+        on_retry=lessons.on_retry(AGENT),
     )
+    price = _price(draft.price)
+    if price is None and draft.price not in (None, ""):
+        # The value may be copied from the owner's notes, so it is not quoted in the lesson.
+        lessons.record(
+            AGENT,
+            'Give the price as a plain number string such as "24.90", without a currency '
+            "symbol, words or a range, or null when the notes state no price.",
+        )
+    if len(draft.title) > MAX_TITLE_LENGTH:
+        lessons.record(
+            AGENT,
+            f"Keep the title at most {MAX_TITLE_LENGTH} characters: an earlier title was "
+            "longer and had to be cut.",
+        )
     return ProductRecord(
         productId=product_id,
         title=_fit_title(draft.title),
         description=draft.description,
-        price=_price(draft.price),
+        price=price,
         productType=_label(draft.productType),
         vendor=_label(draft.vendor),
         tags=_tags(draft.tags),
