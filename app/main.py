@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 
-from app.api import analytics, chat, products, research
+from app.api import analytics, chat, orders, products, research
 
 # Static cockpit with no build step; ui/index.html is the entry point.
 UI_DIR = Path(__file__).resolve().parents[1] / "ui"
@@ -26,6 +26,7 @@ async def revalidate_cockpit_files(
 app.include_router(analytics.router)
 app.include_router(products.router)
 app.include_router(chat.router)
+app.include_router(orders.router)
 app.include_router(research.router)
 
 

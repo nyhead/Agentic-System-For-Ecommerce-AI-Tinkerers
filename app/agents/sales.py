@@ -2,12 +2,19 @@
 
 import json
 import re
+from typing import Literal
 
 from pydantic import BaseModel
 
 from app.state import ProductRecord
 from app.tools.llm import LLMClient, LLMError
-from app.tools.shopify import PurchaseInfo, ShopifyClient, purchase_info
+from app.tools.shopify import (
+    PurchaseInfo,
+    ShopifyClient,
+    ShopifyError,
+    create_test_order,
+    purchase_info,
+)
 
 # A live chat path: fail fast rather than keep the shopper waiting on the adapter's 60 s.
 REQUEST_TIMEOUT_SECONDS = 10.0
@@ -88,6 +95,44 @@ def answer_shopper(
         checkoutUrl=info.checkout_url,
         price=info.price,
         currency=info.currency,
+    )
+
+
+MYSHOPIFY_SUFFIX = ".myshopify.com"
+
+
+class SimulatedSale(BaseModel):
+    """A simulated purchase recorded as a Shopify test order; no customer paid anything."""
+
+    simulatedPurchase: Literal[True] = True
+    testOrder: Literal[True] = True
+    testOrderName: str
+    testOrderAdminUrl: str
+    total: str
+    currency: str
+
+
+def record_test_sale(
+    product: ProductRecord, *, client: ShopifyClient | None = None
+) -> SimulatedSale:
+    """Close the demo sale with a Shopify test order for one unit of a buyable product."""
+    if not product.shopifyProductId:
+        raise ValueError(f"product {product.productId!r} has no Shopify draft")
+    client = client or ShopifyClient()
+    # Checked before the order is sent, so a bad domain never leaves an order without a link.
+    domain = client.config.store_domain
+    if not domain.endswith(MYSHOPIFY_SUFFIX):
+        raise ShopifyError(f"Store domain {domain!r} is not a myshopify.com domain")
+    store_handle = domain.removesuffix(MYSHOPIFY_SUFFIX)
+    order = create_test_order(product, client=client)
+    numeric_id = order.order_id.rsplit("/", 1)[-1]
+    if not numeric_id.isdigit():
+        raise ShopifyError(f"Unexpected order id {order.order_id!r}")
+    return SimulatedSale(
+        testOrderName=order.name,
+        testOrderAdminUrl=f"https://admin.shopify.com/store/{store_handle}/orders/{numeric_id}",
+        total=order.total,
+        currency=order.currency,
     )
 
 
