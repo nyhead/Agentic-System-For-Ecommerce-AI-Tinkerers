@@ -15,6 +15,7 @@ One owner per path. You, and the agent working for you, edit only your own lane.
 | `.github/`, `scripts/`, `Dockerfile`, `.dockerignore`, `pyproject.toml`, `uv.lock`, `.env.example`, `app/main.py`, `app/api/`, `app/state.py`, `tests/test_api_*.py`, `tests/test_foundation.py` | Nihad — DevOps, deployment, HTTP wiring and shared contracts |
 | `fixtures/`, `README.md`, `AGENTS.md`, `CLAUDE.md`, `.gitignore` | Shared — change only in a PR that all three teammates have seen |
 
+- Today Nihad wires the cockpit to the `/api` routes and edits `ui/js/` for that; Ibrahim keeps the rest of `ui/` and reviews those changes.
 - Nihad does not own a feature agent. Nihad reviews every change to `app/graph.py`, because that is where the workstreams meet.
 - Coordinate with Nihad before changing `app/state.py`, dependencies, CI or deployment. Only one dependency PR (`pyproject.toml` and `uv.lock`) is open at a time, and Nihad opens it.
 - Appending a variable name to `.env.example` is allowed in any PR that introduces that variable.
