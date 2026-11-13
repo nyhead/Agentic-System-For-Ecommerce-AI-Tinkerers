@@ -132,12 +132,12 @@ def test_second_create_returns_existing_product_without_mutation():
     assert result.imageUrl == CDN_URL
 
 
-VARIANT_GID = "gid://shopify/ProductVariant/2002"
+DRAFT_VARIANT_GID = "gid://shopify/ProductVariant/2002"
 CREATED_WITH_VARIANT = data(
     productCreate={
         "product": {
             "id": PRODUCT_GID,
-            "variants": {"nodes": [{"id": VARIANT_GID}]},
+            "variants": {"nodes": [{"id": DRAFT_VARIANT_GID}]},
             "media": {"nodes": []},
         },
         "userErrors": [],
@@ -145,7 +145,7 @@ CREATED_WITH_VARIANT = data(
 )
 PRICED = data(
     productVariantsBulkUpdate={
-        "productVariants": [{"id": VARIANT_GID, "price": "24.90"}],
+        "productVariants": [{"id": DRAFT_VARIANT_GID, "price": "24.90"}],
         "userErrors": [],
     }
 )
@@ -169,7 +169,7 @@ def test_create_draft_sends_type_vendor_tags_and_sets_variant_price():
     assert "productVariantsBulkUpdate(productId: $productId, variants: $variants)" in price["query"]
     assert price["variables"] == {
         "productId": PRODUCT_GID,
-        "variants": [{"id": VARIANT_GID, "price": "24.90"}],
+        "variants": [{"id": DRAFT_VARIANT_GID, "price": "24.90"}],
     }
     assert result.shopifyProductId == PRODUCT_GID
     assert result.price == listing().price
