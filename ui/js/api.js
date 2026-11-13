@@ -47,8 +47,10 @@
   window.CCApi = {
     // POST /api/products/draft. Resolves with the WorkflowView; `error` may be set on a 201.
     draft: (photo, notes, productId) => call('POST', '/api/products/draft', { photo: photo || null, notes: notes || '', productId: productId || null }),
-    // POST /api/products/{productId}/approval
-    decide: (productId, approved) => call('POST', '/api/products/' + encodeURIComponent(productId) + '/approval', { approved: !!approved }),
+    // POST /api/products/{productId}/approval. `price` (a string such as "8500.00" or "0.00") is sent
+    // only on an approval; it replaces any price from the notes.
+    decide: (productId, approved, price) => call('POST', '/api/products/' + encodeURIComponent(productId) + '/approval',
+      approved && price ? { approved: true, price } : { approved: !!approved }),
     // GET /api/events: every workflow's action log, oldest first.
     events: () => call('GET', '/api/events'),
     toDataUrl,

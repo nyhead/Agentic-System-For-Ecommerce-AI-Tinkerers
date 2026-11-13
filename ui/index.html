@@ -1417,7 +1417,10 @@ class Component extends DCLogic {
   decideLive(pid, approved) {
     const p0 = this.P(pid); if (!p0 || !p0.apiId || this.state.liveBusy) return;
     this.setState({ liveBusy: true });
-    window.CCDemo.agents.decideListing(p0.apiId, approved).then(view => {
+    // The price shown in the review drawer (from the notes or typed there) goes with an approval.
+    // With none, it publishes at 0.00: the service refuses an approval that carries no price at all.
+    const price = !approved ? null : Number(p0.price) > 0 ? Number(p0.price).toFixed(2) : '0.00';
+    window.CCDemo.agents.decideListing(p0.apiId, approved, price).then(view => {
       this.setState({ liveBusy: false });
       if (view.error) { this.toast({ title: approved ? 'Not published' : 'Not rejected', body: view.error }); this.syncEvents(); return; }
       const ok = view.approval === (approved ? 'approved' : 'rejected');
