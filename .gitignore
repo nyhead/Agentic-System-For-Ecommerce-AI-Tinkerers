@@ -222,3 +222,13 @@ __marimo__/
 .env.*
 !.env.example
 .tools/
+
+# Cockpit UI (Node)
+node_modules/
+.next/
+*.tsbuildinfo
+# The Python rules above ignore every lib/ folder; UI source keeps its own.
+!ui/**/lib/
+
+# Per-user coding-agent settings
+.claude/settings.local.json
