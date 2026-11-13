@@ -953,3 +953,23 @@ select.input {
   .sk { animation: none; }
   .spin { animation-duration: 1.6s; }
 }
+
+/* Market insights (research agent) */
+.detail-actions { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+.mk-steps { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-4); list-style: none; margin: var(--s-3) 0 0; padding: 0; font-size: var(--fs-13); color: var(--text-3); }
+.mk-step { display: inline-flex; align-items: center; gap: var(--s-2); }
+.mk-step-dot { width: 8px; height: 8px; border-radius: var(--r-full); border: 1px solid var(--border-strong); }
+.mk-step[data-state="done"] { color: var(--text-2); }
+.mk-step[data-state="done"] .mk-step-dot { background: var(--success); border-color: var(--success); }
+.mk-step[data-state="active"] { color: var(--text); font-weight: 500; }
+.mk-step[data-state="active"] .mk-step-dot { background: var(--accent); border-color: var(--accent); }
+.mk-note { margin-top: var(--s-3); padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--subtle); font-size: var(--fs-13); }
+.mk-note--warn { color: var(--warning-text); }
+.mk-price { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--s-4); margin: var(--s-2) 0 var(--s-3); }
+.mk-price-value { font-size: var(--fs-20); font-weight: 600; color: var(--text); }
+.mk-price-range { font-size: var(--fs-16); color: var(--text-2); }
+.mk-list { margin: var(--s-1) 0 var(--s-3); padding-left: var(--s-5); font-size: var(--fs-14); display: grid; gap: var(--s-1); }
+.mk-list--muted { color: var(--text-2); font-size: var(--fs-13); }
+.mk-change { border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s-3) var(--s-4); display: grid; gap: var(--s-2); margin-top: var(--s-3); }
+.mk-change-head { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.mk-diff { display: grid; grid-template-columns: 80px 1fr; gap: var(--s-3); font-size: var(--fs-14); white-space: pre-wrap; }
