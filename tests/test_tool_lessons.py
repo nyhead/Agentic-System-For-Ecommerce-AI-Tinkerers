@@ -107,3 +107,31 @@ def test_retry_lesson_quotes_only_a_short_error():
         "title: Field required"
     )
     assert "problem was" not in lessons.retry_lesson("x" * 500)
+
+
+def test_no_memory_without_lessons_path(monkeypatch, tmp_path):
+    monkeypatch.delenv("LESSONS_PATH", raising=False)
+    monkeypatch.chdir(tmp_path)
+    lessons.record("product", "Keep titles short.")
+    assert lessons.recall("product") == []
+    assert lessons.prompt_block("product") == ""
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_scoped_lessons_reach_only_their_product(tmp_path):
+    store = LessonStore(tmp_path / "l.json")
+    store.record("product", "Keep titles short.")
+    store.record("product", "No box with this one.", scope="watch-1")
+    assert store.recall("product") == ["Keep titles short."]
+    assert store.recall("product", scope="mug-1") == ["Keep titles short."]
+    assert sorted(store.recall("product", scope="watch-1")) == [
+        "Keep titles short.",
+        "No box with this one.",
+    ]
+
+
+def test_lessons_saved_before_scopes_still_load(tmp_path):
+    path = tmp_path / "l.json"
+    old = {"agent": "product", "text": "Old.", "count": 1, "firstSeen": "t", "lastSeen": "t"}
+    path.write_text(json.dumps([old]))
+    assert LessonStore(path).recall("product") == ["Old."]

@@ -30,14 +30,15 @@ class Lesson:
     count: int
     firstSeen: str
     lastSeen: str
+    # "" for a lesson about every listing; a product id for one about that product only, such
+    # as the owner's reason for rejecting it, so one item's facts never reach another listing.
+    scope: str = ""
 
 
-def default_path() -> Path:
-    """`LESSONS_PATH`, read per call, else a file in the system temporary directory."""
+def default_path() -> Path | None:
+    """`LESSONS_PATH`, read per call. Unset means no memory: nothing is stored or recalled."""
     configured = os.environ.get("LESSONS_PATH", "").strip()
-    if configured:
-        return Path(configured)
-    return Path(tempfile.gettempdir()) / "commercecrew-lessons.json"
+    return Path(configured) if configured else None
 
 
 def _lock(path: Path) -> threading.Lock:
@@ -52,26 +53,28 @@ class LessonStore:
         self._path = Path(path) if path is not None else None
 
     @property
-    def path(self) -> Path:
+    def path(self) -> Path | None:
         return self._path if self._path is not None else default_path()
 
-    def record(self, agent: str, text: str) -> None:
-        """Add a lesson, or raise its count when the same lesson for that agent exists."""
+    def record(self, agent: str, text: str, scope: str = "") -> None:
+        """Add a lesson, or raise its count when the same lesson for that agent and scope exists."""
         text = " ".join(text.split())[:MAX_LESSON_LENGTH]
         if not text or not agent:
             return
         try:
             path = self.path
+            if path is None:
+                return
             with _lock(path):
                 lessons = self._load(path)
                 now = datetime.now(UTC).isoformat()
                 for lesson in lessons:
-                    if lesson.agent == agent and lesson.text == text:
+                    if lesson.agent == agent and lesson.text == text and lesson.scope == scope:
                         lesson.count += 1
                         lesson.lastSeen = now
                         break
                 else:
-                    lessons.append(Lesson(agent, text, 1, now, now))
+                    lessons.append(Lesson(agent, text, 1, now, now, scope))
                 self._save(path, lessons)
         except Exception:
             return
@@ -79,14 +82,23 @@ class LessonStore:
     def all(self) -> list[Lesson]:
         try:
             path = self.path
+            if path is None:
+                return []
             with _lock(path):
                 return self._load(path)
         except Exception:
             return []
 
-    def recall(self, agent: str, limit: int = MAX_RECALL) -> list[str]:
-        """The most frequent, then most recent, lessons for one agent."""
-        mine = [lesson for lesson in self.all() if lesson.agent == agent]
+    def recall(self, agent: str, limit: int = MAX_RECALL, scope: str = "") -> list[str]:
+        """The most frequent, then most recent, lessons for one agent.
+
+        Shop-wide lessons always; lessons scoped to a product only when `scope` is that product.
+        """
+        mine = [
+            lesson
+            for lesson in self.all()
+            if lesson.agent == agent and lesson.scope in ("", scope)
+        ]
         mine.sort(key=lambda lesson: (lesson.count, lesson.lastSeen), reverse=True)
         return [lesson.text for lesson in mine[:limit]]
 
@@ -104,7 +116,11 @@ class LessonStore:
                 lesson = Lesson(**item)
             except TypeError:
                 continue
-            if isinstance(lesson.text, str) and isinstance(lesson.count, int):
+            if (
+                isinstance(lesson.text, str)
+                and isinstance(lesson.count, int)
+                and isinstance(lesson.scope, str)
+            ):
                 lessons.append(lesson)
         return lessons
 
@@ -121,17 +137,20 @@ class LessonStore:
             raise
 
 
-def record(agent: str, text: str, *, store: LessonStore | None = None) -> None:
-    (store or LessonStore()).record(agent, text)
+def record(agent: str, text: str, *, scope: str = "", store: LessonStore | None = None) -> None:
+    (store or LessonStore()).record(agent, text, scope)
 
 
-def recall(agent: str, *, store: LessonStore | None = None) -> list[str]:
-    return (store or LessonStore()).recall(agent)
+def recall(agent: str, *, scope: str = "", store: LessonStore | None = None) -> list[str]:
+    return (store or LessonStore()).recall(agent, scope=scope)
 
 
-def prompt_block(agent: str, *, store: LessonStore | None = None) -> str:
-    """Text to append to a user prompt, or "" when there are no lessons for the agent."""
-    found = recall(agent, store=store)
+def prompt_block(agent: str, *, scope: str = "", store: LessonStore | None = None) -> str:
+    """Text to append to a user prompt, or "" when there are no lessons for the agent.
+
+    `scope` is the product being drafted: its own lessons are added to the shop-wide ones.
+    """
+    found = recall(agent, scope=scope, store=store)
     if not found:
         return ""
     return "\n\n" + _HEADER + "".join(f"\n- {text}" for text in found)

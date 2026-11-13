@@ -106,7 +106,8 @@ def draft_listing(
         raise ValueError("nothing to draft from: give the merchant's notes, a photo, or both")
     llm = llm or LLMClient(timeout=DRAFT_TIMEOUT_SECONDS)
     draft = llm.structured(
-        _user_prompt(notes, has_image=image is not None) + lessons.prompt_block(AGENT),
+        _user_prompt(notes, has_image=image is not None)
+        + lessons.prompt_block(AGENT, scope=product_id),
         _ListingDraft,
         system=SYSTEM_PROMPT,
         images=[image] if image is not None else [],
