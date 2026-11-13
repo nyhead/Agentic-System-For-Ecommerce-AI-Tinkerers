@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CommerceCrew</title>
+<script src="vendor/dc-runtime.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="vendor/modernist/styles.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&amp;display=swap">
+<script src="js/icons.js"></script>
+<script src="js/demo.js"></script>
+<style>
+:root{--color-bg:#F6F5F2;--color-surface:#FFFFFF;--color-text:#202522;--color-accent:#B84324;--color-accent-100:#F8ECE7;--color-accent-600:#A33B1F;--color-accent-700:#8C321A;--color-divider:#E3E6E0;--radius-sm:6px;--radius-md:8px;--radius-lg:12px;--font-heading-weight:600;--shadow-lg:0 16px 40px rgba(32,35,33,.18)}
+html,body{margin:0;height:100%;background:#F6F5F2;color:#202522;font-family:Archivo,system-ui,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:#B84324}a:hover{color:#8C321A}
+button,input,select,textarea{font-family:inherit}
+:focus-visible{outline:2px solid #B84324;outline-offset:2px}
+@keyframes ccFade{from{opacity:0}to{opacity:1}}
+@keyframes ccDrawer{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+@keyframes ccPop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+@keyframes ccSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:1ms!important;animation-iteration-count:1!important;transition-duration:1ms!important}}
+</style>
+</helmet>
+<div style="display:grid;grid-template-columns:224px minmax(0,1fr);height:100vh;overflow:hidden;background:#F6F5F2;font-variant-numeric:tabular-nums">
+<aside aria-label="Main" style="background:#202321;color:#ECEDEA;display:flex;flex-direction:column;height:100vh;padding:18px 12px 12px;gap:18px;position:relative;z-index:30">
+  <div style="display:flex;align-items:center;gap:10px;padding:2px 8px">
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="0" y="8" width="14" height="14" rx="3" fill="#B84324"></rect><rect x="8" y="1" width="13" height="13" rx="3" fill="none" stroke="#ECEDEA" stroke-width="2"></rect></svg>
+    <span style="font-size:16px;font-weight:600;letter-spacing:-0.01em">CommerceCrew</span>
+  </div>
+  <div style="position:relative">
+    <button onClick="{{ toggleStore }}" aria-haspopup="true" aria-expanded="{{ storeOpen }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:8px 10px;background:#2A2E2B;border:1px solid #3A3F3B;border-radius:10px;color:#ECEDEA;cursor:pointer;text-align:left;transition:background 160ms" style-hover="background:#303531">
+      <span style="width:28px;height:28px;border-radius:7px;background:#ECEDEA;color:#202321;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none">A</span>
+      <span style="flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25"><span style="font-size:13px;font-weight:600">Atelier Store</span><span style="font-size:11.5px;color:#9AA29C">Demo workspace</span></span>
+      <cc-icon name="chevrons-up-down" size="14"></cc-icon>
+    </button>
+    <sc-if value="{{ storeOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeMenu }}" style="position:fixed;inset:0;z-index:50"></div>
+      <div role="menu" style="position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:51;background:#FFFFFF;color:#202522;border-radius:10px;box-shadow:0 12px 32px rgba(32,35,33,.22);padding:6px;animation:ccPop 160ms ease-out">
+        <div role="menuitem" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;background:#F6F5F2;font-size:13px;font-weight:500"><span style="flex:1">Atelier Store</span><cc-icon name="check" size="14"></cc-icon></div>
+        <div style="padding:8px 10px 6px;font-size:12px;color:#626A64">This demo workspace has one store. Data is simulated.</div>
+      </div>
+    </sc-if>
+  </div>
+  <nav style="display:flex;flex-direction:column;gap:2px">
+    <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+      <button onClick="{{ n.go }}" aria-current="{{ n.ac }}" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border:0;border-radius:8px;background:{{ n.bg }};color:{{ n.fg }};font-size:13.5px;font-weight:500;cursor:pointer;text-align:left;transition:background 160ms,color 160ms" style-hover="color:#FFFFFF;background:#2C302D">
+        <cc-icon name="{{ n.icon }}" size="16"></cc-icon><span style="flex:1">{{ n.label }}</span>
+        <sc-if value="{{ n.hasBadge }}" hint-placeholder-val="{{ false }}"><span aria-label="{{ n.badgeLabel }}" style="min-width:20px;height:20px;padding:0 6px;border-radius:6px;background:{{ n.badgeBg }};color:#FFFFFF;font-size:11.5px;font-weight:600;display:grid;place-items:center">{{ n.badge }}</span></sc-if>
+      </button>
+    </sc-for>
+  </nav>
+  <div style="margin-top:auto;display:flex;flex-direction:column;gap:14px">
+    <div style="padding:0 10px;display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:10.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#8E968F">Connections</div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#C4CAC5"><cc-icon name="store" size="14"></cc-icon><span style="flex:1">Shopify</span><span style="font-size:11px;color:#9AA29C;border:1px solid #3A3F3B;border-radius:5px;padding:0 6px">Simulated</span></div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#C4CAC5"><cc-icon name="message-square" size="14"></cc-icon><span style="flex:1">Store chat</span><span style="font-size:11px;color:#9AA29C;border:1px solid #3A3F3B;border-radius:5px;padding:0 6px">Simulated</span></div>
+    </div>
+    <div style="position:relative;border-top:1px solid #343935;padding-top:12px">
+      <button onClick="{{ toggleAccount }}" aria-haspopup="true" aria-expanded="{{ accountOpen }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:6px 8px;border:0;border-radius:8px;background:transparent;color:#ECEDEA;cursor:pointer;text-align:left" style-hover="background:#2C302D">
+        <span style="width:30px;height:30px;border-radius:50%;background:#B84324;color:#FFFFFF;display:grid;place-items:center;font-size:12px;font-weight:600;flex:none">EM</span>
+        <span style="flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25"><span style="font-size:13px;font-weight:500">Elena Marsh</span><span style="font-size:11.5px;color:#9AA29C">Owner</span></span>
+        <cc-icon name="more" size="16"></cc-icon>
+      </button>
+      <sc-if value="{{ accountOpen }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ closeMenu }}" style="position:fixed;inset:0;z-index:50"></div>
+        <div role="menu" style="position:absolute;left:0;right:0;bottom:calc(100% + 6px);z-index:51;background:#FFFFFF;color:#202522;border-radius:10px;box-shadow:0 12px 32px rgba(32,35,33,.22);padding:6px;animation:ccPop 160ms ease-out">
+          <button role="menuitem" onClick="{{ askReset }}" style="width:100%;display:flex;align-items:center;gap:8px;padding:8px 10px;border:0;border-radius:6px;background:transparent;font-size:13px;color:#202522;cursor:pointer;text-align:left" style-hover="background:#F3F2EE"><cc-icon name="rotate-ccw" size="14"></cc-icon>Reset demo…</button>
+          <div style="padding:6px 10px;font-size:12px;color:#626A64">Signed in to a demo account</div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</aside>
+<div style="display:flex;flex-direction:column;min-width:0;height:100vh">
+  <header style="height:60px;flex:none;display:flex;align-items:center;gap:10px;padding:0 32px 0 40px;border-bottom:1px solid #E3E6E0;background:#F6F5F2">
+    <h1 style="margin:0;font-size:17px;font-weight:600;letter-spacing:-0.01em;color:#202522;flex:1;min-width:0">{{ pageTitle }}</h1>
+    <span style="font-size:12px;color:#626A64;display:inline-flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#8C948E"></span>Demo workspace</span>
+    <div style="position:relative">
+      <button class="btn btn-secondary btn-icon" aria-label="More options" aria-haspopup="true" aria-expanded="{{ moreOpen }}" onClick="{{ toggleMore }}" style="background:#FFFFFF;border-color:#D3D7D0;border-radius:8px;width:36px;height:36px;color:#202522" style-hover="background:#F3F2EE"><cc-icon name="more" size="16"></cc-icon></button>
+      <sc-if value="{{ moreOpen }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ closeMenu }}" style="position:fixed;inset:0;z-index:50"></div>
+        <div role="menu" style="position:absolute;right:0;top:calc(100% + 6px);z-index:51;width:240px;background:#FFFFFF;border-radius:10px;box-shadow:0 12px 32px rgba(32,35,33,.18);border:1px solid #E3E6E0;padding:6px;animation:ccPop 160ms ease-out">
+          <button role="menuitem" onClick="{{ askReset }}" style="width:100%;display:flex;align-items:center;gap:8px;padding:8px 10px;border:0;border-radius:6px;background:transparent;font-size:13px;color:#202522;cursor:pointer;text-align:left" style-hover="background:#F3F2EE"><cc-icon name="rotate-ccw" size="14"></cc-icon>Reset demo…</button>
+          <div style="padding:6px 10px 4px;font-size:12px;color:#626A64;line-height:1.45">All agents, connections and publishing in this workspace are simulated.</div>
+        </div>
+      </sc-if>
+    </div>
+    <button class="btn btn-primary" onClick="{{ openAdd }}" style="font-weight:500;font-size:13.5px;padding:9px 14px;border-radius:8px;color:#FFFFFF"><cc-icon name="plus" size="16"></cc-icon>Add product</button>
+  </header>
+  <main ref="{{ mainRef }}" style="flex:1;min-height:0;overflow:auto;position:relative">
+    <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">
+      <div aria-busy="true" style="padding:32px 40px;display:flex;flex-direction:column;gap:16px">
+        <div style="width:320px;height:28px;border-radius:6px;background:#ECEBE6"></div>
+        <div style="width:520px;height:16px;border-radius:6px;background:#ECEBE6"></div>
+        <div style="height:72px;border-radius:12px;background:#ECEBE6;margin-top:12px"></div>
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:32px"><div style="height:320px;border-radius:12px;background:#ECEBE6"></div><div style="height:320px;border-radius:12px;background:#EFEEEA"></div></div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:28px 40px 48px;display:flex;flex-direction:column;gap:24px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64">{{ todayLabel }}</div>
+          <h2 style="margin:0;font-size:26px;font-weight:600;letter-spacing:-0.02em;line-height:1.2;color:#202522">Your store, moving forward.</h2>
+          <p style="margin:0;font-size:14.5px;color:#626A64;max-width:720px;text-wrap:pretty">{{ summary }}</p>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px;overflow:hidden">
+          <sc-for list="{{ counts }}" as="c" hint-placeholder-count="3">
+            <button onClick="{{ c.go }}" style="display:flex;align-items:center;gap:14px;padding:14px 20px;border:0;border-left:{{ c.border }};background:transparent;cursor:pointer;text-align:left;transition:background 160ms" style-hover="background:#FBFAF7">
+              <span style="font-size:26px;font-weight:600;letter-spacing:-0.02em;color:{{ c.fg }};min-width:28px">{{ c.n }}</span>
+              <span style="display:flex;flex-direction:column;line-height:1.3;flex:1;min-width:0"><span style="font-size:13.5px;font-weight:500;color:#202522">{{ c.label }}</span><span style="font-size:12px;color:#626A64">{{ c.hint }}</span></span>
+              <cc-icon name="arrow-right" size="15" style="color:#8C948E"></cc-icon>
+            </button>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:32px;align-items:start">
+          <div style="display:flex;flex-direction:column;gap:28px;min-width:0">
+            <section aria-labelledby="att-h" style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:baseline;gap:10px">
+                <h3 id="att-h" style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Needs your attention</h3>
+                <span style="font-size:12px;color:#626A64">{{ attentionCount }}</span>
+                <button onClick="{{ goReview }}" class="btn btn-ghost" style="margin-left:auto;font-size:12.5px;font-weight:500;padding:2px 6px;border-radius:6px;color:#8C321A">Review queue</button>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px;overflow:hidden">
+                <sc-for list="{{ attention }}" as="d" hint-placeholder-count="3">
+                  <div onClick="{{ d.open }}" style="display:grid;grid-template-columns:60px minmax(0,1fr) auto;gap:16px;align-items:center;padding:16px 20px;border-bottom:1px solid #EDEFEA;cursor:pointer;transition:background 160ms" style-hover="background:#FBFAF7">
+                    <div style="width:60px;height:60px;border-radius:10px;overflow:hidden;background:{{ d.thumb.bg }};display:grid;place-items:center;color:#202522;border:1px solid #E3E6E0">
+                      <sc-if value="{{ d.thumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ d.thumb.src }}" alt="" style="width:100%;height:100%;object-fit:cover;transform:{{ d.thumb.t }};transform-origin:{{ d.thumb.o }}"></sc-if>
+                      <sc-if value="{{ d.thumb.noPhoto }}" hint-placeholder-val="{{ false }}"><cc-icon name="{{ d.thumb.icon }}" size="22"></cc-icon></sc-if>
+                    </div>
+                    <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
+                      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#626A64"><cc-icon name="{{ d.agentIcon }}" size="13"></cc-icon><span style="font-weight:500;color:#3E4641">{{ d.agentName }}</span><span aria-hidden="true">·</span><span>{{ d.time }}</span></div>
+                      <div style="font-size:15px;font-weight:600;color:#202522;line-height:1.3">{{ d.title }}</div>
+                      <div style="font-size:13px;color:#626A64;text-wrap:pretty;line-height:1.45">{{ d.text }}</div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
+                      <span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;white-space:nowrap;background:{{ d.st.bg }};color:{{ d.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ d.st.dot }}"></span>{{ d.st.label }}</span>
+                      <button class="btn btn-secondary" onClick="{{ d.open }}" disabled="{{ d.working }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:13px;padding:7px 12px;border-radius:8px;color:#202522;white-space:nowrap" style-hover="background:#F3F2EE;border-color:#BCC2BA">{{ d.action }}<cc-icon name="arrow-right" size="14"></cc-icon></button>
+                    </div>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ noAttention }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:32px 24px;display:flex;align-items:center;gap:14px">
+                    <span style="width:40px;height:40px;border-radius:10px;background:#E5EFE7;color:#235A3A;display:grid;place-items:center"><cc-icon name="check" size="20"></cc-icon></span>
+                    <div><div style="font-size:15px;font-weight:600">Nothing needs you right now.</div><div style="font-size:13px;color:#626A64">New decisions from your agents will appear here.</div></div>
+                  </div>
+                </sc-if>
+              </div>
+            </section>
+            <section aria-labelledby="rp-h" style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:baseline;gap:10px">
+                <h3 id="rp-h" style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Recent products</h3>
+                <button onClick="{{ goProducts }}" class="btn btn-ghost" style="margin-left:auto;font-size:12.5px;font-weight:500;padding:2px 6px;border-radius:6px;color:#8C321A">All products</button>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px;overflow:hidden">
+                <table class="table" style="font-size:13.5px;table-layout:fixed">
+                  <thead><tr>
+                    <th style="padding:10px 20px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px">Product</th>
+                    <th style="width:128px;padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px">Status</th>
+                    <th style="width:104px;padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px;text-align:right">Available</th>
+                    <th style="width:104px;padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px;text-align:right">Price</th>
+                    <th style="width:104px;padding:10px 20px 10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px;text-align:right">Updated</th>
+                  </tr></thead>
+                  <tbody>
+                    <sc-for list="{{ recent }}" as="p" hint-placeholder-count="5">
+                      <tr onClick="{{ p.open }}" style="cursor:pointer">
+                        <td style="padding:8px 12px 8px 20px;border-bottom:1px solid #EDEFEA">
+                          <div style="display:flex;align-items:center;gap:12px;min-width:0">
+                            <div style="width:36px;height:36px;border-radius:8px;overflow:hidden;flex:none;background:#EEECE7;display:grid;place-items:center;color:#7D847F;border:1px solid #E3E6E0">
+                              <sc-if value="{{ p.thumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ p.thumb.src }}" alt="" style="width:100%;height:100%;object-fit:cover;transform:{{ p.thumb.t }};transform-origin:{{ p.thumb.o }}"></sc-if>
+                              <sc-if value="{{ p.thumb.noPhoto }}" hint-placeholder-val="{{ false }}"><cc-icon name="{{ p.thumb.icon }}" size="16"></cc-icon></sc-if>
+                            </div>
+                            <button onClick="{{ p.open }}" title="{{ p.name }}" style="border:0;background:none;padding:0;font:inherit;font-weight:500;line-height:1.35;color:#202522;text-align:left;cursor:pointer;min-width:0;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2">{{ p.name }}</button>
+                          </div>
+                        </td>
+                        <td style="padding:8px 12px;border-bottom:1px solid #EDEFEA;overflow:hidden"><span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;white-space:nowrap;background:{{ p.st.bg }};color:{{ p.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ p.st.dot }}"></span>{{ p.st.label }}</span></td>
+                        <td style="padding:8px 12px;border-bottom:1px solid #EDEFEA;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:{{ p.stockColor }}">{{ p.stock }}</td>
+                        <td style="padding:8px 12px;border-bottom:1px solid #EDEFEA;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:{{ p.priceColor }}">{{ p.price }}</td>
+                        <td style="padding:8px 20px 8px 12px;border-bottom:1px solid #EDEFEA;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#626A64">{{ p.updated }}</td>
+                      </tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+          <section aria-labelledby="feed-h" style="display:flex;flex-direction:column;gap:10px;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:10px">
+              <h3 id="feed-h" style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Agent activity</h3>
+              <button onClick="{{ goActivity }}" class="btn btn-ghost" style="margin-left:auto;font-size:12.5px;font-weight:500;padding:2px 6px;border-radius:6px;color:#8C321A">View all</button>
+            </div>
+            <div style="display:flex;flex-direction:column;border-top:1px solid #E3E6E0">
+              <sc-for list="{{ feed }}" as="a" hint-placeholder-count="6">
+                <div style="border-bottom:1px solid #E3E6E0;padding:4px 0">
+                  <button onClick="{{ a.toggle }}" aria-expanded="{{ a.expanded }}" style="width:100%;display:grid;grid-template-columns:28px minmax(0,1fr) 16px;gap:12px;align-items:start;padding:10px 8px;border:0;border-radius:8px;background:transparent;text-align:left;cursor:pointer;color:#202522;transition:background 160ms" style-hover="background:#EFEEE9">
+                    <span style="width:28px;height:28px;border-radius:7px;background:#EBEAE4;display:grid;place-items:center;color:#3E4641"><cc-icon name="{{ a.icon }}" size="14"></cc-icon></span>
+                    <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                      <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#626A64"><span style="font-weight:500;color:#3E4641">{{ a.agentName }}</span><span aria-hidden="true">·</span><span>{{ a.time }}</span></span>
+                      <span style="font-size:13.5px;font-weight:600;line-height:1.35">{{ a.title }}</span>
+                      <span style="font-size:12.5px;color:#626A64;line-height:1.45;text-wrap:pretty">{{ a.desc }}</span>
+                      <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:{{ a.st.fg }};margin-top:3px"><span style="width:6px;height:6px;border-radius:50%;background:{{ a.st.dot }}"></span>{{ a.st.label }}</span>
+                    </span>
+                    <span style="color:#8C948E;padding-top:6px"><cc-icon name="{{ a.chev }}" size="16"></cc-icon></span>
+                  </button>
+                  <sc-if value="{{ a.expanded }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:0 8px 12px 48px;display:flex;flex-direction:column;gap:8px">
+                      <sc-if value="{{ a.hasDetails }}" hint-placeholder-val="{{ false }}">
+                        <ul style="margin:0;padding:0 0 0 16px;font-size:12.5px;color:#3E4641;line-height:1.55">
+                          <sc-for list="{{ a.details }}" as="t" hint-placeholder-count="2"><li>{{ t.t }}</li></sc-for>
+                        </ul>
+                      </sc-if>
+                      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                        <sc-if value="{{ a.hasTarget }}" hint-placeholder-val="{{ false }}"><button onClick="{{ a.openTarget }}" style="display:inline-flex;align-items:center;gap:6px;border:1px solid #E3E6E0;background:#FFFFFF;border-radius:6px;padding:3px 8px;font-size:12px;color:#202522;cursor:pointer" style-hover="border-color:#BCC2BA"><cc-icon name="{{ a.targetIcon }}" size="12"></cc-icon>{{ a.targetLabel }}</button></sc-if>
+                        <sc-if value="{{ a.hasNext }}" hint-placeholder-val="{{ false }}"><button onClick="{{ a.doNext }}" class="btn btn-ghost" style="font-size:12.5px;font-weight:500;padding:3px 6px;border-radius:6px;color:#8C321A">{{ a.next }}<cc-icon name="arrow-right" size="13"></cc-icon></button></sc-if>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isProducts }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:24px 40px 48px;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div style="position:relative;width:320px;max-width:100%">
+            <span style="position:absolute;left:11px;top:11px;color:#626A64"><cc-icon name="search" size="16"></cc-icon></span>
+            <input type="search" aria-label="Search products" placeholder="Search by name, SKU or category" value="{{ search }}" onChange="{{ onSearch }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px 8px 34px;color:#202522;width:100%">
+          </div>
+          <div role="group" aria-label="Filter by listing status" style="display:inline-flex;border:1px solid #D3D7D0;border-radius:8px;overflow:hidden;background:#FFFFFF">
+            <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
+              <button aria-pressed="{{ f.active }}" onClick="{{ f.pick }}" style="border:0;border-left:{{ f.bl }};background:{{ f.bg }};color:{{ f.fg }};padding:8px 12px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background 160ms">{{ f.label }}<span style="color:{{ f.cfg }};font-weight:400">{{ f.count }}</span></button>
+            </sc-for>
+          </div>
+          <span style="margin-left:auto;font-size:12.5px;color:#626A64">{{ resultLabel }}</span>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px;overflow:hidden">
+          <sc-if value="{{ hasRows }}" hint-placeholder-val="{{ true }}">
+            <table class="table" style="font-size:13.5px">
+              <thead><tr>
+                <th style="padding:10px 12px 10px 20px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px">Product</th>
+                <th style="padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px">SKU</th>
+                <th style="padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px;text-align:right">Available</th>
+                <th style="padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px;text-align:right">Price</th>
+                <th style="padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px">Listing status</th>
+                <th style="padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px">Last updated</th>
+                <th style="padding:10px 20px 10px 12px;border-bottom:1px solid #E3E6E0"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Action</span></th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ rows }}" as="p" hint-placeholder-count="6">
+                  <tr onClick="{{ p.open }}" style="cursor:pointer">
+                    <td style="padding:10px 12px 10px 20px;border-bottom:1px solid #EDEFEA">
+                      <div style="display:flex;align-items:center;gap:12px;min-width:0">
+                        <div style="width:44px;height:44px;border-radius:8px;overflow:hidden;flex:none;background:#EEECE7;display:grid;place-items:center;color:#7D847F;border:1px solid #E3E6E0">
+                          <sc-if value="{{ p.thumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ p.thumb.src }}" alt="" style="width:100%;height:100%;object-fit:cover;transform:{{ p.thumb.t }};transform-origin:{{ p.thumb.o }}"></sc-if>
+                          <sc-if value="{{ p.thumb.noPhoto }}" hint-placeholder-val="{{ false }}"><cc-icon name="{{ p.thumb.icon }}" size="18"></cc-icon></sc-if>
+                        </div>
+                        <div style="display:flex;flex-direction:column;min-width:0">
+                          <button onClick="{{ p.open }}" style="border:0;background:none;padding:0;font:inherit;font-weight:500;color:#202522;text-align:left;cursor:pointer">{{ p.name }}</button>
+                          <span style="font-size:12px;color:#626A64">{{ p.category }}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td style="padding:10px 12px;border-bottom:1px solid #EDEFEA;white-space:nowrap;color:{{ p.skuColor }};font-size:13px">{{ p.sku }}</td>
+                    <td style="padding:10px 12px;border-bottom:1px solid #EDEFEA;text-align:right;white-space:nowrap;color:{{ p.stockColor }}">{{ p.stock }}</td>
+                    <td style="padding:10px 12px;border-bottom:1px solid #EDEFEA;text-align:right;white-space:nowrap;color:{{ p.priceColor }}">{{ p.price }}</td>
+                    <td style="padding:10px 12px;border-bottom:1px solid #EDEFEA"><span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;white-space:nowrap;background:{{ p.st.bg }};color:{{ p.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ p.st.dot }}"></span>{{ p.st.label }}</span></td>
+                    <td style="padding:10px 12px;border-bottom:1px solid #EDEFEA;white-space:nowrap;color:#626A64">{{ p.updated }}</td>
+                    <td style="padding:10px 20px 10px 12px;border-bottom:1px solid #EDEFEA;text-align:right"><button class="btn btn-secondary" onClick="{{ p.act }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:12.5px;padding:5px 10px;border-radius:7px;color:#202522" style-hover="background:#F3F2EE;border-color:#BCC2BA">{{ p.action }}</button></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </sc-if>
+          <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:48px 24px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;max-width:420px;margin:0 auto">
+              <span style="width:40px;height:40px;border-radius:10px;background:#F3F2EE;display:grid;place-items:center;color:#626A64"><cc-icon name="search" size="18"></cc-icon></span>
+              <div style="font-size:15px;font-weight:600">{{ emptyTitle }}</div>
+              <div style="font-size:13px;color:#626A64">{{ emptyBody }}</div>
+              <button class="btn btn-secondary" onClick="{{ clearSearch }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:13px;padding:7px 12px;border-radius:8px;color:#202522;margin-top:4px">Clear search and filters</button>
+            </div>
+          </sc-if>
+        </div>
+        <div style="font-size:12px;color:#626A64;display:flex;align-items:center;gap:6px"><cc-icon name="info" size="13"></cc-icon>Inventory is read-only after creation in this prototype. Publishing updates the demo catalog only.</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:20px 40px 48px;display:flex;flex-direction:column;gap:20px;max-width:1240px">
+        <div><button onClick="{{ DT.back }}" class="btn btn-ghost" style="font-size:13px;font-weight:500;color:#3E4641;padding:4px 6px;border-radius:6px"><cc-icon name="arrow-left" size="14"></cc-icon>Products</button></div>
+        <div style="display:flex;align-items:flex-end;gap:16px;justify-content:space-between;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64">{{ DT.category }} · SKU {{ DT.sku }}</div>
+            <h2 style="margin:0;font-size:22px;font-weight:600;letter-spacing:-0.015em;line-height:1.25">{{ DT.name }}</h2>
+          </div>
+          <sc-if value="{{ DT.canReview }}" hint-placeholder-val="{{ false }}"><button class="btn btn-primary" onClick="{{ DT.openReview }}" style="font-weight:500;font-size:13.5px;padding:9px 14px;border-radius:8px;color:#FFFFFF">{{ DT.reviewLabel }}<cc-icon name="arrow-right" size="15"></cc-icon></button></sc-if>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:32px;align-items:start">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-if value="{{ DT.hasImages }}" hint-placeholder-val="{{ false }}">
+              <div style="position:relative;aspect-ratio:3/4;background:#EFEDE8;border-radius:12px;overflow:hidden;border:1px solid #E3E6E0">
+                <img src="{{ DT.main.src }}" alt="{{ DT.main.label }}" style="width:100%;height:100%;object-fit:contain">
+                <button aria-label="Enlarge photo" onClick="{{ DT.enlarge }}" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border:0;border-radius:8px;background:rgba(255,255,255,0.94);color:#202522;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 3px rgba(32,35,33,.18)" style-hover="background:#FFFFFF"><cc-icon name="maximize" size="15"></cc-icon></button>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#626A64"><span><span style="font-weight:500;color:#202522">{{ DT.main.role }}</span> · {{ DT.main.label }}</span><span>{{ DT.idxLabel }}</span></div>
+              <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px">
+                <sc-for list="{{ DT.images }}" as="im" hint-placeholder-count="6">
+                  <button onClick="{{ im.select }}" aria-label="{{ im.label }}" aria-pressed="{{ im.active }}" style="aspect-ratio:1;padding:0;border-radius:8px;overflow:hidden;border:2px solid {{ im.border }};background:#EFEDE8;cursor:pointer"><img src="{{ im.src }}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:{{ im.pos }}"></button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ DT.noImages }}" hint-placeholder-val="{{ false }}">
+              <div style="aspect-ratio:4/3;background:#EEECE7;border-radius:12px;border:1px solid #E3E6E0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#7D847F"><cc-icon name="{{ DT.icon }}" size="36" stroke="1.25"></cc-icon><span style="font-size:12.5px;color:#626A64">Demo product · no photos</span></div>
+            </sc-if>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:24px;min-width:0">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px">
+              <div style="padding:14px 18px;display:flex;flex-direction:column;gap:8px;border-right:1px solid #E3E6E0">
+                <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64">Listing status</div>
+                <div><span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;background:{{ DT.st.bg }};color:{{ DT.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ DT.st.dot }}"></span>{{ DT.st.label }}</span></div>
+                <div style="font-size:12.5px;color:#626A64">{{ DT.statusNote }}</div>
+              </div>
+              <div style="padding:14px 18px;display:flex;flex-direction:column;gap:8px">
+                <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64">Agent tasks</div>
+                <sc-for list="{{ DT.tasks }}" as="t" hint-placeholder-count="1">
+                  <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+                    <cc-icon name="{{ t.icon }}" size="14"></cc-icon>
+                    <span style="flex:1;min-width:0"><span style="font-weight:500">{{ t.title }}</span><span style="color:#626A64"> · {{ t.agent }}</span></span>
+                    <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:{{ t.st.fg }};white-space:nowrap"><span style="width:6px;height:6px;border-radius:50%;background:{{ t.st.dot }}"></span>{{ t.st.label }}</span>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ DT.noTasks }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#626A64">No open agent tasks for this product.</div></sc-if>
+              </div>
+            </div>
+            <section style="display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid #E3E6E0">
+                <h3 style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522;flex:1">Listing information</h3>
+                <sc-if value="{{ DT.dirty }}" hint-placeholder-val="{{ false }}">
+                  <button class="btn btn-ghost" onClick="{{ DT.discard }}" style="font-size:12.5px;font-weight:500;color:#3E4641;padding:4px 8px;border-radius:6px">Discard</button>
+                  <button class="btn btn-primary" onClick="{{ DT.save }}" disabled="{{ DT.nameEmpty }}" style="font-weight:500;font-size:12.5px;padding:6px 12px;border-radius:7px;color:#FFFFFF">Save changes</button>
+                </sc-if>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label for="dt-name" style="font-size:13px;font-weight:500">Title</label>
+                <input id="dt-name" value="{{ DT.bName }}" onChange="{{ DT.onName }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px;color:#202522;width:100%">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label for="dt-desc" style="font-size:13px;font-weight:500">Description</label>
+                <textarea id="dt-desc" rows="5" value="{{ DT.bDesc }}" onChange="{{ DT.onDesc }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;line-height:1.55;padding:9px 10px;color:#202522;width:100%;min-height:120px"></textarea>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label for="dt-price" style="font-size:13px;font-weight:500">Price ({{ DT.currency }})</label>
+                  <input id="dt-price" type="number" min="0" step="0.01" placeholder="Not provided" value="{{ DT.bPrice }}" onChange="{{ DT.onPrice }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px;color:#202522;width:100%">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <span style="font-size:13px;font-weight:500">Available</span>
+                  <div style="min-height:38px;padding:8px 10px;border-radius:8px;background:#F3F2EE;color:{{ DT.stockColor }};font-size:14px">{{ DT.stockRaw }}</div>
+                  <span style="font-size:11.5px;color:#626A64">Read-only in this prototype</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <span style="font-size:13px;font-weight:500">Condition</span>
+                  <div style="min-height:38px;padding:8px 10px;border-radius:8px;background:#F3F2EE;font-size:14px">{{ DT.conditionLabel }}</div>
+                </div>
+              </div>
+            </section>
+            <sc-if value="{{ DT.hasDetails }}" hint-placeholder-val="{{ false }}">
+              <section style="display:flex;flex-direction:column;gap:4px">
+                <h3 style="margin:0 0 6px;padding-bottom:8px;border-bottom:1px solid #E3E6E0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Product details</h3>
+                <sc-for list="{{ DT.details }}" as="x" hint-placeholder-count="4">
+                  <div style="display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:7px 0;border-bottom:1px solid #EDEFEA;font-size:13.5px">
+                    <span style="color:#626A64">{{ x.k }}</span><span>{{ x.v }}</span>
+                    <span style="display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:500;color:{{ x.s.fg }}"><cc-icon name="{{ x.s.icon }}" size="12"></cc-icon>{{ x.s.label }}</span>
+                  </div>
+                </sc-for>
+              </section>
+            </sc-if>
+            <sc-if value="{{ DT.hasHistory }}" hint-placeholder-val="{{ false }}">
+              <section style="display:flex;flex-direction:column;gap:4px">
+                <h3 style="margin:0 0 6px;padding-bottom:8px;border-bottom:1px solid #E3E6E0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Activity history</h3>
+                <sc-for list="{{ DT.history }}" as="h" hint-placeholder-count="3">
+                  <div style="display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:12px;padding:6px 0;font-size:13px;border-bottom:1px solid #EDEFEA">
+                    <span style="font-weight:500">{{ h.who }}</span><span style="color:#3E4641">{{ h.text }}</span><span style="color:#626A64;white-space:nowrap">{{ h.time }}</span>
+                  </div>
+                </sc-for>
+              </section>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isQueue }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:24px 40px 48px;display:flex;flex-direction:column;gap:16px;max-width:1000px">
+        <p style="margin:0;font-size:14px;color:#626A64">Decisions your agents can’t make alone. Each one opens its full review.</p>
+        <div role="tablist" aria-label="Review queue" style="display:flex;gap:20px;border-bottom:1px solid #E3E6E0">
+          <sc-for list="{{ qTabs }}" as="t" hint-placeholder-count="2">
+            <button role="tab" aria-selected="{{ t.active }}" onClick="{{ t.pick }}" style="border:0;background:none;padding:8px 0 10px;margin-bottom:-1px;border-bottom:2px solid {{ t.border }};color:{{ t.fg }};font-size:13.5px;font-weight:500;cursor:pointer;display:inline-flex;gap:6px">{{ t.label }}<span style="color:#626A64;font-weight:400">{{ t.count }}</span></button>
+          </sc-for>
+        </div>
+        <sc-if value="{{ qPending }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px;overflow:hidden">
+            <sc-for list="{{ attention }}" as="d" hint-placeholder-count="3">
+              <div onClick="{{ d.open }}" style="display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:16px;align-items:center;padding:18px 20px;border-bottom:1px solid #EDEFEA;cursor:pointer;transition:background 160ms" style-hover="background:#FBFAF7">
+                <div style="width:64px;height:64px;border-radius:10px;overflow:hidden;background:{{ d.thumb.bg }};display:grid;place-items:center;color:#202522;border:1px solid #E3E6E0">
+                  <sc-if value="{{ d.thumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ d.thumb.src }}" alt="" style="width:100%;height:100%;object-fit:cover;transform:{{ d.thumb.t }};transform-origin:{{ d.thumb.o }}"></sc-if>
+                  <sc-if value="{{ d.thumb.noPhoto }}" hint-placeholder-val="{{ false }}"><cc-icon name="{{ d.thumb.icon }}" size="22"></cc-icon></sc-if>
+                </div>
+                <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
+                  <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#626A64"><cc-icon name="{{ d.agentIcon }}" size="13"></cc-icon><span style="font-weight:500;color:#3E4641">{{ d.agentName }}</span><span aria-hidden="true">·</span><span>{{ d.time }}</span></div>
+                  <div style="font-size:15px;font-weight:600">{{ d.title }}</div>
+                  <div style="font-size:13px;color:#626A64;text-wrap:pretty">{{ d.text }}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
+                  <span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;white-space:nowrap;background:{{ d.st.bg }};color:{{ d.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ d.st.dot }}"></span>{{ d.st.label }}</span>
+                  <button class="btn btn-primary" onClick="{{ d.open }}" disabled="{{ d.working }}" style="font-weight:500;font-size:13px;padding:7px 12px;border-radius:8px;color:#FFFFFF;white-space:nowrap">{{ d.action }}<cc-icon name="arrow-right" size="14"></cc-icon></button>
+                </div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noAttention }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:40px 24px;display:flex;align-items:center;gap:14px">
+                <span style="width:40px;height:40px;border-radius:10px;background:#E5EFE7;color:#235A3A;display:grid;place-items:center"><cc-icon name="check" size="20"></cc-icon></span>
+                <div><div style="font-size:15px;font-weight:600">You’re all caught up.</div><div style="font-size:13px;color:#626A64">Resolved decisions stay in the Resolved tab.</div></div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ qResolved }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px;overflow:hidden">
+            <sc-for list="{{ resolvedList }}" as="d" hint-placeholder-count="2">
+              <div style="display:grid;grid-template-columns:28px minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:14px 20px;border-bottom:1px solid #EDEFEA">
+                <span style="width:28px;height:28px;border-radius:7px;background:#E5EFE7;color:#235A3A;display:grid;place-items:center"><cc-icon name="check" size="14"></cc-icon></span>
+                <div style="min-width:0"><div style="font-size:14px;font-weight:600">{{ d.title }}</div><div style="font-size:12.5px;color:#626A64">{{ d.agentName }} · {{ d.outcome }}</div></div>
+                <span style="font-size:12.5px;color:#626A64;white-space:nowrap">{{ d.resolvedTime }}</span>
+                <button class="btn btn-secondary" onClick="{{ d.open }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:12.5px;padding:5px 10px;border-radius:7px;color:#202522">View</button>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noResolved }}" hint-placeholder-val="{{ false }}"><div style="padding:32px 24px;font-size:13.5px;color:#626A64">Nothing resolved yet. Approved and published items will appear here.</div></sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isConvos }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:320px minmax(0,1fr);height:100%;min-height:0">
+        <div style="border-right:1px solid #E3E6E0;overflow:auto;display:flex;flex-direction:column">
+          <div style="padding:16px 20px 10px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64">Inbox</div>
+          <sc-for list="{{ convos }}" as="c" hint-placeholder-count="4">
+            <button onClick="{{ c.pick }}" aria-current="{{ c.cur }}" style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;width:100%;text-align:left;padding:14px 20px 14px 17px;border:0;border-left:3px solid {{ c.bar }};border-top:1px solid #EAEBE6;background:{{ c.bg }};cursor:pointer;color:#202522;transition:background 160ms" style-hover="background:#FFFFFF">
+              <span style="width:32px;height:32px;border-radius:50%;background:#E7E5DF;display:grid;place-items:center;font-size:11.5px;font-weight:600;color:#3E4641">{{ c.initials }}</span>
+              <span style="display:flex;flex-direction:column;gap:3px;min-width:0">
+                <span style="display:flex;gap:8px;align-items:baseline"><span style="font-size:13.5px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.customer }}</span><span style="font-size:11.5px;color:#626A64;white-space:nowrap">{{ c.time }}</span></span>
+                <span style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.subject }}</span>
+                <span style="font-size:12.5px;color:#626A64;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.preview }}</span>
+                <span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;color:{{ c.st.fg }};margin-top:2px"><span style="width:6px;height:6px;border-radius:50%;background:{{ c.st.dot }}"></span>{{ c.st.label }}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;min-height:0;background:#FFFFFF">
+          <div style="flex:none;display:flex;align-items:center;gap:14px;padding:14px 24px;border-bottom:1px solid #E3E6E0;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px">
+              <div style="font-size:15px;font-weight:600">{{ CV.customer }}</div>
+              <div style="font-size:12.5px;color:#626A64">{{ CV.subject }} · {{ CV.channel }}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#3E4641"><span style="color:#626A64">Assigned</span><cc-icon name="{{ CV.agentIcon }}" size="14"></cc-icon><span style="font-weight:500">{{ CV.agentName }}</span></div>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;background:{{ CV.st.bg }};color:{{ CV.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ CV.st.dot }}"></span>{{ CV.st.label }}</span>
+            <sc-if value="{{ CV.canHandBack }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary" onClick="{{ CV.handBack }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:12.5px;padding:5px 10px;border-radius:7px;color:#202522">Hand back to agent</button></sc-if>
+          </div>
+          <sc-if value="{{ CV.waiting }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:none;display:flex;align-items:center;gap:12px;padding:12px 24px;background:#FFF8EA;border-bottom:1px solid #F0DDB0">
+              <span style="color:#7A4A00"><cc-icon name="alert-circle" size="16"></cc-icon></span>
+              <div style="flex:1;font-size:13px;color:#5C3A00"><strong style="font-weight:600">{{ CV.agentName }} answered first, then handed this to you.</strong> {{ CV.handoff }}</div>
+              <sc-if value="{{ CV.hasDecision }}" hint-placeholder-val="{{ false }}"><button class="btn btn-primary" onClick="{{ CV.openDecision }}" style="font-weight:500;font-size:12.5px;padding:6px 12px;border-radius:7px;color:#FFFFFF;white-space:nowrap">Review proposed reply</button></sc-if>
+            </div>
+          </sc-if>
+          <div style="flex:1;min-height:0;overflow:auto;padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+            <sc-if value="{{ CV.hasProduct }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ CV.openProduct }}" style="align-self:flex-start;display:flex;align-items:center;gap:10px;padding:6px 12px 6px 6px;border:1px solid #E3E6E0;border-radius:10px;background:#FBFAF8;cursor:pointer;color:#202522" style-hover="border-color:#BCC2BA">
+                <span style="width:32px;height:32px;border-radius:6px;overflow:hidden;background:#EEECE7;display:grid;place-items:center;color:#7D847F">
+                  <sc-if value="{{ CV.pthumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ CV.pthumb.src }}" alt="" style="width:100%;height:100%;object-fit:cover;transform:{{ CV.pthumb.t }};transform-origin:{{ CV.pthumb.o }}"></sc-if>
+                  <sc-if value="{{ CV.pthumb.noPhoto }}" hint-placeholder-val="{{ false }}"><cc-icon name="{{ CV.pthumb.icon }}" size="14"></cc-icon></sc-if>
+                </span>
+                <span style="font-size:12.5px"><span style="color:#626A64">About </span><span style="font-weight:500">{{ CV.productName }}</span></span>
+              </button>
+            </sc-if>
+            <sc-for list="{{ CV.messages }}" as="m" hint-placeholder-count="3">
+              <sc-if value="{{ m.isSystem }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#626A64;padding:2px 0"><cc-icon name="corner-down-right" size="13"></cc-icon><span>{{ m.text }}</span><span>· {{ m.time }}</span></div>
+              </sc-if>
+              <sc-if value="{{ m.isCustomer }}" hint-placeholder-val="{{ false }}">
+                <div style="max-width:72%;align-self:flex-start;display:flex;flex-direction:column;gap:4px">
+                  <span style="font-size:12px;color:#626A64"><span style="font-weight:500;color:#3E4641">{{ m.who }}</span> · {{ m.time }}</span>
+                  <div style="background:#F3F2EE;border-radius:12px;padding:10px 14px;font-size:14px;line-height:1.5">{{ m.text }}</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ m.isOut }}" hint-placeholder-val="{{ false }}">
+                <div style="max-width:72%;align-self:flex-end;display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+                  <span style="font-size:12px;color:#626A64"><span style="font-weight:500;color:#3E4641">{{ m.who }}</span> · {{ m.time }}</span>
+                  <div style="background:{{ m.outBg }};border-radius:12px;padding:10px 14px;font-size:14px;line-height:1.5">{{ m.text }}</div>
+                  <sc-if value="{{ m.hasNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#626A64">{{ m.note }}</span></sc-if>
+                </div>
+              </sc-if>
+            </sc-for>
+          </div>
+          <sc-if value="{{ CV.agentHandling }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:none;border-top:1px solid #E3E6E0;padding:14px 24px;display:flex;align-items:center;gap:12px;background:#FBFAF8">
+              <span style="width:32px;height:32px;border-radius:8px;background:#ECEEEA;color:#3E4A44;display:grid;place-items:center;flex:none"><cc-icon name="{{ CV.agentIcon }}" size="16"></cc-icon></span>
+              <div style="flex:1;min-width:0;font-size:13px;color:#3E4641"><strong style="font-weight:600;color:#202522">{{ CV.agentName }} is answering this customer.</strong> If it can’t answer, it hands the conversation to you.</div>
+              <button class="btn btn-secondary" onClick="{{ CV.take }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:12.5px;padding:6px 12px;border-radius:7px;color:#202522;white-space:nowrap" style-hover="background:#F3F2EE">Take over</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ CV.canCompose }}" hint-placeholder-val="{{ true }}">
+            <form onSubmit="{{ sendMsg }}" style="flex:none;border-top:1px solid #E3E6E0;padding:14px 24px;display:flex;gap:10px;align-items:flex-end">
+              <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+                <label for="composer" style="font-size:12px;color:#626A64">Reply as Atelier Store · sending is simulated</label>
+                <textarea id="composer" rows="2" value="{{ composer }}" onChange="{{ onComposer }}" onKeyDown="{{ composerKey }}" placeholder="Write a reply…" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;padding:8px 10px;color:#202522;width:100%;min-height:44px;resize:none"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" disabled="{{ cantSend }}" style="font-weight:500;font-size:13px;padding:9px 14px;border-radius:8px;color:#FFFFFF"><cc-icon name="send" size="14"></cc-icon>Send</button>
+            </form>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isActivity }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:24px 40px 48px;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <label for="act-agent" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Filter by agent</label>
+          <select id="act-agent" value="{{ actAgent }}" onChange="{{ onActAgent }}" class="input" style="width:200px;background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:13.5px;min-height:38px;padding:7px 10px;color:#202522">
+            <sc-for list="{{ agentOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.k }}">{{ o.l }}</option></sc-for>
+          </select>
+          <div role="group" aria-label="Filter by status" style="display:inline-flex;border:1px solid #D3D7D0;border-radius:8px;overflow:hidden;background:#FFFFFF">
+            <sc-for list="{{ statusOpts }}" as="f" hint-placeholder-count="5">
+              <button aria-pressed="{{ f.active }}" onClick="{{ f.pick }}" style="border:0;border-left:{{ f.bl }};background:{{ f.bg }};color:{{ f.fg }};padding:8px 12px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background 160ms">{{ f.label }}<span style="color:{{ f.cfg }};font-weight:400">{{ f.count }}</span></button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px;overflow:hidden">
+          <sc-for list="{{ arows }}" as="a" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:72px 170px minmax(0,1fr) 150px 130px;gap:16px;align-items:start;padding:14px 20px;border-bottom:1px solid #EDEFEA">
+              <div style="display:flex;flex-direction:column;font-size:12.5px"><span style="font-weight:500">{{ a.clock }}</span><span style="color:#626A64;font-size:12px">{{ a.time }}</span></div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;min-width:0"><span style="width:26px;height:26px;border-radius:7px;background:#F0EFEA;display:grid;place-items:center;flex:none"><cc-icon name="{{ a.icon }}" size="13"></cc-icon></span>{{ a.agentName }}</div>
+              <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+                <span style="font-size:14px;font-weight:600">{{ a.title }}</span>
+                <span style="font-size:13px;color:#626A64;text-wrap:pretty">{{ a.desc }}</span>
+                <sc-if value="{{ a.hasTarget }}" hint-placeholder-val="{{ false }}"><button onClick="{{ a.openTarget }}" style="align-self:flex-start;display:inline-flex;align-items:center;gap:6px;border:1px solid #E3E6E0;background:#FFFFFF;border-radius:6px;padding:2px 8px;font-size:12px;color:#202522;cursor:pointer;margin-top:2px" style-hover="border-color:#BCC2BA"><cc-icon name="{{ a.targetIcon }}" size="12"></cc-icon>{{ a.targetLabel }}</button></sc-if>
+              </div>
+              <div><span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;white-space:nowrap;background:{{ a.st.bg }};color:{{ a.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ a.st.dot }}"></span>{{ a.st.label }}</span></div>
+              <div style="text-align:right"><sc-if value="{{ a.hasNext }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary" onClick="{{ a.doNext }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:12.5px;padding:5px 10px;border-radius:7px;color:#202522;white-space:nowrap">{{ a.next }}</button></sc-if></div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noArows }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:40px 24px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+              <div style="font-size:15px;font-weight:600">No activity matches these filters.</div>
+              <button class="btn btn-secondary" onClick="{{ clearAct }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:13px;padding:7px 12px;border-radius:8px;color:#202522">Show all activity</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+<sc-if value="{{ isListing }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:40">
+    <div onClick="{{ closeDrawer }}" style="position:absolute;inset:0;background:rgba(32,35,33,0.32);animation:ccFade 180ms ease-out"></div>
+    <div ref="{{ drawerRef }}" role="dialog" aria-modal="true" aria-labelledby="ld-title" style="position:absolute;top:8px;right:8px;bottom:8px;width:min(688px,calc(100vw - 96px));background:#FFFFFF;border-radius:12px;box-shadow:0 16px 48px rgba(32,35,33,0.22);display:flex;flex-direction:column;overflow:hidden;animation:ccDrawer 180ms ease-out">
+      <div style="flex:none;display:flex;align-items:flex-start;gap:12px;padding:18px 24px 16px;border-bottom:1px solid #E3E6E0">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64"><cc-icon name="package" size="13"></cc-icon>Product agent · {{ L.kicker }}</div>
+          <h2 id="ld-title" style="margin:6px 0 0;font-size:19px;font-weight:600;line-height:1.3;letter-spacing:-0.01em">{{ L.name }}</h2>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;white-space:nowrap;margin-top:4px;background:{{ L.st.bg }};color:{{ L.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ L.st.dot }}"></span>{{ L.st.label }}</span>
+        <button data-autofocus="true" aria-label="Close review" onClick="{{ closeDrawer }}" style="width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:#3E4641;display:grid;place-items:center;cursor:pointer" style-hover="background:#F3F2EE"><cc-icon name="x" size="18"></cc-icon></button>
+      </div>
+      <div style="flex:1;min-height:0;overflow:auto;padding:20px 24px 28px;display:flex;flex-direction:column;gap:28px">
+        <sc-if value="{{ L.isWorking }}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:8px;background:#ECEEEA;font-size:13px;color:#3E4A44"><span style="display:inline-flex;animation:ccSpin 1s linear infinite"><cc-icon name="loader" size="14"></cc-icon></span>Product agent is revising this listing from your feedback.</div>
+        </sc-if>
+        <div style="display:grid;grid-template-columns:236px minmax(0,1fr);gap:24px;align-items:start">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-if value="{{ L.hasImages }}" hint-placeholder-val="{{ false }}">
+              <div style="position:relative;aspect-ratio:3/4;background:#EFEDE8;border-radius:10px;overflow:hidden;border:1px solid #E3E6E0">
+                <img src="{{ L.main.src }}" alt="{{ L.main.label }}" style="width:100%;height:100%;object-fit:contain">
+                <button aria-label="Enlarge photo" onClick="{{ L.enlarge }}" style="position:absolute;top:8px;right:8px;width:32px;height:32px;border:0;border-radius:8px;background:rgba(255,255,255,0.94);color:#202522;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 3px rgba(32,35,33,.18)" style-hover="background:#FFFFFF"><cc-icon name="maximize" size="14"></cc-icon></button>
+              </div>
+              <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#626A64"><span style="min-width:0"><span style="font-weight:500;color:#202522">{{ L.main.role }}</span> · {{ L.main.label }}</span><span style="white-space:nowrap">{{ L.idxLabel }}</span></div>
+              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">
+                <sc-for list="{{ L.images }}" as="im" hint-placeholder-count="6">
+                  <button onClick="{{ im.select }}" aria-label="{{ im.label }}" aria-pressed="{{ im.active }}" style="aspect-ratio:1;padding:0;border-radius:7px;overflow:hidden;border:2px solid {{ im.border }};background:#EFEDE8;cursor:pointer"><img src="{{ im.src }}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:{{ im.pos }}"></button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ L.noImages }}" hint-placeholder-val="{{ false }}">
+              <div style="aspect-ratio:3/4;background:#EEECE7;border-radius:10px;border:1px solid #E3E6E0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#7D847F"><cc-icon name="{{ L.icon }}" size="32" stroke="1.25"></cc-icon><span style="font-size:12px;color:#626A64">No photos yet</span></div>
+            </sc-if>
+          </div>
+          <section aria-labelledby="cfd-h" style="display:flex;flex-direction:column;gap:14px">
+            <div>
+              <h3 id="cfd-h" style="margin:0;font-size:15px;font-weight:600;letter-spacing:-0.005em">Confirm a few details</h3>
+              <p style="margin:4px 0 0;font-size:13px;color:#626A64;text-wrap:pretty">{{ L.intro }}</p>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <label for="ld-price" style="font-size:13px;font-weight:500">Price</label>
+                <sc-if value="{{ L.priceMiss }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:500;color:#7A4A00;display:inline-flex;align-items:center;gap:4px"><cc-icon name="alert-circle" size="12"></cc-icon>Needed to publish</span></sc-if>
+                <sc-if value="{{ L.priceByResearch }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:500;color:#8C321A;display:inline-flex;align-items:center;gap:4px"><cc-icon name="search" size="12"></cc-icon>Market research</span></sc-if>
+                <sc-if value="{{ L.priceByYou }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:500;color:#235A3A;display:inline-flex;align-items:center;gap:4px"><cc-icon name="user" size="12"></cc-icon>Provided by you</span></sc-if>
+              </div>
+              <div style="display:grid;grid-template-columns:84px minmax(0,1fr);gap:6px">
+                <select aria-label="Currency" value="{{ L.currency }}" onChange="{{ L.onCurrency }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:7px 8px;color:#202522"><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="USD">USD</option></select>
+                <input id="ld-price" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Not provided" value="{{ L.price }}" onChange="{{ L.onPrice }}" class="input" style="background:{{ L.priceBg }};border:1px solid {{ L.priceBorder }};border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px;color:#202522;width:100%">
+              </div>
+              <sc-if value="{{ L.hasResearch }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#626A64;text-wrap:pretty">{{ L.researchNote }}</span></sc-if>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <label for="ld-stock" style="font-size:13px;font-weight:500">Quantity in stock</label>
+                <sc-if value="{{ L.stockMiss }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:500;color:#7A4A00;display:inline-flex;align-items:center;gap:4px"><cc-icon name="alert-circle" size="12"></cc-icon>Needed to publish</span></sc-if>
+                <sc-if value="{{ L.stockByDefault }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:500;color:#4A524D;display:inline-flex;align-items:center;gap:4px"><cc-icon name="info" size="12"></cc-icon>Default quantity</span></sc-if>
+                <sc-if value="{{ L.stockByYou }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:500;color:#235A3A;display:inline-flex;align-items:center;gap:4px"><cc-icon name="user" size="12"></cc-icon>Provided by you</span></sc-if>
+              </div>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px">
+                <input id="ld-stock" type="number" min="0" step="1" placeholder="Not provided" value="{{ L.stock }}" onChange="{{ L.onStock }}" class="input" style="background:{{ L.stockBg }};border:1px solid {{ L.stockBorder }};border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px;color:#202522;width:100%">
+                <button class="btn btn-secondary" onClick="{{ L.setSingle }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:12.5px;padding:6px 10px;border-radius:8px;color:#202522;white-space:nowrap" style-hover="background:#F3F2EE">Single piece</button>
+              </div>
+              <span style="font-size:11.5px;color:#626A64">Inventory is locked after publishing in this prototype.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label for="ld-cond" style="font-size:13px;font-weight:500">Condition</label>
+                <select id="ld-cond" value="{{ L.condition }}" onChange="{{ L.onCondition }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:13.5px;min-height:38px;padding:7px 8px;color:#202522"><option value="">Not provided</option><option>New</option><option>Pre-owned — excellent</option><option>Pre-owned — good</option><option>Pre-owned — fair</option><option>For parts or repair</option></select>
+              </div>
+              <sc-if value="{{ L.isWatch }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label for="ld-work" style="font-size:13px;font-weight:500">Working condition</label>
+                  <select id="ld-work" value="{{ L.working }}" onChange="{{ L.onWorking }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:13.5px;min-height:38px;padding:7px 8px;color:#202522"><option value="">Not provided</option><option>Running, keeps time</option><option>Running, not timed</option><option>Not tested</option><option>Not running</option></select>
+                </div>
+              </sc-if>
+            </div>
+            <sc-if value="{{ L.isWatch }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <span id="ld-box" style="font-size:13px;font-weight:500">Presentation box</span>
+                <div role="group" aria-labelledby="ld-box" style="display:inline-flex;align-self:flex-start;border:1px solid #D3D7D0;border-radius:8px;overflow:hidden">
+                  <sc-for list="{{ L.boxOpts }}" as="b" hint-placeholder-count="3"><button aria-pressed="{{ b.active }}" onClick="{{ b.pick }}" style="border:0;border-left:{{ b.bl }};background:{{ b.bg }};color:{{ b.fg }};padding:7px 12px;font-size:13px;font-weight:500;cursor:pointer">{{ b.label }}</button></sc-for>
+                </div>
+              </div>
+            </sc-if>
+          </section>
+        </div>
+        <section style="display:flex;flex-direction:column;gap:14px">
+          <h3 style="margin:0;padding-bottom:8px;border-bottom:1px solid #E3E6E0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Listing copy</h3>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <label for="ld-title-in" style="font-size:13px;font-weight:500">Title</label>
+              <span style="font-size:11.5px;font-weight:500;color:{{ L.nameS.fg }};display:inline-flex;align-items:center;gap:4px"><cc-icon name="{{ L.nameS.icon }}" size="12"></cc-icon>{{ L.nameS.label }}</span>
+            </div>
+            <input id="ld-title-in" value="{{ L.title }}" onChange="{{ L.onTitle }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px;color:#202522;width:100%">
+            <sc-if value="{{ L.hasNameNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#626A64">{{ L.nameNote }}</span></sc-if>
+            <sc-if value="{{ L.titleMiss }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#7A4A00">A title is needed to publish.</span></sc-if>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <label for="ld-desc" style="font-size:13px;font-weight:500">Description</label>
+              <span style="font-size:11.5px;font-weight:500;color:{{ L.descS.fg }};display:inline-flex;align-items:center;gap:4px"><cc-icon name="{{ L.descS.icon }}" size="12"></cc-icon>{{ L.descS.label }}</span>
+            </div>
+            <textarea id="ld-desc" rows="6" value="{{ L.desc }}" onChange="{{ L.onDesc }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;line-height:1.55;padding:9px 10px;color:#202522;width:100%;min-height:140px"></textarea>
+            <sc-if value="{{ L.descMiss }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#7A4A00">Add a short description (at least a sentence) to publish.</span></sc-if>
+          </div>
+        </section>
+        <sc-if value="{{ L.hasClaims }}" hint-placeholder-val="{{ false }}">
+          <section style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding-bottom:8px;border-bottom:1px solid #E3E6E0">
+              <h3 style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Claims to check</h3>
+              <span style="font-size:12px;color:#626A64">{{ L.claimsLabel }}</span>
+            </div>
+            <sc-for list="{{ L.claims }}" as="c" hint-placeholder-count="2">
+              <div style="border:1px solid {{ c.border }};background:{{ c.bg }};border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+                <div style="font-size:14px;font-weight:500">“{{ c.text }}”</div>
+                <div style="font-size:12.5px;color:#626A64;text-wrap:pretty">{{ c.why }}</div>
+                <sc-if value="{{ c.open }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="btn btn-secondary" onClick="{{ c.remove }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:12.5px;padding:5px 10px;border-radius:7px;color:#202522" style-hover="background:#F3F2EE">Remove from listing</button>
+                    <button class="btn btn-ghost" onClick="{{ c.verify }}" style="font-weight:500;font-size:12.5px;padding:5px 8px;border-radius:7px;color:#8C321A">Keep — I’ve verified this</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ c.done }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:{{ c.doneFg }}"><cc-icon name="{{ c.doneIcon }}" size="14"></cc-icon><span style="font-weight:500;flex:1">{{ c.doneLabel }}</span><button onClick="{{ c.undo }}" class="btn btn-ghost" style="font-size:12px;font-weight:500;padding:2px 6px;border-radius:6px;color:#3E4641">Undo</button></div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </section>
+        </sc-if>
+        <sc-if value="{{ L.hasObs }}" hint-placeholder-val="{{ false }}">
+          <section style="display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding-bottom:8px;border-bottom:1px solid #E3E6E0;margin-bottom:4px">
+              <h3 style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">What the photos show</h3>
+              <span style="font-size:11.5px;font-weight:500;color:#4A524D;display:inline-flex;align-items:center;gap:4px"><cc-icon name="eye" size="12"></cc-icon>Transcribed, not verified</span>
+            </div>
+            <sc-for list="{{ L.obs }}" as="o" hint-placeholder-count="4">
+              <div style="display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:7px 0;border-bottom:1px solid #EDEFEA">
+                <span style="font-size:12.5px;color:#626A64">{{ o.area }}</span>
+                <span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13.5px">{{ o.text }}</span><sc-if value="{{ o.hasNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#7A4A00">{{ o.note }}</span></sc-if></span>
+                <sc-if value="{{ o.hasImg }}" hint-placeholder-val="{{ false }}"><button onClick="{{ o.view }}" class="btn btn-ghost" style="font-size:12px;font-weight:500;padding:2px 6px;border-radius:6px;color:#8C321A">View photo</button></sc-if>
+              </div>
+            </sc-for>
+          </section>
+        </sc-if>
+        <sc-if value="{{ L.hasDetails }}" hint-placeholder-val="{{ false }}">
+          <section style="display:flex;flex-direction:column;gap:4px">
+            <h3 style="margin:0 0 4px;padding-bottom:8px;border-bottom:1px solid #E3E6E0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Product details</h3>
+            <sc-for list="{{ L.details }}" as="x" hint-placeholder-count="5">
+              <div style="display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:7px 0;border-bottom:1px solid #EDEFEA;font-size:13.5px">
+                <span style="color:#626A64;font-size:12.5px">{{ x.k }}</span><span>{{ x.v }}</span>
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:500;color:{{ x.s.fg }}"><cc-icon name="{{ x.s.icon }}" size="12"></cc-icon>{{ x.s.label }}</span>
+              </div>
+            </sc-for>
+          </section>
+        </sc-if>
+        <sc-if value="{{ L.isWatch }}" hint-placeholder-val="{{ false }}">
+          <section style="display:flex;flex-direction:column;gap:10px">
+            <button onClick="{{ L.toggleOpt }}" aria-expanded="{{ L.optOpen }}" style="display:flex;align-items:center;gap:8px;padding:0 0 8px;border:0;border-bottom:1px solid #E3E6E0;background:none;cursor:pointer;text-align:left;color:#202522">
+              <span style="flex:1;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">Optional specifications</span>
+              <span style="font-size:12px;color:#626A64">{{ L.optLabel }}</span><cc-icon name="{{ L.optChev }}" size="15"></cc-icon>
+            </button>
+            <sc-if value="{{ L.optOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px">
+                <sc-for list="{{ L.optFields }}" as="o" hint-placeholder-count="4">
+                  <div style="display:flex;flex-direction:column;gap:5px">
+                    <label for="{{ o.id }}" style="font-size:13px;font-weight:500">{{ o.label }}</label>
+                    <input id="{{ o.id }}" value="{{ o.value }}" onChange="{{ o.on }}" placeholder="{{ o.ph }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:13.5px;min-height:36px;padding:7px 10px;color:#202522;width:100%">
+                    <sc-if value="{{ o.hasHint }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#626A64">{{ o.hint }}</span></sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </section>
+        </sc-if>
+        <section style="display:flex;flex-direction:column;gap:4px">
+          <button onClick="{{ L.toggleHist }}" aria-expanded="{{ L.histOpen }}" style="display:flex;align-items:center;gap:8px;padding:0 0 8px;margin-bottom:4px;border:0;border-bottom:1px solid #E3E6E0;background:none;cursor:pointer;text-align:left;color:#202522">
+            <span style="flex:1;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">Activity history</span>
+            <sc-if value="{{ L.histMore }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#626A64">{{ L.histLabel }}</span></sc-if><cc-icon name="{{ L.histChev }}" size="15"></cc-icon>
+          </button>
+          <sc-for list="{{ L.history }}" as="h" hint-placeholder-count="3">
+            <div style="display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:12px;padding:5px 0;font-size:13px">
+              <span style="font-weight:500">{{ h.who }}</span><span style="color:#3E4641">{{ h.text }}</span><span style="color:#626A64;white-space:nowrap;font-size:12px">{{ h.time }}</span>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+      <div style="flex:none;border-top:1px solid #E3E6E0;background:#FFFFFF;padding:14px 24px;display:flex;flex-direction:column;gap:12px">
+        <sc-if value="{{ L.fbOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label for="ld-fb" style="font-size:13px;font-weight:500">What should the Product agent change?</label>
+            <textarea id="ld-fb" rows="3" value="{{ L.fb }}" onChange="{{ L.onFb }}" placeholder="e.g. Shorter description, and mention the strap is a replacement." class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;padding:8px 10px;color:#202522;width:100%;min-height:72px"></textarea>
+            <sc-if value="{{ L.fbErr }}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size:12px;color:#A0281C">Add a short note so the agent knows what to change.</span></sc-if>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button class="btn btn-ghost" onClick="{{ L.cancelFb }}" style="font-weight:500;font-size:13px;color:#3E4641;padding:7px 10px;border-radius:8px">Cancel</button>
+              <button class="btn btn-primary" onClick="{{ L.sendFb }}" style="font-weight:500;font-size:13px;padding:7px 12px;border-radius:8px;color:#FFFFFF"><cc-icon name="send" size="14"></cc-icon>Send to Product agent</button>
+            </div>
+          </div>
+        </sc-if>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;min-width:0;font-size:12.5px">
+            <sc-if value="{{ L.ready }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:6px;color:#235A3A;font-weight:500"><cc-icon name="check-circle" size="14"></cc-icon>Ready to publish</span></sc-if>
+            <sc-if value="{{ L.notReady }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:flex-start;gap:6px;color:#7A4A00"><cc-icon name="alert-circle" size="14"></cc-icon><span>Before publishing, still needed: {{ L.missText }}.</span></span></sc-if>
+          </div>
+          <button class="btn btn-ghost" onClick="{{ L.save }}" style="font-weight:500;font-size:13px;color:#3E4641;padding:8px 10px;border-radius:8px">Save draft</button>
+          <sc-if value="{{ L.canFeedback }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary" onClick="{{ L.toggleFb }}" aria-expanded="{{ L.fbOpen }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:13px;padding:8px 12px;border-radius:8px;color:#202522" style-hover="background:#F3F2EE">Request changes</button></sc-if>
+          <button class="btn btn-primary" onClick="{{ L.publish }}" disabled="{{ L.publishDisabled }}" style="font-weight:500;font-size:13px;padding:8px 14px;border-radius:8px;color:#FFFFFF"><cc-icon name="check" size="15"></cc-icon>Approve &amp; publish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ isSupport }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:40">
+    <div onClick="{{ closeDrawer }}" style="position:absolute;inset:0;background:rgba(32,35,33,0.32);animation:ccFade 180ms ease-out"></div>
+    <div ref="{{ drawerRef }}" role="dialog" aria-modal="true" aria-labelledby="sd-title" style="position:absolute;top:8px;right:8px;bottom:8px;width:min(648px,calc(100vw - 96px));background:#FFFFFF;border-radius:12px;box-shadow:0 16px 48px rgba(32,35,33,0.22);display:flex;flex-direction:column;overflow:hidden;animation:ccDrawer 180ms ease-out">
+      <div style="flex:none;display:flex;align-items:flex-start;gap:12px;padding:18px 24px 16px;border-bottom:1px solid #E3E6E0">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64"><cc-icon name="message-square" size="13"></cc-icon>Support agent · Response review</div>
+          <h2 id="sd-title" style="margin:6px 0 0;font-size:19px;font-weight:600;line-height:1.3;letter-spacing:-0.01em">Customer asked about water resistance</h2>
+        </div>
+        <button data-autofocus="true" aria-label="Close review" onClick="{{ closeDrawer }}" style="width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:#3E4641;display:grid;place-items:center;cursor:pointer" style-hover="background:#F3F2EE"><cc-icon name="x" size="18"></cc-icon></button>
+      </div>
+      <div style="flex:1;min-height:0;overflow:auto;padding:20px 24px 28px;display:flex;flex-direction:column;gap:24px">
+        <section style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:30px;height:30px;border-radius:50%;background:#E7E5DF;display:grid;place-items:center;font-size:11px;font-weight:600;color:#3E4641">{{ S.initials }}</span>
+            <div style="flex:1;font-size:13px"><span style="font-weight:600">{{ S.customer }}</span><span style="color:#626A64"> · {{ S.channel }} · {{ S.time }}</span></div>
+          </div>
+          <div style="background:#F3F2EE;border-radius:12px;padding:12px 14px;font-size:14.5px;line-height:1.55">{{ S.msg }}</div>
+        </section>
+        <sc-if value="{{ S.hasFirstReply }}" hint-placeholder-val="{{ false }}">
+          <section style="display:flex;flex-direction:column;gap:8px">
+            <h3 style="margin:0;padding-bottom:8px;border-bottom:1px solid #E3E6E0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">What the agent already answered</h3>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#626A64"><cc-icon name="message-square" size="13"></cc-icon><span style="font-weight:500;color:#3E4641">Support agent</span><span aria-hidden="true">·</span><span>{{ S.firstReplyTime }}</span><span aria-hidden="true">·</span><span>sent</span></div>
+            <div style="background:#F1F3EF;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.55">{{ S.firstReply }}</div>
+          </section>
+        </sc-if>
+        <section style="display:flex;flex-direction:column;gap:8px">
+          <h3 style="margin:0;padding-bottom:8px;border-bottom:1px solid #E3E6E0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Product context</h3>
+          <div style="display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center">
+            <div style="width:52px;height:52px;border-radius:8px;overflow:hidden;background:#EEECE7;border:1px solid #E3E6E0;display:grid;place-items:center">
+              <sc-if value="{{ S.pthumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ S.pthumb.src }}" alt="" style="width:100%;height:100%;object-fit:cover;transform:{{ S.pthumb.t }};transform-origin:{{ S.pthumb.o }}"></sc-if>
+            </div>
+            <div style="min-width:0"><div style="font-size:14px;font-weight:500">{{ S.pname }}</div><div style="font-size:12.5px;color:#626A64">Listing status: {{ S.pst.label }}</div></div>
+            <button onClick="{{ S.openProduct }}" class="btn btn-ghost" style="font-size:12.5px;font-weight:500;padding:3px 6px;border-radius:6px;color:#8C321A">Open product</button>
+          </div>
+          <div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;padding:8px 0 0;font-size:13.5px">
+            <span style="color:#626A64;font-size:12.5px">Seen in photo</span>
+            <span>Case back marked “SEAMASTER · WATERPROOF”. <span style="color:#7A4A00">A marking from manufacture — not a tested rating.</span></span>
+          </div>
+        </section>
+        <section style="display:flex;flex-direction:column;gap:10px">
+          <div>
+            <h3 style="margin:0;font-size:15px;font-weight:600">What the agent needs from you</h3>
+            <p style="margin:4px 0 0;font-size:13px;color:#626A64">Has this watch been pressure-tested? The agent couldn’t verify it, and its follow-up will only say what you confirm.</p>
+          </div>
+          <div role="radiogroup" aria-label="Water resistance" style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ S.options }}" as="o" hint-placeholder-count="3">
+              <label class="radio" for="{{ o.id }}" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid {{ o.border }};background:{{ o.bg }};border-radius:10px;cursor:pointer;transition:border-color 160ms,background 160ms">
+                <input type="radio" id="{{ o.id }}" name="wr" checked="{{ o.checked }}" onChange="{{ o.pick }}">
+                <span class="dot" style="margin-top:2px"></span>
+                <span style="display:flex;flex-direction:column"><span style="font-size:14px;font-weight:500">{{ o.label }}</span><span style="font-size:12.5px;color:#626A64">{{ o.hint }}</span></span>
+              </label>
+            </sc-for>
+          </div>
+          <sc-if value="{{ S.isTested }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="sd-rating" style="font-size:13px;font-weight:500">Tested rating and date</label>
+              <input id="sd-rating" value="{{ S.rating }}" onChange="{{ S.onRating }}" placeholder="e.g. 3 ATM in March 2026" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px;color:#202522;width:100%">
+            </div>
+          </sc-if>
+        </section>
+        <section style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <label for="sd-reply" style="font-size:15px;font-weight:600">Proposed follow-up</label>
+            <span style="display:inline-flex;align-items:center;gap:10px">
+              <sc-if value="{{ S.edited }}" hint-placeholder-val="{{ false }}"><button onClick="{{ S.regen }}" class="btn btn-ghost" style="font-size:12px;font-weight:500;padding:2px 6px;border-radius:6px;color:#8C321A">Rebuild from my answer</button></sc-if>
+              <span style="font-size:11.5px;font-weight:500;color:{{ S.replyS.fg }};display:inline-flex;align-items:center;gap:4px"><cc-icon name="{{ S.replyS.icon }}" size="12"></cc-icon>{{ S.replyS.label }}</span>
+            </span>
+          </div>
+          <textarea id="sd-reply" rows="7" value="{{ S.reply }}" onChange="{{ S.onReply }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;line-height:1.55;padding:10px 12px;color:#202522;width:100%;min-height:150px"></textarea>
+          <span style="font-size:12px;color:#626A64">Sending is simulated — no message reaches a real customer.</span>
+        </section>
+      </div>
+      <div style="flex:none;border-top:1px solid #E3E6E0;padding:14px 24px;display:flex;align-items:center;gap:8px">
+        <div style="flex:1;min-width:0;font-size:12.5px">
+          <sc-if value="{{ S.hasErr }}" hint-placeholder-val="{{ false }}"><span role="alert" style="display:inline-flex;gap:6px;align-items:flex-start;color:#A0281C"><cc-icon name="alert-circle" size="14"></cc-icon>{{ S.err }}</span></sc-if>
+        </div>
+        <button class="btn btn-ghost" onClick="{{ S.save }}" style="font-weight:500;font-size:13px;color:#3E4641;padding:8px 10px;border-radius:8px">Save draft</button>
+        <button class="btn btn-primary" onClick="{{ S.approve }}" style="font-weight:500;font-size:13px;padding:8px 14px;border-radius:8px;color:#FFFFFF"><cc-icon name="send" size="14"></cc-icon>Approve &amp; send reply</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ isCampaign }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:40">
+    <div onClick="{{ closeDrawer }}" style="position:absolute;inset:0;background:rgba(32,35,33,0.32);animation:ccFade 180ms ease-out"></div>
+    <div ref="{{ drawerRef }}" role="dialog" aria-modal="true" aria-labelledby="cd-title" style="position:absolute;top:8px;right:8px;bottom:8px;width:min(688px,calc(100vw - 96px));background:#FFFFFF;border-radius:12px;box-shadow:0 16px 48px rgba(32,35,33,0.22);display:flex;flex-direction:column;overflow:hidden;animation:ccDrawer 180ms ease-out">
+      <div style="flex:none;display:flex;align-items:flex-start;gap:12px;padding:18px 24px 16px;border-bottom:1px solid #E3E6E0">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64"><cc-icon name="megaphone" size="13"></cc-icon>Marketing agent · Campaign draft</div>
+          <h2 id="cd-title" style="margin:6px 0 0;font-size:19px;font-weight:600;line-height:1.3;letter-spacing:-0.01em">Campaign draft ready</h2>
+        </div>
+        <button data-autofocus="true" aria-label="Close review" onClick="{{ closeDrawer }}" style="width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:#3E4641;display:grid;place-items:center;cursor:pointer" style-hover="background:#F3F2EE"><cc-icon name="x" size="18"></cc-icon></button>
+      </div>
+      <div style="flex:1;min-height:0;overflow:auto;padding:20px 24px 28px;display:flex;flex-direction:column;gap:24px">
+        <div style="display:grid;grid-template-columns:236px minmax(0,1fr);gap:24px;align-items:start">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="position:relative;aspect-ratio:3/4;background:#EFEDE8;border-radius:10px;overflow:hidden;border:1px solid #E3E6E0">
+              <img src="{{ K.src }}" alt="{{ K.label }}" style="width:100%;height:100%;object-fit:contain">
+              <button aria-label="Enlarge photo" onClick="{{ K.enlarge }}" style="position:absolute;top:8px;right:8px;width:32px;height:32px;border:0;border-radius:8px;background:rgba(255,255,255,0.94);color:#202522;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 3px rgba(32,35,33,.18)"><cc-icon name="maximize" size="14"></cc-icon></button>
+            </div>
+            <div style="font-size:12px;color:#626A64"><span style="font-weight:500;color:#202522">Selected image</span> · {{ K.label }}<sc-if value="{{ K.isAgentPick }}" hint-placeholder-val="{{ false }}"> · agent’s pick</sc-if></div>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">
+              <sc-for list="{{ K.images }}" as="im" hint-placeholder-count="6">
+                <button onClick="{{ im.pick }}" aria-label="Use {{ im.label }}" aria-pressed="{{ im.active }}" style="aspect-ratio:1;padding:0;border-radius:7px;overflow:hidden;border:2px solid {{ im.border }};background:#EFEDE8;cursor:pointer"><img src="{{ im.src }}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:{{ im.pos }}"></button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="cd-channel" style="font-size:13px;font-weight:500">Intended channel</label>
+              <select id="cd-channel" value="{{ K.channel }}" onChange="{{ K.onChannel }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:7px 8px;color:#202522"><option>Instagram post</option><option>Email newsletter</option><option>Facebook post</option></select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;justify-content:space-between;gap:8px"><label for="cd-head" style="font-size:13px;font-weight:500">Headline</label><span style="font-size:11.5px;color:#626A64">{{ K.hlen }}</span></div>
+              <input id="cd-head" maxlength="60" value="{{ K.headline }}" onChange="{{ K.onHeadline }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px;color:#202522;width:100%">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;justify-content:space-between;gap:8px"><label for="cd-body" style="font-size:13px;font-weight:500">Copy</label><span style="font-size:11.5px;color:#626A64">{{ K.blen }}</span></div>
+              <textarea id="cd-body" rows="6" value="{{ K.body }}" onChange="{{ K.onBody }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;line-height:1.55;padding:9px 10px;color:#202522;width:100%;min-height:140px"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:#3E4641;background:#F6F5F2;border-radius:8px;padding:10px 12px"><cc-icon name="info" size="14"></cc-icon><span>The agent kept the year and water resistance out of the copy — neither is verified yet.</span></div>
+          </div>
+        </div>
+        <section style="display:flex;flex-direction:column;gap:6px">
+          <h3 style="margin:0;padding-bottom:8px;border-bottom:1px solid #E3E6E0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Linked product</h3>
+          <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;flex-wrap:wrap"><span style="font-weight:500">{{ K.pname }}</span><span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;background:{{ K.pst.bg }};color:{{ K.pst.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ K.pst.dot }}"></span>{{ K.pst.label }}</span></div>
+          <div style="font-size:12.5px;color:#626A64">{{ K.listingNote }}</div>
+        </section>
+      </div>
+      <div style="flex:none;border-top:1px solid #E3E6E0;padding:14px 24px;display:flex;align-items:center;gap:8px">
+        <div style="flex:1;min-width:0;font-size:12.5px;color:#626A64">
+          <sc-if value="{{ K.hasErr }}" hint-placeholder-val="{{ false }}"><span role="alert" style="color:#A0281C">{{ K.err }}</span></sc-if>
+          <sc-if value="{{ K.notErr }}" hint-placeholder-val="{{ true }}"><span>Approving saves the draft. No ad is published.</span></sc-if>
+        </div>
+        <button class="btn btn-ghost" onClick="{{ K.save }}" style="font-weight:500;font-size:13px;color:#3E4641;padding:8px 10px;border-radius:8px">Save draft</button>
+        <button class="btn btn-primary" onClick="{{ K.approve }}" style="font-weight:500;font-size:13px;padding:8px 14px;border-radius:8px;color:#FFFFFF"><cc-icon name="check" size="15"></cc-icon>Approve draft</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:45;display:grid;place-items:center;padding:24px">
+    <div onClick="{{ M.close }}" style="position:absolute;inset:0;background:rgba(32,35,33,0.4);animation:ccFade 180ms ease-out"></div>
+    <div ref="{{ modalRef }}" role="dialog" aria-modal="true" aria-labelledby="am-title" style="position:relative;width:min(880px,100%);max-height:calc(100vh - 48px);background:#FFFFFF;border-radius:12px;box-shadow:0 20px 56px rgba(32,35,33,0.26);display:flex;flex-direction:column;overflow:hidden;animation:ccPop 180ms ease-out">
+      <div style="flex:none;display:flex;align-items:center;gap:16px;padding:18px 24px;border-bottom:1px solid #E3E6E0">
+        <h2 id="am-title" style="margin:0;font-size:18px;font-weight:600;letter-spacing:-0.01em">Add product</h2>
+        <ol aria-label="Steps" style="list-style:none;margin:0 0 0 12px;padding:0;display:flex;align-items:center;gap:10px;flex:1">
+          <sc-for list="{{ M.steps }}" as="t" hint-placeholder-count="3">
+            <li style="display:flex;align-items:center;gap:8px">
+              <span style="width:22px;height:22px;border-radius:6px;background:{{ t.bg }};color:{{ t.fg }};border:1px solid {{ t.border }};display:grid;place-items:center;font-size:11.5px;font-weight:600">
+                <sc-if value="{{ t.isDone }}" hint-placeholder-val="{{ false }}"><cc-icon name="check" size="12" stroke="2.5"></cc-icon></sc-if>
+                <sc-if value="{{ t.notDone }}" hint-placeholder-val="{{ true }}">{{ t.n }}</sc-if>
+              </span>
+              <span style="font-size:13px;font-weight:500;color:{{ t.lfg }}">{{ t.label }}</span>
+              <sc-if value="{{ t.hasLine }}" hint-placeholder-val="{{ true }}"><span aria-hidden="true" style="width:28px;height:1px;background:#D3D7D0"></span></sc-if>
+            </li>
+          </sc-for>
+        </ol>
+        <sc-if value="{{ M.canClose }}" hint-placeholder-val="{{ true }}"><button aria-label="Close" onClick="{{ M.close }}" style="width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:#3E4641;display:grid;place-items:center;cursor:pointer" style-hover="background:#F3F2EE"><cc-icon name="x" size="18"></cc-icon></button></sc-if>
+      </div>
+      <div style="flex:1;min-height:0;overflow:auto;padding:24px">
+        <sc-if value="{{ M.s1 }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div onDragOver="{{ M.onDragOver }}" onDragLeave="{{ M.onDragLeave }}" onDrop="{{ M.onDrop }}" style="border:1.5px dashed {{ M.dropBorder }};background:{{ M.dropBg }};border-radius:12px;padding:28px;display:flex;align-items:center;gap:20px;transition:border-color 160ms,background 160ms">
+              <span style="width:48px;height:48px;border-radius:12px;background:#FFFFFF;border:1px solid #E3E6E0;display:grid;place-items:center;color:#202522;flex:none"><cc-icon name="upload" size="22"></cc-icon></span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:15px;font-weight:600">{{ M.dropText }}</div>
+                <div style="font-size:13px;color:#626A64">JPG or PNG. Several photos become one product — choose which one shoppers see first.</div>
+              </div>
+              <div style="display:flex;gap:8px;flex:none">
+                <button class="btn btn-secondary" onClick="{{ M.pick }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:13px;padding:8px 12px;border-radius:8px;color:#202522" style-hover="background:#F3F2EE"><cc-icon name="image" size="15"></cc-icon>Choose files</button>
+                <button class="btn btn-secondary" onClick="{{ M.useSample }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:13px;padding:8px 12px;border-radius:8px;color:#202522" style-hover="background:#F3F2EE"><cc-icon name="watch" size="15"></cc-icon>Use sample watch</button>
+              </div>
+              <input ref="{{ fileRef }}" type="file" accept="image/*" multiple="{{ true }}" onChange="{{ M.onFiles }}" aria-label="Choose product photos" tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
+            </div>
+            <sc-if value="{{ M.hasErrors }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:8px;background:#FBE7E4;color:#7E2217;font-size:13px">
+                <sc-for list="{{ M.errors }}" as="e" hint-placeholder-count="1"><span style="display:flex;gap:6px;align-items:center"><cc-icon name="alert-circle" size="14"></cc-icon>{{ e.t }}</span></sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ M.busy }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;gap:8px;font-size:13px;color:#3E4641"><span style="display:inline-flex;animation:ccSpin 1s linear infinite"><cc-icon name="loader" size="14"></cc-icon></span>{{ M.busyLabel }}</div></sc-if>
+            <sc-if value="{{ M.hasImages }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:baseline;justify-content:space-between">
+                <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">{{ M.countLabel }}</span>
+                <span style="font-size:12px;color:#626A64">Select a photo’s star to make it the cover</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(124px,1fr));gap:12px">
+                <sc-for list="{{ M.images }}" as="im" hint-placeholder-count="6">
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <div style="position:relative;aspect-ratio:3/4;border-radius:10px;overflow:hidden;border:2px solid {{ im.border }};background:#EFEDE8">
+                      <img src="{{ im.src }}" alt="{{ im.label }}" style="width:100%;height:100%;object-fit:cover">
+                      <button onClick="{{ im.remove }}" aria-label="{{ im.removeLabel }}" style="position:absolute;top:6px;right:6px;width:28px;height:28px;border:0;border-radius:7px;background:rgba(255,255,255,0.94);color:#202522;display:grid;place-items:center;cursor:pointer" style-hover="background:#FFFFFF;color:#A0281C"><cc-icon name="x" size="14"></cc-icon></button>
+                      <sc-if value="{{ im.isCover }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:6px;bottom:6px;display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:5px;background:#B84324;color:#FFFFFF;font-size:11.5px;font-weight:500"><cc-icon name="star" size="11"></cc-icon>Cover</span></sc-if>
+                      <sc-if value="{{ im.notCover }}" hint-placeholder-val="{{ false }}"><button onClick="{{ im.setCover }}" aria-label="{{ im.coverLabel }}" style="position:absolute;left:6px;bottom:6px;display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border:0;border-radius:5px;background:rgba(255,255,255,0.94);color:#202522;font-size:11.5px;font-weight:500;cursor:pointer" style-hover="background:#FFFFFF"><cc-icon name="star" size="11"></cc-icon>Set cover</button></sc-if>
+                    </div>
+                    <span style="font-size:12px;color:#626A64;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ im.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <div style="display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:#3E4641;background:#F6F5F2;border-radius:8px;padding:10px 12px"><cc-icon name="info" size="14"></cc-icon><span>Photos are all the agents need. The Product agent writes the listing, the Research agent suggests a price from comparable listings, and quantity starts at 1. You can change anything when you review it.</span></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ M.sGen }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:32px;align-items:start;padding:8px 0 16px">
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">
+              <sc-for list="{{ M.thumbs }}" as="t" hint-placeholder-count="6"><div style="aspect-ratio:1;border-radius:7px;overflow:hidden;background:#EFEDE8;border:1px solid #E3E6E0"><img src="{{ t.src }}" alt="" style="width:100%;height:100%;object-fit:cover"></div></sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div><div style="font-size:15px;font-weight:600">Your agents are preparing the listing</div><div style="font-size:13px;color:#626A64">Product agent writes the listing; Research agent prices it from comparable listings. Simulated in this demo — usually a few seconds.</div></div>
+              <ol role="status" aria-live="polite" style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px">
+                <sc-for list="{{ M.gen }}" as="g" hint-placeholder-count="4">
+                  <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:{{ g.fg }};font-weight:{{ g.weight }}">
+                    <sc-if value="{{ g.done }}" hint-placeholder-val="{{ false }}"><span style="width:20px;height:20px;border-radius:6px;background:#E5EFE7;color:#235A3A;display:grid;place-items:center"><cc-icon name="check" size="13" stroke="2.5"></cc-icon></span></sc-if>
+                    <sc-if value="{{ g.active }}" hint-placeholder-val="{{ false }}"><span style="width:20px;height:20px;display:grid;place-items:center;color:#B84324"><span style="display:inline-flex;animation:ccSpin 1s linear infinite"><cc-icon name="loader" size="16" stroke="2"></cc-icon></span></span></sc-if>
+                    <sc-if value="{{ g.pending }}" hint-placeholder-val="{{ true }}"><span style="width:20px;height:20px;border-radius:6px;border:1.5px solid #D3D7D0"></span></sc-if>
+                    {{ g.label }}
+                  </li>
+                </sc-for>
+              </ol>
+              <sc-if value="{{ M.hasGenError }}" hint-placeholder-val="{{ false }}">
+                <div role="alert" style="display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:8px;background:#FBE7E4;color:#7E2217;font-size:13px">
+                  <span>{{ M.genError }}</span>
+                  <div style="display:flex;gap:8px"><button class="btn btn-primary" onClick="{{ M.retryGen }}" style="font-weight:500;font-size:12.5px;padding:6px 12px;border-radius:7px;color:#FFFFFF"><cc-icon name="refresh" size="13"></cc-icon>Try again</button><button class="btn btn-ghost" onClick="{{ M.backFromError }}" style="font-weight:500;font-size:12.5px;color:#3E4641">Back to photos</button></div>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+      <sc-if value="{{ M.notGen }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:none;border-top:1px solid #E3E6E0;padding:14px 24px;display:flex;align-items:center;gap:8px">
+          <div style="flex:1;min-width:0;font-size:12.5px">
+            <sc-if value="{{ M.hasErr }}" hint-placeholder-val="{{ false }}"><span role="alert" style="display:inline-flex;gap:6px;align-items:center;color:#A0281C"><cc-icon name="alert-circle" size="14"></cc-icon>{{ M.err }}</span></sc-if>
+          </div>
+          <button class="btn btn-ghost" onClick="{{ M.saveDraft }}" style="font-weight:500;font-size:13px;color:#3E4641;padding:8px 10px;border-radius:8px">Save as draft</button>
+          <button class="btn btn-primary" onClick="{{ M.next }}" style="font-weight:500;font-size:13px;padding:8px 14px;border-radius:8px;color:#FFFFFF">{{ M.nextLabel }}<cc-icon name="arrow-right" size="14"></cc-icon></button>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ lbOpen }}" hint-placeholder-val="{{ false }}">
+  <div ref="{{ lightboxRef }}" role="dialog" aria-modal="true" aria-label="Photo viewer" onClick="{{ LB.close }}" style="position:fixed;inset:0;z-index:60;background:rgba(20,22,21,0.92);display:flex;flex-direction:column;animation:ccFade 160ms ease-out">
+    <div onClick="{{ LB.stop }}" style="flex:none;display:flex;align-items:center;gap:12px;padding:14px 20px;color:#ECEDEA">
+      <span style="flex:1;font-size:13.5px"><span style="font-weight:600">{{ LB.label }}</span><span style="color:#9AA29C"> · {{ LB.idxLabel }}</span></span>
+      <button data-autofocus="true" aria-label="Close photo viewer" onClick="{{ LB.close }}" style="width:36px;height:36px;border:0;border-radius:8px;background:#2C302D;color:#FFFFFF;display:grid;place-items:center;cursor:pointer" style-hover="background:#3A3F3B"><cc-icon name="x" size="18"></cc-icon></button>
+    </div>
+    <div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:16px;padding:0 20px 24px">
+      <sc-if value="{{ LB.multi }}" hint-placeholder-val="{{ false }}"><button aria-label="Previous photo" onClick="{{ LB.prev }}" style="width:44px;height:44px;border:0;border-radius:10px;background:#2C302D;color:#FFFFFF;display:grid;place-items:center;cursor:pointer;flex:none" style-hover="background:#3A3F3B"><cc-icon name="chevron-left" size="20"></cc-icon></button></sc-if>
+      <img onClick="{{ LB.stop }}" src="{{ LB.src }}" alt="{{ LB.label }}" style="max-width:min(100%,1000px);max-height:100%;object-fit:contain;border-radius:8px;min-width:0">
+      <sc-if value="{{ LB.multi }}" hint-placeholder-val="{{ false }}"><button aria-label="Next photo" onClick="{{ LB.next }}" style="width:44px;height:44px;border:0;border-radius:10px;background:#2C302D;color:#FFFFFF;display:grid;place-items:center;cursor:pointer;flex:none" style-hover="background:#3A3F3B"><cc-icon name="chevron-right" size="20"></cc-icon></button></sc-if>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ confirmOpen }}" hint-placeholder-val="{{ false }}">
+  <div class="dialog-backdrop" style="z-index:70;background:rgba(32,35,33,0.45);animation:ccFade 160ms ease-out">
+    <div ref="{{ confirmRef }}" class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="rs-title" aria-describedby="rs-body" style="background:#FFFFFF;border-radius:12px;padding:22px;gap:10px;width:min(420px,100%)">
+      <div id="rs-title" class="dialog-title" style="font-size:17px;font-weight:600">Reset the demo?</div>
+      <div id="rs-body" class="dialog-body" style="font-size:13.5px;color:#3E4641;opacity:1">This restores the original products, decisions, conversations and agent activity. Products you added will be removed.</div>
+      <div class="dialog-actions" style="gap:8px">
+        <button data-autofocus="true" class="btn btn-secondary" onClick="{{ cancelReset }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:13px;padding:8px 12px;border-radius:8px;color:#202522">Cancel</button>
+        <button class="btn btn-primary" onClick="{{ doReset }}" style="font-weight:500;font-size:13px;padding:8px 14px;border-radius:8px;color:#FFFFFF"><cc-icon name="rotate-ccw" size="14"></cc-icon>Reset demo</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+<div aria-live="polite" role="status" style="position:fixed;left:248px;bottom:24px;z-index:80">
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:flex-start;gap:12px;width:420px;max-width:calc(100vw - 272px);background:#202321;color:#ECEDEA;border-radius:10px;padding:14px 14px 14px 16px;box-shadow:0 12px 32px rgba(32,35,33,.28);animation:ccPop 180ms ease-out">
+      <span style="color:#8FCFA4;padding-top:1px"><cc-icon name="check-circle" size="18"></cc-icon></span>
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+        <span style="font-size:14px;font-weight:600;color:#FFFFFF">{{ toast.title }}</span>
+        <span style="font-size:13px;color:#C4CAC5;line-height:1.45">{{ toast.body }}</span>
+        <sc-if value="{{ toast.hasAction }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toast.doAction }}" style="align-self:flex-start;margin-top:6px;border:0;background:none;padding:0;color:#F2A68F;font-size:13px;font-weight:500;cursor:pointer;text-decoration:underline;text-underline-offset:3px">{{ toast.action }}</button></sc-if>
+      </div>
+      <button aria-label="Dismiss" onClick="{{ closeToast }}" style="width:26px;height:26px;border:0;border-radius:6px;background:transparent;color:#C4CAC5;display:grid;place-items:center;cursor:pointer" style-hover="background:#2C302D;color:#FFFFFF"><cc-icon name="x" size="14"></cc-icon></button>
+    </div>
+  </sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;overview&quot;,&quot;products&quot;,&quot;review&quot;,&quot;conversations&quot;,&quot;activity&quot;],&quot;default&quot;:&quot;overview&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;fastSimulation&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { ready: false, data: null, route: 'overview', productId: null, search: '', filter: 'all', actAgent: 'all', actStatus: 'all', queueTab: 'pending', convoId: 'c1', composer: '', expanded: {}, drawer: null, gIdx: 0, dIdx: 0, lightbox: null, modal: null, menu: null, confirmReset: false, toast: null, fbOpen: false, fb: '', fbErr: false, optOpen: false, histOpen: false, supErr: '', campErr: '', detailBuf: null, now: Date.now() };
+  KEY = 'commercecrew-demo-v4';
+  R = { drawer: React.createRef(), modal: React.createRef(), lightbox: React.createRef(), confirm: React.createRef() };
+  mainRef = React.createRef();
+  fileRef = React.createRef();
+  _stack = [];
+  FOC = 'button:not([disabled]),[href],input:not([disabled]):not([type="file"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  T = {
+    working: { label: 'Working', fg: '#3E4A44', bg: '#ECEEEA', dot: '#6B7770' },
+    needs_input: { label: 'Needs your input', fg: '#7A4A00', bg: '#FBF0DA', dot: '#C98A12' },
+    completed: { label: 'Completed', fg: '#235A3A', bg: '#E5EFE7', dot: '#2F7A4C' },
+    failed: { label: 'Failed', fg: '#A0281C', bg: '#FBE7E4', dot: '#C8382A' },
+    draft: { label: 'Draft', fg: '#4A524D', bg: '#EEEFEA', dot: '#8C948E' },
+    needs_review: { label: 'Needs review', fg: '#7A4A00', bg: '#FBF0DA', dot: '#C98A12' },
+    published: { label: 'Published', fg: '#235A3A', bg: '#E5EFE7', dot: '#2F7A4C' },
+    waiting: { label: 'Waiting for you', fg: '#7A4A00', bg: '#FBF0DA', dot: '#C98A12' },
+    agent: { label: 'Agent handling', fg: '#3E4A44', bg: '#ECEEEA', dot: '#6B7770' },
+    merchant: { label: 'You’re handling', fg: '#8C321A', bg: '#F8ECE7', dot: '#B84324' },
+    resolved: { label: 'Resolved', fg: '#235A3A', bg: '#E5EFE7', dot: '#2F7A4C' },
+  };
+  SRC = { seen: { label: 'Seen in photo', icon: 'eye', fg: '#4A524D' }, ai: { label: 'AI suggestion', icon: 'circle-dashed', fg: '#8C321A' }, you: { label: 'Provided by you', icon: 'user', fg: '#235A3A' } };
+
+  componentDidMount() {
+    this._prevState = this.state;
+    const boot = () => {
+      if (!window.CCDemo) { this._bt = setTimeout(boot, 40); return; }
+      window.CCDemo.speed = this.props.fastSimulation ? 0.35 : 1;
+      let data = null;
+      try { const raw = localStorage.getItem(this.KEY); if (raw) { const x = JSON.parse(raw); if (x && x.v === window.CCDemo.VERSION) data = x; } } catch (e) {}
+      const st = this.props.startScreen || 'overview';
+      this.setState({ ready: true, data: data || window.CCDemo.seed(), route: ['overview', 'products', 'review', 'conversations', 'activity'].includes(st) ? st : 'overview' });
+    };
+    boot();
+    this._kd = e => this.onKey(e);
+    document.addEventListener('keydown', this._kd);
+    this._iv = setInterval(() => this.setState({ now: Date.now() }), 30000);
+  }
+  componentWillUnmount() { clearTimeout(this._bt); clearInterval(this._iv); clearTimeout(this._tt); clearTimeout(this._pt); document.removeEventListener('keydown', this._kd); }
+  componentDidUpdate(pp) {
+    // dc-runtime passes only prevProps, so keep our own snapshot of the previous state.
+    const ps = this._prevState || {};
+    this._prevState = this.state;
+    if (window.CCDemo && pp.fastSimulation !== this.props.fastSimulation) window.CCDemo.speed = this.props.fastSimulation ? 0.35 : 1;
+    if (ps.data !== this.state.data && this.state.data) {
+      clearTimeout(this._pt);
+      this._pt = setTimeout(() => {
+        const d = this.state.data;
+        try { localStorage.setItem(this.KEY, JSON.stringify(d)); }
+        catch (e) { try { localStorage.setItem(this.KEY, JSON.stringify(d, (k, v) => k === 'images' && Array.isArray(v) ? v.filter(i => !String(i.src).startsWith('data:')) : v)); } catch (e2) {} }
+      }, 400);
+    }
+    const a = this.top(ps), b = this.top(this.state);
+    if (a !== b) {
+      const order = ['drawer', 'modal', 'lightbox', 'confirm'];
+      const opened = b && (!a || order.indexOf(b) > order.indexOf(a));
+      if (opened) { this._stack.push(document.activeElement); this.focusInto(b); }
+      else { const r = this._stack.pop(); if (b) this.focusInto(b); else if (r && r.isConnected) setTimeout(() => r.focus(), 0); }
+    }
+  }
+  focusInto(k) { setTimeout(() => { const el = this.R[k] && this.R[k].current; if (!el) return; const f = el.querySelector('[data-autofocus]') || el.querySelector(this.FOC); if (f) f.focus(); }, 40); }
+  top(s) { return s.confirmReset ? 'confirm' : s.lightbox ? 'lightbox' : s.modal ? 'modal' : s.drawer ? 'drawer' : null; }
+  onKey(e) {
+    const s = this.state;
+    if (e.key === 'Escape') {
+      if (s.menu) return this.setState({ menu: null });
+      if (s.confirmReset) return this.setState({ confirmReset: false });
+      if (s.lightbox) return this.setState({ lightbox: null });
+      if (s.modal) { if (s.modal.step !== 2 || s.modal.genError) this.setState({ modal: null }); return; }
+      if (s.drawer) return this.setState({ drawer: null });
+      return;
+    }
+    if (s.lightbox && !s.confirmReset && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) { this.lbStep(e.key === 'ArrowRight' ? 1 : -1); return; }
+    if (e.key === 'Tab') {
+      const t = this.top(s); if (!t) return;
+      const el = this.R[t].current; if (!el) return;
+      const f = Array.from(el.querySelectorAll(this.FOC)).filter(x => x.offsetParent !== null);
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (!el.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+      else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }
+
+  // ── helpers
+  P(id, d) { return (d || this.state.data).products.find(p => p.id === id); }
+  mut(fn) {
+    this.setState(s => {
+      const src = s.data;
+      const d = JSON.parse(JSON.stringify(src, (k, v) => k === 'images' ? undefined : v));
+      d.products.forEach(p => { const o = src.products.find(x => x.id === p.id); p.images = o ? o.images : []; });
+      fn(d);
+      return { data: d };
+    });
+  }
+  setP(pid, patch) { this.mut(d => { const p = this.P(pid, d); if (p) Object.assign(p, patch, { updated: Date.now() }); }); }
+  list(a) { return a.length <= 1 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
+  money(v, cur) { const n = Number(v); if (!(n > 0)) return null; try { return new Intl.NumberFormat('en-IE', { style: 'currency', currency: cur || 'EUR', maximumFractionDigits: n % 1 ? 2 : 0 }).format(n); } catch (e) { return String(v); } }
+  rel(ts) { const m = (this.state.now - ts) / 60000; if (m < 1) return 'Just now'; if (m < 60) return Math.round(m) + ' min ago'; if (m < 1440) return Math.round(m / 60) + ' h ago'; const dd = Math.round(m / 1440); return dd === 1 ? 'Yesterday' : dd + ' days ago'; }
+  clock(ts) { const t = new Date(ts); return String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0'); }
+  toast(t) { clearTimeout(this._tt); this.setState({ toast: t }); this._tt = setTimeout(() => this.setState({ toast: null }), 6500); }
+  go(route, extra) { this.setState(Object.assign({ route, menu: null, drawer: null }, extra || {})); const m = this.mainRef.current; if (m) m.scrollTop = 0; }
+  uiReset() { return { gIdx: 0, fbOpen: false, fb: '', fbErr: false, optOpen: false, histOpen: false, supErr: '', campErr: '', menu: null }; }
+  openProduct(id) { this.go('product', { productId: id, dIdx: 0, detailBuf: null }); }
+  openListing(pid) { const d = this.state.data.decisions.find(x => x.kind === 'listing' && x.productId === pid && x.status === 'pending'); this.setState(Object.assign({ drawer: { type: 'listing', productId: pid, decisionId: d ? d.id : null } }, this.uiReset())); }
+  openDecision(id) {
+    const d = this.state.data.decisions.find(x => x.id === id); if (!d) return;
+    if (d.status !== 'pending') { if (d.kind === 'support') this.go('conversations', { convoId: d.convoId }); else this.openProduct(d.productId); return; }
+    if (d.state === 'working') return;
+    const extra = d.kind === 'listing' ? {} : {};
+    this.setState(Object.assign({ drawer: { type: d.kind, decisionId: d.id, productId: d.productId } }, this.uiReset(), extra));
+  }
+  openTarget(t) { if (!t) return; if (t.type === 'product') this.openProduct(t.id); else if (t.type === 'conversation') this.go('conversations', { convoId: t.id }); else if (t.type === 'decision') this.openDecision(t.id); }
+  thumbOf(p) {
+    const im = (p.images || []).find(i => i.id === p.coverId) || (p.images || [])[0];
+    if (im) return { photo: true, noPhoto: false, src: im.src, t: 'scale(' + (im.zoom || 1) + ')', o: (im.fx ?? 50) + '% ' + (im.fy ?? 50) + '%', bg: '#EEECE7' };
+    return { photo: false, noPhoto: true, icon: p.icon || 'package', bg: '#EEECE7' };
+  }
+  resolveDecisions(d, pred, outcome) {
+    const ids = [];
+    d.decisions.forEach(x => { if (x.status === 'pending' && pred(x)) { x.status = 'resolved'; x.outcome = outcome; x.resolvedAt = Date.now(); x.state = null; ids.push(x.id); } });
+    d.activity.forEach(a => { if (ids.includes(a.decisionId) && a.status === 'needs_input') { a.status = 'completed'; a.next = null; a.desc = a.desc + ' Resolved by you.'; } });
+  }
+  logAct(d, a) { d.activity.unshift(Object.assign({ id: window.CCDemo.uid('a'), ts: Date.now() }, a)); }
+
+  // ── listing review
+  claim(pid, cid, to) {
+    this.mut(d => {
+      const p = this.P(pid, d); const c = p.claims.find(x => x.id === cid); const from = c.state;
+      if (to === 'removed') p.description = p.description.replace(c.text, '').replace(/\s{2,}/g, ' ').trim();
+      if (to === 'open' && from === 'removed' && !p.description.includes(c.text)) p.description = (p.description.trim() + ' ' + c.text).trim();
+      c.state = to; p.updated = Date.now();
+    });
+  }
+  saveListing(pid) {
+    this.mut(d => { const p = this.P(pid, d); p.history.unshift({ ts: Date.now(), who: 'You', text: 'Saved draft' }); p.updated = Date.now(); });
+    this.setState({ drawer: null });
+    this.toast({ title: 'Draft saved', body: 'Your changes are kept. Nothing was published.' });
+  }
+  publish(pid) {
+    const p0 = this.P(pid); if (!window.CCDemo.requirements(p0).every(r => r.ok)) return;
+    this.mut(d => {
+      const p = this.P(pid, d);
+      p.status = 'published'; p.updated = Date.now();
+      p.history.unshift({ ts: Date.now(), who: 'You', text: 'Approved & published in demo' });
+      this.resolveDecisions(d, x => x.kind === 'listing' && x.productId === pid, 'Published in demo');
+      const rm = p.claims.filter(c => c.state === 'removed').length, vf = p.claims.filter(c => c.state === 'verified').length;
+      this.logAct(d, { agent: 'product', title: 'Listing published in demo', desc: 'You approved “' + p.name + '”. It’s in the demo catalog — nothing was sent to Shopify.', status: 'completed', target: { type: 'product', id: pid, label: p.name },
+        details: ['Price ' + this.money(p.price, p.currency) + ' · quantity ' + p.stock, p.claims.length ? rm + ' claim' + (rm === 1 ? '' : 's') + ' removed, ' + vf + ' verified by you' : 'No claims to check'] });
+    });
+    this.setState({ drawer: null });
+    this.toast({ title: 'Published in demo', body: p0.name + ' is now listed in the demo catalog. No real Shopify listing was created.', action: 'View product', onAction: () => this.openProduct(pid) });
+  }
+  sendFeedback(pid) {
+    const fb = this.state.fb.trim(); if (!fb) return this.setState({ fbErr: true });
+    const decId = this.state.drawer.decisionId; const actId = window.CCDemo.uid('a');
+    this.mut(d => {
+      const p = this.P(pid, d); const x = d.decisions.find(y => y.id === decId);
+      if (x) x.state = 'working';
+      p.history.unshift({ ts: Date.now(), who: 'You', text: 'Requested changes: “' + fb.slice(0, 90) + '”' });
+      d.activity.unshift({ id: actId, ts: Date.now(), agent: 'product', title: 'Revising listing', desc: 'Applying your feedback to “' + p.name + '”.', status: 'working', target: { type: 'product', id: pid, label: p.name }, details: ['Your note: “' + fb.slice(0, 120) + '”'] });
+    });
+    this.setState({ drawer: null, fb: '', fbOpen: false, fbErr: false });
+    this.toast({ title: 'Sent to Product agent', body: 'The revised draft will return to Needs your attention.' });
+    window.CCDemo.agents.reviseListing(this.P(pid), fb).then(patch => {
+      this.mut(d => {
+        const p = this.P(pid, d); if (!p) return;
+        p.description = patch.description; p.descSrc = 'ai'; p.updated = Date.now();
+        p.history.unshift({ ts: Date.now(), who: 'Product agent', text: patch.note });
+        const x = d.decisions.find(y => y.id === decId); if (x) { x.state = null; x.revised = true; x.created = Date.now(); }
+        const a = d.activity.find(y => y.id === actId);
+        if (a) Object.assign(a, { title: 'Revised the listing', desc: patch.note, status: x ? 'needs_input' : 'completed', ts: Date.now(), decisionId: decId, next: x ? 'Confirm details' : null });
+      });
+    });
+  }
+
+  // ── support
+  convo(d, id) { return d.conversations.find(c => c.id === id); }
+  setAnswer(cid, k) { this.mut(d => { const c = this.convo(d, cid); c.answer = k; }); this.setState({ supErr: '' }); }
+  approveSupport(decId) {
+    const s = this.state, dec = s.data.decisions.find(x => x.id === decId), c = this.convo(s.data, dec.convoId);
+    const first = c.customer.split(' ')[0];
+    const reply = c.replyEdited ? c.reply : window.CCDemo.supportReply(c.answer, c.rating, first);
+    if (!c.answer) return this.setState({ supErr: 'Choose what’s been verified so the reply is accurate.' });
+    if (c.answer === 'tested' && !c.rating.trim()) return this.setState({ supErr: 'Add the tested rating, for example “3 ATM in March 2026”.' });
+    if (/\[.*\]/.test(reply)) return this.setState({ supErr: 'Replace the bracketed placeholder in the response.' });
+    if (!reply.trim()) return this.setState({ supErr: 'The response can’t be empty.' });
+    const label = { tested: 'Pressure-tested: ' + c.rating, not_tested: 'Not tested — advise keeping dry', not_resistant: 'Not water resistant' }[c.answer];
+    this.mut(d => {
+      const cc = this.convo(d, dec.convoId);
+      cc.messages.push({ from: 'agent', agent: 'support', text: reply, ts: Date.now(), note: 'Approved by you · sent in demo' });
+      cc.state = 'resolved'; cc.ts = Date.now(); cc.reply = reply;
+      this.resolveDecisions(d, x => x.id === decId, 'Reply sent in demo');
+      const p = this.P(dec.productId, d);
+      if (p) { p.details = p.details.filter(x => x.k !== 'Water resistance'); p.details.push({ k: 'Water resistance', v: label, src: 'you' }); p.history.unshift({ ts: Date.now(), who: 'You', text: 'Confirmed water resistance for a customer reply' }); }
+      this.logAct(d, { agent: 'support', title: 'Sent your approved reply', desc: 'Answered ' + first + ' about water resistance using your verified information. Sent in demo only.', status: 'completed', target: { type: 'conversation', id: cc.id, label: cc.customer }, details: ['Your answer: ' + label, 'Saved to the product details'] });
+    });
+    this.setState({ drawer: null });
+    this.toast({ title: 'Reply approved — sent in demo', body: 'No message was delivered to a real customer.', action: 'Open conversation', onAction: () => this.go('conversations', { convoId: dec.convoId }) });
+  }
+
+  // ── campaign
+  setCamp(patch) { this.mut(d => Object.assign(d.campaign, patch)); this.setState({ campErr: '' }); }
+  approveCampaign(decId) {
+    const c = this.state.data.campaign;
+    if (!c.headline.trim() || !c.body.trim()) return this.setState({ campErr: 'Add a headline and copy before approving.' });
+    this.mut(d => {
+      d.campaign.status = 'approved';
+      this.resolveDecisions(d, x => x.id === decId, 'Draft approved · not published');
+      this.logAct(d, { agent: 'marketing', title: 'Campaign draft approved', desc: d.campaign.channel + ' draft for the Seamaster De Ville. Saved as approved — no ad was published.', status: 'completed', target: { type: 'product', id: d.campaign.productId, label: 'Omega Seamaster De Ville' }, details: ['Headline: “' + d.campaign.headline + '”'] });
+    });
+    this.setState({ drawer: null });
+    this.toast({ title: 'Campaign draft approved', body: 'Saved as an approved draft. No advertisement was published.' });
+  }
+
+  // ── add product
+  // Two steps: 1 = photos, 2 = generating. Photos are the only input; price and quantity come from the agents.
+  setM(patch) { this.setState(s => s.modal ? { modal: Object.assign({}, s.modal, typeof patch === 'function' ? patch(s.modal) : patch) } : null); }
+  openAdd() { this.setState({ menu: null, modal: { step: 1, images: [], coverId: null, errors: [], busy: 0, dragging: false, err: '', gen: -1, genError: null } }); }
+  downscale(file) {
+    return new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onerror = rej;
+      fr.onload = () => { const img = new Image(); img.onerror = rej; img.onload = () => { const k = Math.min(1, 1200 / Math.max(img.width, img.height)); const cv = document.createElement('canvas'); cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); res(cv.toDataURL('image/jpeg', 0.82)); }; img.src = fr.result; };
+      fr.readAsDataURL(file);
+    });
+  }
+  addFiles(list) {
+    const files = Array.from(list || []); const errs = [];
+    files.forEach(f => {
+      if (!/^image\//.test(f.type)) { errs.push('“' + f.name + '” isn’t an image, so it was skipped.'); return; }
+      this.setM(m => ({ busy: m.busy + 1 }));
+      this.downscale(f).then(src => {
+        const id = window.CCDemo.uid('img');
+        this.setM(m => ({ images: m.images.concat([{ id, src, label: f.name.replace(/\.[^.]+$/, ''), role: 'Photo', fx: 50, fy: 50, zoom: 1 }]), coverId: m.coverId || id, busy: m.busy - 1, err: '' }));
+      }).catch(() => this.setM(m => ({ busy: m.busy - 1, errors: m.errors.concat(['“' + f.name + '” couldn’t be read. Try exporting it as JPG or PNG.']) })));
+    });
+    this.setM({ errors: errs, dragging: false });
+  }
+  useSample() { const g = window.CCDemo.watchGallery(); this.setM({ images: g, coverId: 'w-cover', errors: [], err: '' }); }
+  removeImg(id) { this.setM(m => { const images = m.images.filter(i => i.id !== id); return { images, coverId: m.coverId === id ? (images[0] ? images[0].id : null) : m.coverId }; }); }
+  isSample(m) { return m.images.length > 0 && m.images.every(i => String(i.id).startsWith('w-')); }
+  modalNext() {
+    const m = this.state.modal;
+    if (!m.images.length) return this.setM({ err: 'Add at least one photo — or use the sample watch.' });
+    if (m.busy) return this.setM({ err: 'Hold on — previews are still being prepared.' });
+    this.generate();
+  }
+  saveModalDraft() {
+    const m = this.state.modal;
+    const id = window.CCDemo.uid('p'); const n = m.images.length;
+    this.mut(d => {
+      d.products.unshift({ id, name: 'Untitled draft', nameSrc: 'you', descSrc: 'you', priceSrc: 'you', stockSrc: 'default', category: 'Other', categoryKey: 'other', sku: '', status: 'draft', price: '', currency: 'EUR', stock: 1, condition: '', working: '', box: '', optional: { reference: '', year: '', diameter: '', calibre: '' }, description: '', claims: [], observations: [], details: [], images: m.images, coverId: m.coverId, icon: 'package', history: [{ ts: Date.now(), who: 'You', text: 'Saved as draft with ' + n + ' photo' + (n === 1 ? '' : 's') }], updated: Date.now(), created: Date.now() });
+      this.logAct(d, { agent: 'you', title: 'Saved a product draft', desc: '“Untitled draft” is saved with ' + n + ' photo' + (n === 1 ? '' : 's') + '. No listing was generated yet.', status: 'completed', target: { type: 'product', id, label: 'Untitled draft' } });
+    });
+    this.setState({ modal: null });
+    this.toast({ title: 'Draft saved', body: 'Continue anytime from Products.', action: 'View product', onAction: () => this.openProduct(id) });
+  }
+  generate() {
+    const C = window.CCDemo;
+    const m = this.state.modal; const sample = this.isSample(m); const actId = C.uid('a'); const n = m.images.length;
+    this.mut(d => { d.activity.unshift({ id: actId, ts: Date.now(), agent: 'product', title: 'Preparing a listing', desc: 'Reading ' + n + ' photo' + (n === 1 ? '' : 's') + ' for a new product.', status: 'working', details: ['Started from Add product'] }); });
+    this.setM({ step: 2, gen: 0, genError: null, err: '' });
+    C.agents.generateListing({ images: m.images, coverId: m.coverId, sample }, i => this.setM({ gen: i })).then(p => {
+      this.setM({ gen: C.GEN_STEPS.length });
+      setTimeout(() => {
+        const decId = C.uid('d'); const r = p.research;
+        this.mut(d => {
+          d.products.unshift(p);
+          d.decisions.unshift({ id: decId, kind: 'listing', agent: 'product', productId: p.id, title: sample ? 'Confirm watch details' : 'Confirm product details', action: 'Confirm details', status: 'pending', created: Date.now() });
+          const a = d.activity.find(x => x.id === actId);
+          Object.assign(a, { title: 'Prepared a listing', desc: 'Drafted “' + p.name + '” from ' + n + ' photo' + (n === 1 ? '' : 's') + ' and handed it to you.', status: 'needs_input', decisionId: decId, next: 'Confirm details', target: { type: 'product', id: p.id, label: p.name }, details: sample ? ['Grouped photos as one product', 'Transcribed dial, case-back and strap markings', 'Set quantity to 1 — change it if you have more', 'Left year, reference, size, authenticity and condition for you'] : ['Grouped ' + n + ' photos as one product', 'Set quantity to 1 — change it if you have more', 'Asked you for the details it couldn’t verify'] });
+          this.logAct(d, { agent: 'research', title: 'Researched a market price', desc: 'Suggested ' + C.euro(r.suggested) + ' for “' + p.name + '” from ' + r.comps + ' comparable listings.', status: 'completed', target: { type: 'product', id: p.id, label: p.name },
+            details: ['Range ' + C.euro(r.low) + '–' + C.euro(r.high) + ' across ' + r.comps + ' ' + r.basis + ' · synthetic in this demo', 'Confidence: ' + r.confidence.toLowerCase(), 'Shown to you as a suggestion; nothing publishes until you approve'] });
+        });
+        this.setState(Object.assign({ modal: null, drawer: { type: 'listing', productId: p.id, decisionId: decId } }, this.uiReset()));
+      }, 450 * ((window.CCDemo && window.CCDemo.speed) || 1));
+    }).catch(() => {
+      this.mut(d => { const a = d.activity.find(x => x.id === actId); if (a) Object.assign(a, { status: 'failed', title: 'Listing preparation failed', desc: 'The simulated agent didn’t respond.' }); });
+      this.setM({ genError: 'The simulated agent didn’t respond. Your photos are still here.' });
+    });
+  }
+
+  // ── misc
+  retry(id) {
+    this.mut(d => { const a = d.activity.find(x => x.id === id); a.status = 'working'; a.desc = 'Retrying with the simulated image service…'; a.next = null; });
+    window.CCDemo.agents.retryTask().then(() => {
+      this.mut(d => { const a = d.activity.find(x => x.id === id); Object.assign(a, { status: 'completed', title: 'Resized images for email', desc: '3 images resized for the demo newsletter.', ts: Date.now(), details: ['Retried by you', 'Completed in demo'] }); });
+      this.toast({ title: 'Retry succeeded', body: 'Marketing agent resized 3 images for the demo newsletter.' });
+    });
+  }
+  lbStep(k) { this.setState(s => s.lightbox ? { lightbox: Object.assign({}, s.lightbox, { idx: (s.lightbox.idx + k + s.lightbox.images.length) % s.lightbox.images.length }) } : null); }
+  doReset() {
+    try { localStorage.removeItem(this.KEY); } catch (e) {}
+    this.setState(Object.assign({ data: window.CCDemo.seed(), route: 'overview', productId: null, search: '', filter: 'all', actAgent: 'all', actStatus: 'all', queueTab: 'pending', convoId: 'c1', composer: '', expanded: {}, drawer: null, modal: null, lightbox: null, confirmReset: false, detailBuf: null }, this.uiReset()));
+    this.toast({ title: 'Demo reset', body: 'Products, decisions, conversations and activity are back to the starting point.' });
+  }
+
+  pv(p) {
+    const price = this.money(p.price, p.currency); const has = p.stock !== '' && p.stock != null;
+    const dec = this.state.data.decisions.find(x => x.kind === 'listing' && x.productId === p.id && x.status === 'pending');
+    return {
+      id: p.id, name: p.name, category: p.category, sku: p.sku || 'Not provided', skuColor: p.sku ? '#3E4641' : '#626A64',
+      price: price || 'Not provided', priceColor: price ? '#202522' : '#626A64',
+      stock: has ? (Number(p.stock) === 0 ? '0 · Out of stock' : String(p.stock)) : 'Not provided', stockColor: has ? (Number(p.stock) === 0 ? '#A0281C' : '#202522') : '#626A64',
+      st: this.T[p.status], updated: this.rel(p.updated), thumb: this.thumbOf(p),
+      open: () => this.openProduct(p.id),
+      action: p.status === 'needs_review' ? 'Review' : p.status === 'draft' ? 'Continue' : 'View',
+      act: e => { e.stopPropagation(); if (p.status === 'published') this.openProduct(p.id); else if (dec) this.openDecision(dec.id); else this.openListing(p.id); },
+    };
+  }
+  dv(x) {
+    const d = this.state.data, C = window.CCDemo, p = this.P(x.productId), ag = C.AGENTS[x.agent]; const isW = x.state === 'working';
+    let text = x.text, thumb;
+    if (x.kind === 'listing') {
+      const miss = C.requirements(p).filter(r => !r.ok).map(r => r.label);
+      const base = x.revised ? 'Revised per your feedback. ' : 'Prepared from ' + p.images.length + ' photo' + (p.images.length === 1 ? '' : 's') + '. ';
+      text = isW ? 'Applying your feedback to the draft…' : base + (miss.length ? 'Still needed: ' + this.list(miss) + '.' : 'All required details are in — ready to publish.');
+      thumb = this.thumbOf(p);
+    } else if (x.kind === 'support') thumb = { photo: false, noPhoto: true, icon: 'message-square', bg: '#F3F2EE' };
+    else { const im = p.images.find(i => i.id === d.campaign.imageId) || p.images[0]; thumb = im ? { photo: true, noPhoto: false, src: im.src, t: 'scale(1.2)', o: im.fx + '% ' + im.fy + '%', bg: '#EEECE7' } : { photo: false, noPhoto: true, icon: 'megaphone', bg: '#F3F2EE' }; }
+    return { id: x.id, title: x.title, text, agentName: ag.name, agentIcon: ag.icon, time: this.rel(x.created), st: isW ? this.T.working : this.T.needs_input, action: isW ? 'Revising…' : x.action, working: isW, open: () => this.openDecision(x.id), thumb, outcome: x.outcome || '', resolvedTime: x.resolvedAt ? this.rel(x.resolvedAt) : '' };
+  }
+  av(a) {
+    const ag = window.CCDemo.AGENTS[a.agent] || { name: 'You', icon: 'user' }; const ex = !!this.state.expanded[a.id];
+    const hasNext = !!a.next && (a.status === 'needs_input' || a.status === 'failed');
+    return {
+      id: a.id, agentName: ag.name, icon: ag.icon, title: a.title, desc: a.desc, time: this.rel(a.ts), clock: this.clock(a.ts), st: this.T[a.status],
+      expanded: ex, chev: ex ? 'chevron-up' : 'chevron-down', toggle: () => this.setState(s => ({ expanded: Object.assign({}, s.expanded, { [a.id]: !s.expanded[a.id] }) })),
+      details: (a.details || []).map((t, i) => ({ t, i })), hasDetails: !!(a.details && a.details.length),
+      hasTarget: !!a.target, targetLabel: a.target ? a.target.label : '', targetIcon: a.target ? ({ product: 'package', conversation: 'message-square', decision: 'list-checks' })[a.target.type] : 'package',
+      openTarget: () => this.openTarget(a.target), hasNext, next: a.next || '', isFailed: a.status === 'failed',
+      doNext: () => a.status === 'failed' ? this.retry(a.id) : (a.decisionId ? this.openDecision(a.decisionId) : this.openTarget(a.target)),
+    };
+  }
+  gallery(imgs, idx, setIdx, coverId) {
+    const gi = Math.min(idx, Math.max(imgs.length - 1, 0)); const main = imgs[gi];
+    return {
+      hasImages: imgs.length > 0, noImages: !imgs.length, idxLabel: imgs.length ? (gi + 1) + ' of ' + imgs.length : '',
+      main: main ? { src: main.src, label: main.label, isCover: main.id === coverId, role: main.id === coverId ? 'Cover' : main.role } : { src: '', label: '' },
+      images: imgs.map((im, i) => ({ id: im.id, src: im.src, label: im.label, active: i === gi, border: i === gi ? '#B84324' : '#E3E6E0', pos: (im.fx ?? 50) + '% ' + (im.fy ?? 50) + '%', select: () => setIdx(i) })),
+      enlarge: () => this.setState({ lightbox: { images: imgs.map(x => ({ src: x.src, label: x.label })), idx: gi } }),
+    };
+  }
+
+  renderVals() {
+    const s = this.state, T = this.T, SRC = this.SRC;
+    const navDefs = [['overview', 'Overview', 'layout-dashboard'], ['products', 'Products', 'package'], ['review', 'Review queue', 'list-checks'], ['conversations', 'Conversations', 'message-square'], ['activity', 'Agent activity', 'activity']];
+    const cur = s.route === 'product' ? 'products' : s.route;
+    const d = s.data;
+    const pending = d ? d.decisions.filter(x => x.status === 'pending') : [];
+    const waitingC = d ? d.conversations.filter(c => c.state === 'waiting').length : 0;
+    const menuT = k => () => this.setState(st => ({ menu: st.menu === k ? null : k }));
+    const base = {
+      mainRef: this.mainRef, fileRef: this.fileRef, drawerRef: this.R.drawer, modalRef: this.R.modal, lightboxRef: this.R.lightbox, confirmRef: this.R.confirm,
+      nav: navDefs.map(([k, l, i]) => ({ key: k, label: l, icon: i, go: () => this.go(k, k === 'products' ? { filter: 'all' } : k === 'activity' ? { actStatus: 'all', actAgent: 'all' } : {}), bg: cur === k ? '#343935' : 'transparent', fg: cur === k ? '#FFFFFF' : '#C4CAC5', ac: cur === k ? 'page' : undefined,
+        hasBadge: (k === 'review' && pending.length > 0) || (k === 'conversations' && waitingC > 0), badge: k === 'review' ? pending.length : waitingC, badgeBg: k === 'review' ? '#B84324' : '#4A504C', badgeLabel: k === 'review' ? pending.length + ' pending' : waitingC + ' waiting' })),
+      pageTitle: { overview: 'Overview', products: 'Products', product: 'Products', review: 'Review queue', conversations: 'Conversations', activity: 'Agent activity' }[s.route],
+      storeOpen: s.menu === 'store', accountOpen: s.menu === 'account', moreOpen: s.menu === 'more',
+      toggleStore: menuT('store'), toggleAccount: menuT('account'), toggleMore: menuT('more'), closeMenu: () => this.setState({ menu: null }),
+      askReset: () => this.setState({ menu: null, confirmReset: true }), openAdd: () => this.openAdd(),
+      loading: !s.ready, isOverview: false, isProducts: false, isDetail: false, isQueue: false, isConvos: false, isActivity: false,
+      isListing: false, isSupport: false, isCampaign: false, modalOpen: false, lbOpen: false,
+      confirmOpen: s.confirmReset, cancelReset: () => this.setState({ confirmReset: false }), doReset: () => this.doReset(),
+      hasToast: !!s.toast, toast: s.toast ? { title: s.toast.title, body: s.toast.body || '', hasAction: !!s.toast.action, action: s.toast.action || '', doAction: () => { const f = s.toast.onAction; this.setState({ toast: null }); f && f(); } } : {}, closeToast: () => this.setState({ toast: null }),
+    };
+    if (!s.ready) return base;
+    const C = window.CCDemo, A = C.AGENTS;
+    const working = d.activity.filter(a => a.status === 'working');
+    const published = d.products.filter(p => p.status === 'published');
+    const byUpdated = [...d.products].sort((a, b) => b.updated - a.updated);
+    const n = pending.length, w = working.length;
+    const out = Object.assign(base, {
+      isOverview: s.route === 'overview', isProducts: s.route === 'products', isDetail: s.route === 'product', isQueue: s.route === 'review', isConvos: s.route === 'conversations', isActivity: s.route === 'activity',
+      todayLabel: new Date(s.now).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) + ' · Atelier Store',
+      summary: (n ? n + ' decision' + (n > 1 ? 's are' : ' is') + ' waiting on you' : 'Nothing is waiting on you') + '. Your agents are running ' + w + ' task' + (w === 1 ? '' : 's') + ', and ' + published.length + ' of ' + d.products.length + ' products are published in the demo store.',
+      counts: [
+        { n, label: 'Needs your review', hint: 'Open the review queue', fg: n ? '#8C321A' : '#202522', border: '0', go: () => this.go('review', { queueTab: 'pending' }) },
+        { n: w, label: 'Tasks in progress', hint: 'See what agents are doing', fg: '#202522', border: '1px solid #E3E6E0', go: () => this.go('activity', { actStatus: 'working', actAgent: 'all' }) },
+        { n: published.length, label: 'Published products', hint: 'In the demo catalog', fg: '#202522', border: '1px solid #E3E6E0', go: () => this.go('products', { filter: 'published', search: '' }) },
+      ],
+      attention: pending.map(x => this.dv(x)), noAttention: !n, attentionCount: n ? n + ' pending' : 'All clear',
+      feed: [...d.activity].sort((a, b) => b.ts - a.ts).slice(0, 7).map(a => this.av(a)),
+      recent: byUpdated.slice(0, 5).map(p => this.pv(p)),
+      goReview: () => this.go('review', { queueTab: 'pending' }), goProducts: () => this.go('products', { filter: 'all' }), goActivity: () => this.go('activity', { actStatus: 'all', actAgent: 'all' }),
+    });
+
+    // products
+    const q = s.search.trim().toLowerCase();
+    const cnt = { all: d.products.length };
+    ['draft', 'needs_review', 'published'].forEach(k => cnt[k] = d.products.filter(p => p.status === k).length);
+    const rows = byUpdated.filter(p => (s.filter === 'all' || p.status === s.filter) && (!q || (p.name + ' ' + (p.sku || '') + ' ' + p.category).toLowerCase().includes(q))).map(p => this.pv(p));
+    Object.assign(out, {
+      search: s.search, onSearch: e => this.setState({ search: e.target.value }), clearSearch: () => this.setState({ search: '', filter: 'all' }),
+      filters: [['all', 'All'], ['draft', 'Draft'], ['needs_review', 'Needs review'], ['published', 'Published']].map(([k, l], i) => ({ key: k, label: l, count: cnt[k], active: s.filter === k, pick: () => this.setState({ filter: k }), bg: s.filter === k ? '#202522' : '#FFFFFF', fg: s.filter === k ? '#FFFFFF' : '#202522', cfg: s.filter === k ? '#C4CAC5' : '#626A64', bl: i ? '1px solid #D3D7D0' : '0' })),
+      rows, hasRows: rows.length > 0, noRows: !rows.length, resultLabel: rows.length + ' of ' + d.products.length + ' products',
+      emptyTitle: q ? 'No products match “' + s.search.trim() + '”' : 'No products in this view', emptyBody: q ? 'Try a different name or SKU, or clear the search.' : 'Change the filter or add a product.',
+    });
+
+    // product detail
+    const dp = s.route === 'product' && this.P(s.productId);
+    if (dp) {
+      const buf = s.detailBuf || { name: dp.name, description: dp.description, price: dp.price };
+      const dirty = !!s.detailBuf && (buf.name !== dp.name || buf.description !== dp.description || String(buf.price) !== String(dp.price));
+      const setB = (k, v) => this.setState(st => ({ detailBuf: Object.assign({ name: dp.name, description: dp.description, price: dp.price }, st.detailBuf || {}, { [k]: v }) }));
+      const tasks = d.decisions.filter(x => x.productId === dp.id && x.status === 'pending').map(x => ({ id: x.id, title: x.title, agent: A[x.agent].name, icon: A[x.agent].icon, st: x.state === 'working' ? T.working : T.needs_input, open: () => this.openDecision(x.id), action: x.state === 'working' ? 'Revising…' : x.action, disabled: x.state === 'working' }))
+        .concat(d.activity.filter(a => a.status === 'working' && a.target && a.target.type === 'product' && a.target.id === dp.id && !a.decisionId).map(a => ({ id: a.id, title: a.title, agent: (A[a.agent] || {}).name, icon: (A[a.agent] || {}).icon, st: T.working, open: () => {}, action: 'In progress', disabled: true })));
+      out.DT = Object.assign(this.pv(dp), this.gallery(dp.images || [], s.dIdx, i => this.setState({ dIdx: i }), dp.coverId), {
+        icon: dp.icon || 'package', bName: buf.name, bDesc: buf.description, bPrice: buf.price, currency: dp.currency,
+        onName: e => setB('name', e.target.value), onDesc: e => setB('description', e.target.value), onPrice: e => setB('price', e.target.value),
+        dirty, clean: !dirty, save: () => { const b = s.detailBuf; if (!b.name.trim()) return; this.mut(dd => { const p = this.P(dp.id, dd); Object.assign(p, { name: b.name, description: b.description, price: b.price, updated: Date.now() }); if (b.name !== dp.name) p.nameSrc = 'you'; if (String(b.price) !== String(dp.price)) p.priceSrc = 'you'; if (b.description !== dp.description) p.descSrc = 'you'; p.history.unshift({ ts: Date.now(), who: 'You', text: 'Edited listing information' }); }); this.setState({ detailBuf: null }); this.toast({ title: 'Changes saved', body: dp.status === 'published' ? 'Updated in the demo catalog only.' : 'Saved to the draft.' }); },
+        discard: () => this.setState({ detailBuf: null }), nameEmpty: !buf.name.trim(),
+        tasks, hasTasks: tasks.length > 0, noTasks: !tasks.length,
+        statusNote: { draft: 'Not visible to shoppers yet.', needs_review: 'Waiting for your review — not visible to shoppers.', published: 'Visible in the demo catalog. Nothing is sent to Shopify.' }[dp.status],
+        canReview: dp.status !== 'published' && !tasks.some(t => t.disabled), reviewLabel: dp.status === 'draft' ? 'Continue draft' : 'Open review',
+        openReview: () => { const x = d.decisions.find(y => y.kind === 'listing' && y.productId === dp.id && y.status === 'pending'); if (x) this.openDecision(x.id); else this.openListing(dp.id); },
+        back: () => this.go('products'), stockRaw: (dp.stock === '' || dp.stock == null) ? 'Not provided' : String(dp.stock),
+        details: (dp.details || []).map(x => ({ k: x.k, v: x.v, s: SRC[x.src] || SRC.ai })), hasDetails: !!(dp.details && dp.details.length),
+        history: (dp.history || []).map((h, i) => ({ i, who: h.who, text: h.text, time: this.rel(h.ts) })), hasHistory: !!(dp.history && dp.history.length),
+        conditionLabel: dp.condition || 'Not provided', hasPhotos: (dp.images || []).length > 0,
+      });
+    }
+
+    // review queue
+    const resolved = d.decisions.filter(x => x.status === 'resolved').sort((a, b) => b.resolvedAt - a.resolvedAt);
+    Object.assign(out, {
+      qPending: s.queueTab === 'pending', qResolved: s.queueTab === 'resolved',
+      qTabs: [['pending', 'Pending', n], ['resolved', 'Resolved', resolved.length]].map(([k, l, c]) => ({ label: l, count: c, active: s.queueTab === k, pick: () => this.setState({ queueTab: k }), border: s.queueTab === k ? '#B84324' : 'transparent', fg: s.queueTab === k ? '#202522' : '#626A64' })),
+      resolvedList: resolved.map(x => this.dv(x)), hasResolved: resolved.length > 0, noResolved: !resolved.length,
+    });
+
+    // conversations
+    const clist = [...d.conversations].sort((a, b) => ((a.state === 'waiting' ? 0 : 1) - (b.state === 'waiting' ? 0 : 1)) || (b.ts - a.ts));
+    const sel = d.conversations.find(c => c.id === s.convoId) || clist[0];
+    const sp = sel && this.P(sel.productId);
+    const sdec = sel && d.decisions.find(x => x.kind === 'support' && x.convoId === sel.id && x.status === 'pending');
+    out.convos = clist.map(c => { const last = c.messages.filter(m => m.from !== 'system').slice(-1)[0] || {}; return { id: c.id, customer: c.customer, initials: c.initials, subject: c.subject, preview: (last.from === 'customer' ? '' : 'Reply: ') + (last.text || ''), time: this.rel(c.ts), st: T[c.state], pick: () => this.setState({ convoId: c.id, composer: '' }), bg: c.id === sel.id ? '#FFFFFF' : 'transparent', bar: c.id === sel.id ? '#B84324' : 'transparent', cur: c.id === sel.id ? 'true' : undefined }; });
+    out.CV = sel ? {
+      customer: sel.customer, initials: sel.initials, subject: sel.subject, channel: sel.channel, st: T[sel.state], agentName: A[sel.agent].name, agentIcon: A[sel.agent].icon,
+      hasProduct: !!sp, productName: sp ? sp.name : '', openProduct: () => sp && this.openProduct(sp.id), pthumb: sp ? this.thumbOf(sp) : {},
+      waiting: sel.state === 'waiting', handoff: sel.handoff || 'It couldn’t answer this one on its own.', hasDecision: !!sdec, openDecision: () => sdec && this.openDecision(sdec.id),
+      // Agent first: while the agent is answering you see a Take over option instead of the composer.
+      agentHandling: sel.state === 'agent', canCompose: sel.state !== 'agent', canHandBack: sel.state === 'merchant',
+      take: () => this.mut(dd => { const c = this.convo(dd, sel.id); c.state = 'merchant'; c.messages.push({ from: 'system', text: 'You took over from ' + A[c.agent].name, ts: Date.now() }); }),
+      handBack: () => this.mut(dd => { const c = this.convo(dd, sel.id); c.state = 'agent'; c.messages.push({ from: 'system', text: 'You handed this back to ' + A[c.agent].name, ts: Date.now() }); }),
+      messages: sel.messages.map((m, i) => ({ i, text: m.text, time: this.clock(m.ts), isCustomer: m.from === 'customer', isOut: m.from === 'agent' || m.from === 'merchant', isSystem: m.from === 'system', who: m.from === 'merchant' ? 'You' : m.from === 'agent' ? (A[m.agent || sel.agent].name) : sel.customer, note: m.note || '', hasNote: !!m.note, outBg: m.from === 'merchant' ? '#F8ECE7' : '#F1F3EF' })),
+    } : null;
+    Object.assign(out, {
+      composer: s.composer, onComposer: e => this.setState({ composer: e.target.value }), cantSend: !s.composer.trim(),
+      sendMsg: e => { if (e && e.preventDefault) e.preventDefault(); const t = s.composer.trim(); if (!t || !sel) return; this.mut(dd => { const c = this.convo(dd, sel.id); c.messages.push({ from: 'merchant', text: t, ts: Date.now(), note: 'Sent in demo' }); c.ts = Date.now(); if (c.state === 'agent') c.state = 'merchant'; }); this.setState({ composer: '' }); },
+      composerKey: e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) out.sendMsg(e); },
+    });
+
+    // activity screen
+    const arows = [...d.activity].sort((a, b) => b.ts - a.ts).filter(a => (s.actAgent === 'all' || a.agent === s.actAgent) && (s.actStatus === 'all' || a.status === s.actStatus)).map(a => this.av(a));
+    const acnt = k => d.activity.filter(a => (s.actAgent === 'all' || a.agent === s.actAgent) && (k === 'all' || a.status === k)).length;
+    Object.assign(out, {
+      actAgent: s.actAgent, onActAgent: e => this.setState({ actAgent: e.target.value }),
+      agentOpts: [{ k: 'all', l: 'All agents' }].concat(Object.entries(A).map(([k, v]) => ({ k, l: v.name }))).concat([{ k: 'you', l: 'You' }]),
+      statusOpts: [['all', 'All'], ['working', 'Working'], ['needs_input', 'Needs your input'], ['completed', 'Completed'], ['failed', 'Failed']].map(([k, l], i) => ({ label: l, count: acnt(k), active: s.actStatus === k, pick: () => this.setState({ actStatus: k }), bg: s.actStatus === k ? '#202522' : '#FFFFFF', fg: s.actStatus === k ? '#FFFFFF' : '#202522', cfg: s.actStatus === k ? '#C4CAC5' : '#626A64', bl: i ? '1px solid #D3D7D0' : '0' })),
+      arows, hasArows: arows.length > 0, noArows: !arows.length, clearAct: () => this.setState({ actAgent: 'all', actStatus: 'all' }),
+    });
+
+    // drawers
+    const dr = s.drawer;
+    if (dr && dr.type === 'listing') {
+      const p = this.P(dr.productId);
+      if (p) {
+        const req = C.requirements(p); const miss = req.filter(r => !r.ok); const rk = k => req.find(r => r.key === k).ok;
+        const dec = dr.decisionId && d.decisions.find(x => x.id === dr.decisionId);
+        const isWatch = p.categoryKey === 'watch';
+        out.isListing = true;
+        out.L = Object.assign(this.gallery(p.images || [], s.gIdx, i => this.setState({ gIdx: i }), p.coverId), {
+          name: p.name || 'Untitled product', st: T[p.status], kicker: p.status === 'draft' ? 'Draft listing' : 'Listing review', isWatch, icon: p.icon || 'package',
+          intro: (isWatch ? 'The agent transcribed what’s printed on the watch. ' : '') + (p.research ? 'Price is a market-research suggestion and quantity starts at 1 — change either if needed. The rest only you can confirm.' : 'These details only you can confirm.'),
+          title: p.name, onTitle: e => this.setP(p.id, { name: e.target.value, nameSrc: 'you', nameNote: 'Edited by you' }), nameS: SRC[p.nameSrc] || SRC.ai, nameNote: p.nameNote || '', hasNameNote: !!p.nameNote, titleMiss: !rk('title'),
+          desc: p.description, onDesc: e => this.setP(p.id, { description: e.target.value, descSrc: 'you' }), descS: SRC[p.descSrc] || SRC.ai, descMiss: !rk('description'),
+          price: p.price, onPrice: e => this.setP(p.id, { price: e.target.value, priceSrc: 'you' }), currency: p.currency, onCurrency: e => this.setP(p.id, { currency: e.target.value }),
+          priceMiss: !rk('price'), priceByResearch: rk('price') && p.priceSrc === 'research', priceByYou: rk('price') && p.priceSrc !== 'research', priceBorder: rk('price') ? '#D3D7D0' : '#D9A441', priceBg: rk('price') ? '#FFFFFF' : '#FFFBF2',
+          hasResearch: !!p.research, researchNote: p.research ? 'Research agent suggested ' + C.euro(p.research.suggested) + ' · range ' + C.euro(p.research.low) + '–' + C.euro(p.research.high) + ' across ' + p.research.comps + ' comparable listings · ' + p.research.confidence.toLowerCase() + ' confidence · synthetic in this demo' : '',
+          stock: p.stock, onStock: e => this.setP(p.id, { stock: e.target.value === '' ? '' : Number(e.target.value), stockSrc: 'you' }), stockMiss: !rk('stock'), stockByDefault: rk('stock') && p.stockSrc === 'default', stockByYou: rk('stock') && p.stockSrc !== 'default', stockBorder: rk('stock') ? '#D3D7D0' : '#D9A441', stockBg: rk('stock') ? '#FFFFFF' : '#FFFBF2', setSingle: () => this.setP(p.id, { stock: 1, stockSrc: 'you' }),
+          condition: p.condition, onCondition: e => this.setP(p.id, { condition: e.target.value }), condOk: !!p.condition,
+          working: p.working, onWorking: e => this.setP(p.id, { working: e.target.value }), workOk: !!p.working,
+          boxOpts: [['yes', 'Included'], ['no', 'Not included'], ['unsure', 'Not sure']].map(([k, l], i) => ({ label: l, active: p.box === k, pick: () => this.setP(p.id, { box: k }), bg: p.box === k ? '#202522' : '#FFFFFF', fg: p.box === k ? '#FFFFFF' : '#202522', bl: i ? '1px solid #D3D7D0' : '0' })),
+          claims: (p.claims || []).map(c => ({ id: c.id, text: c.text, why: c.why, open: c.state === 'open', done: c.state !== 'open', remove: () => this.claim(p.id, c.id, 'removed'), verify: () => this.claim(p.id, c.id, 'verified'), undo: () => this.claim(p.id, c.id, 'open'), doneLabel: c.state === 'removed' ? 'Removed from the description' : 'Kept — you verified this', doneFg: c.state === 'removed' ? '#4A524D' : '#235A3A', doneIcon: c.state === 'removed' ? 'trash' : 'check-circle', border: c.state === 'open' ? '#E8C77E' : '#E3E6E0', bg: c.state === 'open' ? '#FFFBF2' : '#FFFFFF' })),
+          hasClaims: !!(p.claims && p.claims.length), openClaims: (p.claims || []).filter(c => c.state === 'open').length, claimsLabel: (() => { const o = (p.claims || []).filter(c => c.state === 'open').length; return o ? o + ' to resolve before publishing' : 'All resolved'; })(),
+          obs: (p.observations || []).map(o => ({ id: o.id, area: o.area, text: o.text, note: o.note || '', hasNote: !!o.note, hasImg: (p.images || []).some(x => x.id === o.img), view: () => { const i = (p.images || []).findIndex(x => x.id === o.img); if (i >= 0) this.setState({ gIdx: i }); } })), hasObs: !!(p.observations && p.observations.length),
+          details: (p.details || []).map(x => ({ k: x.k, v: x.v, s: SRC[x.src] || SRC.ai })), hasDetails: !!(p.details && p.details.length),
+          optFields: [['reference', 'Reference number', 'Not provided', ''], ['year', 'Year of manufacture', 'Not provided', 'Engraved dates aren’t proof of manufacture year.'], ['diameter', 'Case diameter', 'Not provided — e.g. 34 mm', ''], ['calibre', 'Movement calibre', 'Not provided', '']].map(([k, l, ph, h]) => ({ k, id: 'opt-' + k, label: l, ph, hint: h, hasHint: !!h, value: (p.optional || {})[k] || '', on: e => this.mut(dd => { const pp = this.P(p.id, dd); pp.optional = Object.assign({}, pp.optional, { [k]: e.target.value }); }) })),
+          optOpen: s.optOpen, optChev: s.optOpen ? 'chevron-up' : 'chevron-down', toggleOpt: () => this.setState({ optOpen: !s.optOpen }), optLabel: (() => { const f = Object.values(p.optional || {}).filter(Boolean).length; return f ? f + ' of 4 added' : 'Optional — won’t block publishing'; })(),
+          history: (p.history || []).slice(0, s.histOpen ? 50 : 3).map((h, i) => ({ i, who: h.who, text: h.text, time: this.rel(h.ts) })), histOpen: s.histOpen, histChev: s.histOpen ? 'chevron-up' : 'chevron-down', toggleHist: () => this.setState({ histOpen: !s.histOpen }), histMore: (p.history || []).length > 3, histLabel: s.histOpen ? 'Show less' : 'Show all ' + (p.history || []).length,
+          ready: !miss.length, notReady: miss.length > 0, missText: this.list(miss.map(r => r.label)), publishDisabled: miss.length > 0 || p.status === 'published',
+          isWorking: !!(dec && dec.state === 'working'),
+          save: () => this.saveListing(p.id), publish: () => this.publish(p.id),
+          fbOpen: s.fbOpen, fb: s.fb, fbErr: s.fbErr, onFb: e => this.setState({ fb: e.target.value, fbErr: false }), toggleFb: () => this.setState({ fbOpen: !s.fbOpen, fbErr: false }), cancelFb: () => this.setState({ fbOpen: false, fb: '', fbErr: false }), sendFb: () => this.sendFeedback(p.id), canFeedback: !!dec,
+        });
+      }
+    }
+    if (dr && dr.type === 'support') {
+      const dec = d.decisions.find(x => x.id === dr.decisionId); const c = dec && this.convo(d, dec.convoId); const p = dec && this.P(dec.productId);
+      if (c && p) {
+        const first = c.customer.split(' ')[0];
+        const reply = c.replyEdited ? c.reply : C.supportReply(c.answer, c.rating, first);
+        const firstReply = c.messages.find(m => m.from === 'agent');
+        out.isSupport = true;
+        out.S = {
+          hasFirstReply: !!firstReply, firstReply: firstReply ? firstReply.text : '', firstReplyTime: firstReply ? this.rel(firstReply.ts) : '',
+          customer: c.customer, initials: c.initials, channel: c.channel, time: this.rel((c.messages.find(m => m.from === 'customer') || {}).ts || c.ts), msg: (c.messages.find(m => m.from === 'customer') || {}).text,
+          pname: p.name, pst: T[p.status], pthumb: this.thumbOf(p), openProduct: () => this.openProduct(p.id),
+          options: [['not_tested', 'Not tested recently', 'The reply will advise keeping it away from water.'], ['tested', 'Pressure-tested', 'Share the rating and when it was tested.'], ['not_resistant', 'Not water resistant', 'The reply will ask the customer to keep it dry.']].map(([k, l, h]) => ({ key: k, id: 'wr-' + k, label: l, hint: h, checked: c.answer === k, pick: () => this.setAnswer(c.id, k), border: c.answer === k ? '#B84324' : '#E3E6E0', bg: c.answer === k ? '#FCF5F2' : '#FFFFFF' })),
+          isTested: c.answer === 'tested', rating: c.rating || '', onRating: e => this.mut(dd => { this.convo(dd, c.id).rating = e.target.value; }),
+          reply, onReply: e => this.mut(dd => { const cc = this.convo(dd, c.id); cc.reply = e.target.value; cc.replyEdited = true; }),
+          replyS: c.replyEdited ? SRC.you : SRC.ai, edited: !!c.replyEdited, regen: () => this.mut(dd => { const cc = this.convo(dd, c.id); cc.replyEdited = false; cc.reply = ''; }),
+          err: s.supErr, hasErr: !!s.supErr, unanswered: !c.answer,
+          save: () => { this.setState({ drawer: null }); this.toast({ title: 'Response saved', body: 'The Support agent will wait for your approval.' }); },
+          approve: () => this.approveSupport(dec.id),
+        };
+      }
+    }
+    if (dr && dr.type === 'campaign') {
+      const dec = d.decisions.find(x => x.id === dr.decisionId); const cm = d.campaign; const p = this.P(cm.productId);
+      if (dec && p) {
+        const imgs = p.images || []; const ci = Math.max(0, imgs.findIndex(i => i.id === cm.imageId)); const im = imgs[ci] || {};
+        out.isCampaign = true;
+        out.K = {
+          src: im.src, label: im.label, isAgentPick: im.id === cm.agentImageId, enlarge: () => this.setState({ lightbox: { images: imgs.map(x => ({ src: x.src, label: x.label })), idx: ci } }),
+          images: imgs.map(x => ({ id: x.id, src: x.src, label: x.label, pos: (x.fx ?? 50) + '% ' + (x.fy ?? 50) + '%', border: x.id === cm.imageId ? '#B84324' : '#E3E6E0', active: x.id === cm.imageId, pick: () => this.setCamp({ imageId: x.id }) })),
+          channel: cm.channel, onChannel: e => this.setCamp({ channel: e.target.value }), headline: cm.headline, onHeadline: e => this.setCamp({ headline: e.target.value }), body: cm.body, onBody: e => this.setCamp({ body: e.target.value }),
+          hlen: cm.headline.length + ' / 60', blen: cm.body.length + ' characters',
+          pname: p.name, pst: T[p.status], listingNote: p.status === 'published' ? 'Listing is published in demo.' : 'Listing isn’t published yet — approving keeps this as a draft either way.',
+          err: s.campErr, hasErr: !!s.campErr, notErr: !s.campErr,
+          save: () => { this.setState({ drawer: null }); this.toast({ title: 'Campaign draft saved', body: 'Nothing was published.' }); }, approve: () => this.approveCampaign(dec.id),
+        };
+      }
+    }
+    out.closeDrawer = () => this.setState({ drawer: null });
+
+    // add product modal
+    const m = s.modal;
+    if (m) {
+      out.modalOpen = true;
+      out.M = {
+        s1: m.step === 1, sGen: m.step === 2, notGen: m.step !== 2,
+        steps: ['Photos', 'Generate'].map((l, i) => ({ n: i + 1, label: l, isDone: m.step > i + 1, notDone: m.step <= i + 1, bg: m.step === i + 1 ? '#202522' : m.step > i + 1 ? '#2F7A4C' : '#FFFFFF', fg: m.step >= i + 1 ? '#FFFFFF' : '#626A64', border: m.step >= i + 1 ? 'transparent' : '#D3D7D0', lfg: m.step === i + 1 ? '#202522' : '#626A64', hasLine: i < 1 })),
+        images: m.images.map(im => ({ id: im.id, src: im.src, label: im.label, isCover: im.id === m.coverId, notCover: im.id !== m.coverId, setCover: () => this.setM({ coverId: im.id }), remove: () => this.removeImg(im.id), border: im.id === m.coverId ? '#B84324' : '#E3E6E0', removeLabel: 'Remove ' + im.label, coverLabel: 'Set ' + im.label + ' as cover' })),
+        hasImages: m.images.length > 0, countLabel: m.images.length + ' photo' + (m.images.length === 1 ? '' : 's') + ' · one product',
+        busy: m.busy > 0, busyLabel: 'Preparing ' + m.busy + ' preview' + (m.busy === 1 ? '' : 's') + '…',
+        errors: m.errors.map((t, i) => ({ t, i })), hasErrors: m.errors.length > 0, err: m.err, hasErr: !!m.err,
+        dropBorder: m.dragging ? '#B84324' : '#C9CEC6', dropBg: m.dragging ? '#FCF3EF' : '#FBFAF8', dropText: m.dragging ? 'Drop to add photos' : 'Drag photos here',
+        onDragOver: e => { e.preventDefault(); if (!this.state.modal.dragging) this.setM({ dragging: true }); }, onDragLeave: e => { if (e.currentTarget.contains(e.relatedTarget)) return; this.setM({ dragging: false }); }, onDrop: e => { e.preventDefault(); this.addFiles(e.dataTransfer.files); },
+        pick: () => this.fileRef.current && this.fileRef.current.click(), onFiles: e => { this.addFiles(e.target.files); e.target.value = ''; },
+        useSample: () => this.useSample(), isSample: this.isSample(m),
+        cover: (m.images.find(i => i.id === m.coverId) || {}).src || '', hasCover: !!m.coverId,
+        gen: C.GEN_STEPS.map((l, i) => ({ label: l, done: m.gen > i, active: m.gen === i, pending: m.gen < i, fg: m.gen >= i ? '#202522' : '#8C948E', weight: m.gen === i ? '600' : '400' })),
+        genError: m.genError || '', hasGenError: !!m.genError, retryGen: () => this.generate(), backFromError: () => this.setM({ step: 1, genError: null, gen: -1 }),
+        thumbs: m.images.slice(0, 6).map(im => ({ id: im.id, src: im.src })),
+        next: () => this.modalNext(), nextLabel: 'Generate listing',
+        saveDraft: () => this.saveModalDraft(), close: () => this.setState({ modal: null }), canClose: m.step !== 2 || !!m.genError,
+      };
+    }
+
+    // lightbox
+    if (s.lightbox) {
+      const lb = s.lightbox, im = lb.images[lb.idx];
+      out.lbOpen = true;
+      out.LB = { src: im.src, label: im.label, idxLabel: (lb.idx + 1) + ' of ' + lb.images.length, prev: () => this.lbStep(-1), next: () => this.lbStep(1), close: () => this.setState({ lightbox: null }), stop: e => e.stopPropagation(), multi: lb.images.length > 1 };
+    }
+    return out;
+  }
+}
+</script>
+</body>
+</html>
