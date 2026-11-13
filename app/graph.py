@@ -69,6 +69,12 @@ class WorkflowEvent(TypedDict):
     at: str  # ISO 8601, UTC
 
 
+class ProductEvent(WorkflowEvent):
+    """An action-log entry tagged with its product, for the log across all workflows."""
+
+    productId: str
+
+
 class RunState(WorkflowState, total=False):
     """WorkflowState plus the run's inputs and its action log."""
 
@@ -92,18 +98,25 @@ class NotAwaitingApprovalError(WorkflowError):
     pass
 
 
+class WorkflowExistsError(WorkflowError):
+    """`start` for a product whose workflow is waiting or finished; new inputs were not used."""
+
+
 def _event(agent: Agent, action: str, ok: bool = True) -> WorkflowEvent:
     return {
         "agent": agent,
         "action": action,
         "ok": ok,
-        "at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "at": datetime.now(UTC).isoformat(timespec="milliseconds"),
     }
 
 
 def _failed(agent: Agent, action: str, message: str, error: Exception) -> RunState:
     # The technical cause goes to the server log; the merchant sees only `message`.
-    logger.warning("%s agent failed: %s: %s", agent, type(error).__name__, error)
+    expected = isinstance(error, (LLMError, ShopifyError, ValueError))
+    logger.warning(
+        "%s agent failed: %s: %s", agent, type(error).__name__, error, exc_info=not expected
+    )
     return {"error": message, "events": [_event(agent, action, ok=False)]}
 
 
@@ -136,6 +149,7 @@ class Workflow:
         self._graph = self._build()
         self._guard = threading.Lock()
         self._locks: dict[str, threading.Lock] = {}
+        self._started: list[str] = []
 
     @property
     def graph(self) -> CompiledStateGraph[RunState, None, RunState, RunState]:
@@ -153,8 +167,8 @@ class Workflow:
     ) -> RunState:
         """Run draft, marketing and analytics, then stop with approval "pending".
 
-        A workflow that is waiting or finished is returned unchanged. One that stopped with an
-        error is run again, keeping the draft and copy it already made.
+        Raises WorkflowExistsError for a workflow that is waiting or finished. One that stopped
+        with an error, or was interrupted mid-step, is run again, keeping what already succeeded.
         """
         if not product_id.strip():
             raise ValueError("product_id is empty")
@@ -164,9 +178,15 @@ class Workflow:
             raise ValueError(f"metrics are for {metrics.productId!r}, not {product_id!r}")
         with self._lock(product_id):
             config = _config(product_id)
-            previous = self._graph.get_state(config).values
-            if previous and "error" not in previous:
-                return _public(previous)
+            current = self._graph.get_state(config)
+            previous = current.values
+            paused = current.next == ("decision",)
+            failed = "error" in previous or (bool(current.next) and not paused)
+            if previous and not failed:
+                approval = previous.get("approval", "unknown")
+                raise WorkflowExistsError(
+                    f"A workflow for product {product_id!r} already exists (approval: {approval})"
+                )
             seed: RunState = {"productId": product_id, "notes": notes}
             if photo is not None:
                 seed["photo"] = photo
@@ -185,8 +205,19 @@ class Workflow:
                     seed["marketing"] = kept["marketing"]
                 if metrics is None and "metrics" in kept:
                     seed["metrics"] = kept["metrics"]
+                    if "analytics" in kept:
+                        seed["analytics"] = kept["analytics"]
+                if photo is None and image_url is None:
+                    if "photo" in kept:
+                        seed["photo"] = kept["photo"]
+                        seed["photoMimeType"] = kept.get("photoMimeType", "image/jpeg")
+                    if "sourceImageUrl" in kept:
+                        seed["sourceImageUrl"] = kept["sourceImageUrl"]
                 seed["events"] = kept.get("events", [])
                 self._checkpointer.delete_thread(product_id)
+            with self._guard:
+                if product_id not in self._started:
+                    self._started.append(product_id)
             self._graph.invoke(seed, config)
             return _public(self._graph.get_state(config).values)
 
@@ -209,6 +240,20 @@ class Workflow:
     def snapshot(self, product_id: str) -> RunState | None:
         values = self._graph.get_state(_config(product_id)).values
         return _public(values) if values else None
+
+    def products(self) -> list[str]:
+        """Ids of the workflows this process has started, in start order."""
+        with self._guard:
+            return list(self._started)
+
+    def events(self) -> list[ProductEvent]:
+        """Every workflow's action log, merged and sorted by time."""
+        merged: list[ProductEvent] = []
+        for product_id in self.products():
+            state = self.snapshot(product_id) or {}
+            for event in state.get("events", []):
+                merged.append({**event, "productId": product_id})
+        return sorted(merged, key=lambda event: event["at"])
 
     def _lock(self, product_id: str) -> threading.Lock:
         with self._guard:
@@ -245,6 +290,8 @@ class Workflow:
                 return _failed(
                     "product", "Could not use the photo or notes", DRAFT_INPUT_UNUSABLE, error
                 )
+            except Exception as error:
+                return _failed("product", "Could not write the listing", DRAFT_MODEL_FAILED, error)
             events.append(_event("product", "Wrote a draft title and description"))
         if record.shopifyProductId is None:
             try:
@@ -255,7 +302,7 @@ class Workflow:
                     photo_mime_type=state.get("photoMimeType", "image/jpeg"),
                     client=self._shopify,
                 )
-            except (ShopifyError, ValueError) as error:
+            except Exception as error:
                 failure = _failed(
                     "product", "Could not save the draft in Shopify", DRAFT_SHOPIFY_FAILED, error
                 )
@@ -268,16 +315,18 @@ class Workflow:
             return {}
         try:
             copy = marketing.write_marketing(state["product"], llm=self._llm)
-        except LLMError as error:
+        except Exception as error:
             return _failed("marketing", "Could not write the launch copy", MARKETING_FAILED, error)
         action = "Wrote an SEO title, a meta description and two social ads"
         return {"marketing": copy, "events": [_event("marketing", action)]}
 
     def _analytics(self, state: RunState) -> RunState:
+        if "analytics" in state:
+            return {}
         metrics = state["metrics"]
         try:
             result = analytics.analyze(metrics)
-        except ValueError as error:
+        except Exception as error:
             return _failed("analytics", "Could not read the metrics", ANALYTICS_FAILED, error)
         action = f"Recommended a next step from {metrics.source} metrics"
         return {"analytics": result, "events": [_event("analytics", action)]}
@@ -303,7 +352,7 @@ class Workflow:
     def _publish(self, state: RunState) -> RunState:
         try:
             record = product.publish(state["product"], client=self._shopify)
-        except ShopifyError as error:
+        except Exception as error:
             return _failed("product", "Could not publish the listing", PUBLISH_FAILED, error)
         published = _event("product", "Published the product to the Online Store")
         return {"product": record, "approval": "approved", "events": [published]}
@@ -372,3 +421,11 @@ def decide(product_id: str, approved: bool) -> RunState:
 
 def snapshot(product_id: str) -> RunState | None:
     return default_workflow().snapshot(product_id)
+
+
+def products() -> list[str]:
+    return default_workflow().products()
+
+
+def events() -> list[ProductEvent]:
+    return default_workflow().events()

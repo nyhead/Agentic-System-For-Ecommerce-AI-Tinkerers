@@ -262,15 +262,15 @@ def test_publish_activates_and_publishes():
         productUpdate={"product": {"id": PRODUCT_GID, "status": "ACTIVE"}, "userErrors": []}
     )
     client, fake = make_shopify(
-        publications, activated, data(publishablePublish={"userErrors": []})
+        publications, data(publishablePublish={"userErrors": []}), activated
     )
     draft = record(shopifyProductId=PRODUCT_GID)
 
     assert product.publish(draft, client=client) == draft
-    assert "productUpdate" in fake.request(1)["query"]
-    assert fake.request(1)["variables"] == {"product": {"id": PRODUCT_GID, "status": "ACTIVE"}}
-    assert "publishablePublish" in fake.request(2)["query"]
-    assert fake.request(2)["variables"]["id"] == PRODUCT_GID
+    assert "publishablePublish" in fake.request(1)["query"]
+    assert fake.request(1)["variables"]["id"] == PRODUCT_GID
+    assert "productUpdate" in fake.request(2)["query"]
+    assert fake.request(2)["variables"] == {"product": {"id": PRODUCT_GID, "status": "ACTIVE"}}
 
 
 def test_publish_failure_propagates():

@@ -301,7 +301,7 @@ def create_draft_product(
 
 def online_store_publication_id(client: ShopifyClient | None = None) -> str:
     client = client or ShopifyClient()
-    publications = client.graphql(APP_PUBLICATIONS)["publications"]["nodes"]
+    publications = (client.graphql(APP_PUBLICATIONS).get("publications") or {}).get("nodes") or []
     for publication in publications:
         apps = ((publication.get("catalog") or {}).get("apps") or {}).get("nodes") or []
         if any(app.get("handle") == ONLINE_STORE_APP_HANDLE for app in apps):
@@ -315,19 +315,23 @@ def publish_product(
     publication_id: str | None = None,
     client: ShopifyClient | None = None,
 ) -> ProductRecord:
-    """Make an approved product ACTIVE and publish it to the Online Store. Safe to repeat."""
+    """Publish an approved product to the Online Store, then make it ACTIVE. Safe to repeat.
+
+    Publishing comes first because a DRAFT stays hidden from customers even on a channel, so a
+    failure between the two calls leaves the product a hidden DRAFT rather than ACTIVE.
+    """
     if not record.shopifyProductId:
         raise ShopifyError(f"Product {record.productId!r} has no Shopify draft to publish")
     client = client or ShopifyClient()
     publication_id = publication_id or online_store_publication_id(client)
     product_id = record.shopifyProductId
     client.mutate(
-        ACTIVATE_PRODUCT, {"product": {"id": product_id, "status": "ACTIVE"}}, "productUpdate"
-    )
-    client.mutate(
         PUBLISH_PRODUCT,
         {"id": product_id, "input": [{"publicationId": publication_id}]},
         "publishablePublish",
+    )
+    client.mutate(
+        ACTIVATE_PRODUCT, {"product": {"id": product_id, "status": "ACTIVE"}}, "productUpdate"
     )
     return record
 

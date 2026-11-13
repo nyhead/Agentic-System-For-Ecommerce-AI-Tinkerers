@@ -4,15 +4,22 @@ import os
 import subprocess
 import sys
 from datetime import datetime
+from pathlib import Path
 
 import pytest
 
 from app import graph
-from app.graph import NotAwaitingApprovalError, UnknownWorkflowError, Workflow
+from app.graph import (
+    NotAwaitingApprovalError,
+    UnknownWorkflowError,
+    Workflow,
+    WorkflowExistsError,
+)
 from app.state import MetricsRecord
 from app.tools.llm import LLMClient
 from app.tools.shopify import ShopifyClient, ShopifyConfig
 
+ROOT = Path(__file__).resolve().parents[1]
 PRODUCT_ID = "demo-mug-001"
 PRODUCT_GID = "gid://shopify/Product/1001"
 PUBLICATION_GID = "gid://shopify/Publication/7"
@@ -41,7 +48,10 @@ class FakeLLM:
 
     def __call__(self, url, headers, body, timeout):
         self.calls.append(json.loads(body))
-        return self.responses.pop(0)
+        response = self.responses.pop(0)
+        if isinstance(response, BaseException):
+            raise response
+        return response
 
 
 class FakeShopify:
@@ -51,7 +61,10 @@ class FakeShopify:
 
     def __call__(self, method, url, headers, body, timeout):
         self.calls.append({"url": url, "body": body})
-        status, payload = self.responses.pop(0)
+        response = self.responses.pop(0)
+        if isinstance(response, BaseException):
+            raise response
+        status, payload = response
         return status, payload if isinstance(payload, bytes) else json.dumps(payload).encode()
 
     def queue(self, *responses):
@@ -109,7 +122,11 @@ ACTIVATED = data(
     productUpdate={"product": {"id": PRODUCT_GID, "status": "ACTIVE"}, "userErrors": []}
 )
 PUBLISHED = data(publishablePublish={"userErrors": []})
-PUBLISH_FLOW = (PUBLICATIONS, ACTIVATED, PUBLISHED)
+PUBLISH_FLOW = (PUBLICATIONS, PUBLISHED, ACTIVATED)
+
+
+class Abort(BaseException):
+    """Stands in for the process being interrupted in the middle of a step."""
 
 
 def make_workflow(llm_responses=(), shopify_responses=()):
@@ -229,11 +246,12 @@ def test_approval_publishes_and_ends_approved():
 
     assert state["approval"] == "approved"
     assert "error" not in state
-    assert shopify.operations()[-3:] == ["AppPublications", "ActivateProduct", "PublishProduct"]
-    activate = json.loads(shopify.calls[-2]["body"])["variables"]
-    assert activate == {"product": {"id": PRODUCT_GID, "status": "ACTIVE"}}
-    publish = json.loads(shopify.calls[-1]["body"])["variables"]
+    # Publish to the channel first and set ACTIVE last, so a failure in between stays hidden.
+    assert shopify.operations()[-3:] == ["AppPublications", "PublishProduct", "ActivateProduct"]
+    publish = json.loads(shopify.calls[-2]["body"])["variables"]
     assert publish == {"id": PRODUCT_GID, "input": [{"publicationId": PUBLICATION_GID}]}
+    activate = json.loads(shopify.calls[-1]["body"])["variables"]
+    assert activate == {"product": {"id": PRODUCT_GID, "status": "ACTIVE"}}
     assert workflow.graph.get_state({"configurable": {"thread_id": PRODUCT_ID}}).next == ()
 
 
@@ -258,7 +276,8 @@ def test_publish_is_reachable_only_from_the_approval_decision():
         "decision",
     )
     # Starting again does not move past the approval either.
-    workflow.start(PRODUCT_ID, "Blue mug, 350 ml.")
+    with pytest.raises(WorkflowExistsError):
+        workflow.start(PRODUCT_ID, "Blue mug, 350 ml.")
     assert "AppPublications" not in shopify.operations()
     assert workflow.snapshot(PRODUCT_ID)["approval"] == "pending"
 
@@ -333,15 +352,25 @@ def test_failure_message_is_logged_server_side_without_credentials(caplog):
     assert "HTTP" not in state["error"]
 
 
-def test_start_again_while_pending_changes_nothing():
+def test_start_again_while_pending_raises_and_changes_nothing():
     workflow, llm, shopify = pending_workflow()
     first = workflow.snapshot(PRODUCT_ID)
     calls = (len(llm.calls), len(shopify.calls))
 
-    again = workflow.start(PRODUCT_ID, "Different notes.")
+    with pytest.raises(WorkflowExistsError, match="approval: pending"):
+        workflow.start(PRODUCT_ID, "Different notes.", photo=PHOTO, metrics=METRICS)
 
-    assert again == first
+    assert workflow.snapshot(PRODUCT_ID) == first
     assert (len(llm.calls), len(shopify.calls)) == calls
+
+
+@pytest.mark.parametrize("approved, status", [(True, "approved"), (False, "rejected")])
+def test_start_again_after_a_decision_raises(approved, status):
+    workflow, _, shopify = pending_workflow()
+    shopify.queue(*PUBLISH_FLOW)
+    workflow.decide(PRODUCT_ID, approved)
+    with pytest.raises(WorkflowExistsError, match=f"approval: {status}"):
+        workflow.start(PRODUCT_ID, "Blue mug.")
 
 
 def test_start_again_after_a_marketing_failure_resumes_without_a_second_draft():
@@ -385,13 +414,13 @@ def test_start_again_after_a_shopify_failure_reuses_the_written_listing():
 
 def test_publish_failure_leaves_a_hidden_draft_and_can_be_retried():
     workflow, _, shopify = pending_workflow()
-    shopify.queue(PUBLICATIONS, user_errors("productUpdate", "Not allowed"))
+    shopify.queue(PUBLICATIONS, user_errors("publishablePublish", "Not allowed"))
 
     state = workflow.decide(PRODUCT_ID, True)
 
     assert state["error"] == graph.PUBLISH_FAILED
     assert state["approval"] == "pending"
-    assert "PublishProduct" not in shopify.operations()
+    assert "ActivateProduct" not in shopify.operations()
     calls = len(shopify.calls)
     state = workflow.start(PRODUCT_ID, "Blue mug.")
     assert state["approval"] == "pending" and "error" not in state
@@ -489,7 +518,102 @@ def test_import_needs_no_credentials():
     result = subprocess.run(
         [sys.executable, "-c", "import app.graph as g; assert g._default is None"],
         env=env,
+        cwd=ROOT,
         capture_output=True,
         text=True,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_unexpected_exception_in_a_node_fails_the_step_and_can_be_retried(caplog):
+    workflow, _, shopify = pending_workflow()
+    shopify.queue(PUBLICATIONS, RuntimeError("bug in a transport"))
+
+    with caplog.at_level(logging.WARNING, logger="app.graph"):
+        state = workflow.decide(PRODUCT_ID, True)
+
+    assert state["error"] == graph.PUBLISH_FAILED
+    assert state["approval"] == "pending"
+    assert "RuntimeError" in caplog.text and "Traceback" in caplog.text
+    assert workflow.start(PRODUCT_ID, "Blue mug.")["approval"] == "pending"
+    shopify.queue(*PUBLISH_FLOW)
+    assert workflow.decide(PRODUCT_ID, True)["approval"] == "approved"
+
+
+def test_null_publications_end_with_an_error_instead_of_a_stuck_run():
+    workflow, _, shopify = pending_workflow()
+    shopify.queue(data(publications=None))
+
+    state = workflow.decide(PRODUCT_ID, True)
+
+    assert state["error"] == graph.PUBLISH_FAILED
+    assert workflow.graph.get_state({"configurable": {"thread_id": PRODUCT_ID}}).next == ()
+
+
+def test_run_interrupted_mid_step_is_retried_by_start():
+    workflow, llm, shopify = make_workflow([reply(LISTING), Abort()], [NOT_FOUND, CREATED])
+    with pytest.raises(Abort):
+        workflow.start(PRODUCT_ID, "Blue mug.")
+    stuck = workflow.graph.get_state({"configurable": {"thread_id": PRODUCT_ID}})
+    assert stuck.next == ("marketing",) and "error" not in stuck.values
+
+    llm.responses.append(reply(COPY))
+    state = workflow.start(PRODUCT_ID, "Blue mug.")
+
+    assert state["approval"] == "pending"
+    assert shopify.operations() == ["FindProductByHandle", "CreateDraftProduct"]
+
+
+def test_retry_after_failed_create_keeps_the_photo():
+    workflow, _, shopify = make_workflow(
+        [reply(LISTING), reply(COPY)],
+        [STAGED, UPLOADED, NOT_FOUND, user_errors("productCreate", "Busy")],
+    )
+    workflow.start(PRODUCT_ID, "Blue mug.", photo=PHOTO)
+    shopify.queue(STAGED, UPLOADED, NOT_FOUND, CREATED)
+
+    state = workflow.start(PRODUCT_ID, "Blue mug.")
+
+    assert state["approval"] == "pending"
+    assert PHOTO in shopify.calls[5]["body"]
+    create = json.loads(shopify.calls[7]["body"])["variables"]
+    assert create["media"][0]["originalSource"] == RESOURCE_URL
+
+
+def test_retry_keeps_analytics_instead_of_running_it_again():
+    workflow, _, shopify = pending_workflow(metrics=METRICS)
+    shopify.queue(PUBLICATIONS, user_errors("publishablePublish", "Not allowed"))
+    workflow.decide(PRODUCT_ID, True)
+
+    state = workflow.start(PRODUCT_ID, "Blue mug.")
+
+    assert state["analytics"].conversionRate == 0.025
+    recommended = [a for a in actions(state) if a[0] == "analytics"]
+    assert recommended == [("analytics", "Recommended a next step from synthetic metrics", True)]
+
+
+def test_products_and_events_list_every_started_workflow():
+    workflow, llm, shopify = pending_workflow()
+    llm.responses += [reply(LISTING), reply(COPY)]
+    shopify.queue(NOT_FOUND, CREATED)
+    workflow.start("other-001", "Red mug.")
+    with pytest.raises(UnknownWorkflowError):
+        workflow.decide("never-started", True)
+
+    assert workflow.products() == [PRODUCT_ID, "other-001"]
+    merged = workflow.events()
+    assert len(merged) == 10
+    assert [e["at"] for e in merged] == sorted(e["at"] for e in merged)
+    assert {e["productId"] for e in merged} == {PRODUCT_ID, "other-001"}
+    assert set(merged[0]) == {"agent", "action", "ok", "at", "productId"}
+    for product_id in workflow.products():
+        mine = [(e["agent"], e["action"], e["ok"]) for e in merged if e["productId"] == product_id]
+        assert mine == actions(workflow.snapshot(product_id))
+    json.dumps(merged)
+
+
+def test_module_products_and_events_use_the_default_workflow(monkeypatch):
+    workflow, _, _ = pending_workflow()
+    monkeypatch.setattr(graph, "_default", workflow)
+    assert graph.products() == [PRODUCT_ID]
+    assert [e["productId"] for e in graph.events()] == [PRODUCT_ID] * 5

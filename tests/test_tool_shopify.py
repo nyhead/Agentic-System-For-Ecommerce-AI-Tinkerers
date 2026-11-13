@@ -174,16 +174,46 @@ def test_publish_activates_and_publishes_to_online_store():
         productUpdate={"product": {"id": PRODUCT_GID, "status": "ACTIVE"}, "userErrors": []}
     )
     published = data(publishablePublish={"userErrors": []})
-    fake = FakeShopify(publications, activated, published)
+    fake = FakeShopify(publications, published, activated)
     draft = record().model_copy(update={"shopifyProductId": PRODUCT_GID})
 
     assert shopify.publish_product(draft, client=make_client(fake)) == draft
     assert "publications(first: 50, catalogType: APP)" in fake.request(0)["query"]
-    assert fake.request(1)["variables"] == {"product": {"id": PRODUCT_GID, "status": "ACTIVE"}}
-    assert fake.request(2)["variables"] == {
+    # Publish to the channel first; ACTIVE last, so a failure in between leaves a hidden DRAFT.
+    assert "publishablePublish" in fake.request(1)["query"]
+    assert fake.request(1)["variables"] == {
         "id": PRODUCT_GID,
         "input": [{"publicationId": "gid://shopify/Publication/3"}],
     }
+    assert "productUpdate" in fake.request(2)["query"]
+    assert fake.request(2)["variables"] == {"product": {"id": PRODUCT_GID, "status": "ACTIVE"}}
+
+
+def test_failed_channel_publish_sends_no_status_change():
+    publications = data(
+        publications={
+            "nodes": [
+                {
+                    "id": "gid://shopify/Publication/3",
+                    "catalog": {"apps": {"nodes": [{"handle": "online_store"}]}},
+                }
+            ]
+        }
+    )
+    failed = data(publishablePublish={"userErrors": [{"field": ["id"], "message": "Nope"}]})
+    fake = FakeShopify(publications, failed)
+    draft = record().model_copy(update={"shopifyProductId": PRODUCT_GID})
+    with pytest.raises(ShopifyError, match="publishablePublish failed"):
+        shopify.publish_product(draft, client=make_client(fake))
+    assert len(fake.calls) == 2
+    assert all("productUpdate" not in json.loads(call["body"])["query"] for call in fake.calls)
+
+
+@pytest.mark.parametrize("reply", [{"publications": None}, {"publications": {"nodes": None}}, {}])
+def test_missing_publications_raise_shopify_error(reply):
+    fake = FakeShopify((200, {"data": reply}))
+    with pytest.raises(ShopifyError, match="No Online Store publication"):
+        shopify.online_store_publication_id(make_client(fake))
 
 
 def test_publish_requires_a_shopify_draft():
