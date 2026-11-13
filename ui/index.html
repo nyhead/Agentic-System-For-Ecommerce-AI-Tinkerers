@@ -1756,7 +1756,7 @@ class Component extends DCLogic {
           statusLabel: !r ? 'Not researched yet' : (STATUS[r.status] || [STEP_LABELS[idx] || r.status])[0],
           statusDot: !r ? 'var(--text-3)' : ((STATUS[r.status] || [])[1] || 'var(--accent)'),
           modeLabel: !r ? '' : (r.dataMode === 'live' ? 'Live eBay data via Apify' : 'FIXTURE DATA — not live research') + ' · ' + this.rel(Date.parse(r.updatedAt)),
-          hasSteps: idx >= 0, steps: STEP_LABELS.map((l, i) => ({ label: l, state: i < idx || r.status === 'ready_for_review' ? 'done' : i === idx ? 'active' : 'todo' })),
+          hasSteps: idx >= 0, steps: idx < 0 ? [] : STEP_LABELS.map((l, i) => ({ label: l, state: i < idx || r.status === 'ready_for_review' ? 'done' : i === idx ? 'active' : 'todo' })),
           hasError: !!(s.mkErr || (r && r.error)), error: s.mkErr || (r && r.error) || '',
           hasRec: !!rec && !running,
           rec: rec ? {
