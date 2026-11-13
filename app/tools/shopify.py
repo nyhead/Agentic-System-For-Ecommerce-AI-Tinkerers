@@ -478,6 +478,78 @@ def purchase_info(
     )
 
 
+CREATE_TEST_ORDER = """
+mutation CreateTestOrder($order: OrderCreateOrderInput!) {
+  orderCreate(order: $order) {
+    order {
+      id
+      name
+      test
+      displayFinancialStatus
+      totalPriceSet { shopMoney { amount currencyCode } }
+    }
+    userErrors { field message }
+  }
+}
+"""
+
+
+class NotBuyableError(ShopifyError):
+    """The product cannot be bought now, so no order was sent; `reason` says why."""
+
+    def __init__(self, message: str, reason: NotBuyableReason) -> None:
+        super().__init__(message)
+        self.reason = reason
+
+
+@dataclass(frozen=True)
+class ShopifyTestOrder:
+    """A Shopify test order: recorded in the admin, no real payment taken."""
+
+    order_id: str
+    name: str
+    total: str
+    currency: str
+    test: bool
+
+
+def create_test_order(
+    record: ProductRecord,
+    *,
+    publication_id: str | None = None,
+    client: ShopifyClient | None = None,
+) -> ShopifyTestOrder:
+    """Record a PAID test order for one unit, only if `purchase_info` says it can be bought.
+
+    The order is always sent with `test: true`, so this cannot create a real order. It is not
+    idempotent: each call records another test order.
+    """
+    client = client or ShopifyClient()
+    info = purchase_info(record, publication_id=publication_id, client=client)
+    if info.reason is not None or not info.variant_id:
+        reason: NotBuyableReason = info.reason or "no_variant"
+        raise NotBuyableError(f"Product {record.productId!r} cannot be bought: {reason}", reason)
+    order_input = {
+        "test": True,
+        "financialStatus": "PAID",
+        "lineItems": [{"variantId": info.variant_id, "quantity": 1}],
+    }
+    result = client.mutate(CREATE_TEST_ORDER, {"order": order_input}, "orderCreate")
+    order = result.get("order")
+    if not order or not order.get("id"):
+        raise ShopifyError("orderCreate returned no order")
+    if order.get("test") is not True:
+        raise ShopifyError(f"Shopify did not record order {order.get('name')!r} as a test order")
+    money = (order.get("totalPriceSet") or {}).get("shopMoney") or {}
+    return ShopifyTestOrder(
+        order_id=str(order["id"]),
+        name=str(order.get("name") or ""),
+        total=str(money.get("amount") or ""),
+        currency=str(money.get("currencyCode") or ""),
+        test=True,
+    )
+
+
 def _multipart(
     fields: list[tuple[str, str]], filename: str, mime_type: str, data: bytes
 ) -> tuple[bytes, str]:
