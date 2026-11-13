@@ -5,10 +5,15 @@ from pathlib import Path
 
 import pytest
 
-from app.agents.sales import REQUEST_TIMEOUT_SECONDS, SalesReply, answer_shopper
+from app.agents.sales import (
+    REQUEST_TIMEOUT_SECONDS,
+    SalesReply,
+    answer_shopper,
+    record_test_sale,
+)
 from app.state import ProductRecord
 from app.tools.llm import LLMClient, LLMError
-from app.tools.shopify import ShopifyClient, ShopifyConfig, ShopifyError
+from app.tools.shopify import NotBuyableError, ShopifyClient, ShopifyConfig, ShopifyError
 
 ROOT = Path(__file__).resolve().parents[1]
 PRODUCT_GID = "gid://shopify/Product/1001"
@@ -209,3 +214,43 @@ def test_import_needs_no_credentials():
     )
     assert done.returncode == 0, done.stderr
     assert done.stdout.strip() == "answer_shopper"
+
+
+def order_created():
+    order = {
+        "id": "gid://shopify/Order/5550001",
+        "name": "#1001",
+        "test": True,
+        "displayFinancialStatus": "PAID",
+        "totalPriceSet": {"shopMoney": {"amount": "24.0", "currencyCode": "EUR"}},
+    }
+    return {"data": {"orderCreate": {"order": order, "userErrors": []}}}
+
+
+def test_test_sale_links_to_the_order_in_shopify_admin():
+    client, fake = shop(ONLINE_STORE, purchase_facts(), order_created())
+    sale = record_test_sale(product(), client=client)
+    assert sale.model_dump() == {
+        "simulatedPurchase": True,
+        "testOrder": True,
+        "testOrderName": "#1001",
+        "testOrderAdminUrl": "https://admin.shopify.com/store/demo-shop/orders/5550001",
+        "total": "24.0",
+        "currency": "EUR",
+    }
+    assert fake.calls == 3
+
+
+def test_test_sale_of_a_draft_sends_no_order():
+    client, fake = shop(ONLINE_STORE, purchase_facts(status="DRAFT"))
+    with pytest.raises(NotBuyableError):
+        record_test_sale(product(), client=client)
+    assert fake.calls == 2
+
+
+def test_test_sale_without_shopify_id_is_a_caller_error():
+    unlisted = product().model_copy(update={"shopifyProductId": None})
+    client, fake = shop()
+    with pytest.raises(ValueError, match="no Shopify draft"):
+        record_test_sale(unlisted, client=client)
+    assert fake.calls == 0

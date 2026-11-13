@@ -1,6 +1,6 @@
 # CommerceCrew team agreement
 
-Build the Python LangGraph MVP in this repository. Delivery is 16:45 Prague on 13 November 2026; freeze features at 16:00. Official hand-in is 17:45 and demos start at 18:15, three minutes each.
+Build the Python LangGraph MVP in this repository. Delivery is 16:45 Prague on 13 November 2026; freeze features at 16:30. Official hand-in is 17:45 and demos start at 18:15, three minutes each.
 
 These rules bind every teammate and every AI coding agent working in a teammate's checkout. Claude Code loads this file through `CLAUDE.md`; Codex and other agents read it directly. The [README](README.md) holds the product plan, layout and setup.
 
@@ -10,14 +10,16 @@ One owner per path. You, and the agent working for you, edit only your own lane.
 
 | Paths | Owner |
 | --- | --- |
-| `app/agents/`, `app/tools/`, `app/graph.py`, `tests/test_agent_*.py`, `tests/test_tool_*.py` | Musa — agentic system and Shopify integration |
-| `ui/` | Ibrahim — merchant cockpit dashboard |
+| `app/agents/` except the two modules below, `app/tools/`, `app/graph.py`, `tests/test_agent_*.py` except the two below, `tests/test_tool_*.py` | Musa — agentic system and Shopify integration |
+| `ui/`, `app/agents/marketing.py`, `app/agents/support.py`, `tests/test_agent_marketing.py`, `tests/test_agent_support.py` | Ibrahim — merchant cockpit dashboard, marketing agent and customer service agent |
 | `.github/`, `scripts/`, `Dockerfile`, `.dockerignore`, `pyproject.toml`, `uv.lock`, `.env.example`, `app/main.py`, `app/api/`, `app/state.py`, `tests/test_api_*.py`, `tests/test_foundation.py` | Nihad — DevOps, deployment, HTTP wiring and shared contracts |
 | `fixtures/`, `README.md`, `AGENTS.md`, `CLAUDE.md`, `.gitignore` | Shared — change only in a PR that all three teammates have seen |
 
+- Today Nihad wires the cockpit to the `/api` routes and edits `ui/js/` for that; Ibrahim keeps the rest of `ui/` and reviews those changes.
 - Nihad does not own a feature agent. Nihad reviews every change to `app/graph.py`, because that is where the workstreams meet.
 - Coordinate with Nihad before changing `app/state.py`, dependencies, CI or deployment. Only one dependency PR (`pyproject.toml` and `uv.lock`) is open at a time, and Nihad opens it.
 - Appending a variable name to `.env.example` is allowed in any PR that introduces that variable.
+- Each teammate may use their own model key and their own Shopify dev store in a local `.env`. The deployed service uses one set of credentials, held by Nihad in the host's settings.
 - Do not change another owner's module without coordinating. If your task needs a change in another lane, stop and ask that owner; they make it in their own PR.
 
 ## Branching: one trunk
@@ -59,7 +61,7 @@ Within one tier, the oldest green PR goes first. The author of the later PR reso
 
 If `main` breaks, nothing else merges until it is green again. Whoever merged the breaking PR fixes it or reverts it within 10 minutes.
 
-After the 16:00 freeze, only `fix/` and `docs/` PRs merge.
+After the 16:30 freeze, only `fix/` and `docs/` PRs merge.
 
 ## Rules for AI coding agents
 

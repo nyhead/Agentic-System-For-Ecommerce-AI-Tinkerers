@@ -31,7 +31,9 @@ _PROMPT = f"""Write launch copy for the product below.
 Use only facts stated in the product title and description. Do not invent materials, \
 dimensions, colors, prices, discounts, shipping promises, certifications, awards or health \
 claims, and do not add any other detail that is not stated there. The shop owner would be \
-publishing false claims under their own name. If a fact is not given, leave it out.
+publishing false claims under their own name. If a fact is not given, leave it out. That \
+includes how the product feels, fits, wears or lasts: nobody has told you, so do not say it \
+is comfortable, durable, reliable or well made.
 
 Write:
 - seoTitle: a search result title of at most {SEO_TITLE_MAX - 5} characters that names \
@@ -40,8 +42,9 @@ the product.
 one or two plain sentences.
 - socialAds: exactly two ads, each with "channel" and "copy", at most {AD_COPY_MAX - 5} \
 characters of copy each and no hashtags.
-  1. channel "{CHANNELS[0]}": a visual angle, about how the product looks and feels.
-  2. channel "{CHANNELS[1]}": a practical angle, about using the product day to day.
+  1. channel "{CHANNELS[0]}": a visual angle, about what the product looks like.
+  2. channel "{CHANNELS[1]}": a factual angle, about what the product is and what the \
+description says about its history or condition.
   The two ads must say different things, not the same sentence twice.
 Shorter is fine: never pad the copy with extra claims to reach a length.
 

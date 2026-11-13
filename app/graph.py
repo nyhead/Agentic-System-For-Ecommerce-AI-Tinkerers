@@ -1,5 +1,6 @@
 """Listing workflow: draft, launch copy and analytics, then publish only on merchant approval."""
 
+import contextvars
 import logging
 import operator
 import threading
@@ -26,11 +27,31 @@ from app.state import (
 )
 from app.tools import lessons
 from app.tools.llm import Image, LLMClient, LLMError
+from app.tools.posthog import PostHogClient
 from app.tools.shopify import ShopifyClient, ShopifyError
 
 logger = logging.getLogger(__name__)
 
 Agent = Literal["product", "marketing", "analytics", "merchant", "workflow"]
+# (event name, distinct id, properties, ISO timestamp); must never raise or block.
+Capture = Callable[[str, str, dict[str, Any], str], None]
+
+# PostHog event names by action-log prefix for successes; every failure is "workflow_step_failed".
+POSTHOG_EVENTS = {
+    "Wrote a draft title and description": "listing_drafted",
+    "Created the draft in Shopify, hidden from customers": "shopify_draft_created",
+    "Wrote an SEO title, a meta description and two social ads": "marketing_copy_written",
+    "Recommended a next step from": "analytics_recommended",
+    "Skipped: no shop numbers for this product yet": "analytics_skipped",
+    "Waiting for the shop owner to approve or reject": "approval_requested",
+    "Approved the listing": "listing_approved",
+    "Rejected the listing; nothing was published": "listing_rejected",
+    "Published the product to the Online Store": "listing_published",
+}
+# The capture function and product id of the run in progress, set by `Workflow` per invoke.
+_run: contextvars.ContextVar[tuple[Capture, str] | None] = contextvars.ContextVar(
+    "_run", default=None
+)
 
 # The checkpointer only restores these classes from a checkpoint, and no other.
 STATE_TYPES = (ProductRecord, MarketingResult, SocialAd, MetricsRecord, AnalyticsResult)
@@ -104,12 +125,41 @@ class WorkflowExistsError(WorkflowError):
 
 
 def _event(agent: Agent, action: str, ok: bool = True) -> WorkflowEvent:
-    return {
+    event: WorkflowEvent = {
         "agent": agent,
         "action": action,
         "ok": ok,
         "at": datetime.now(UTC).isoformat(timespec="milliseconds"),
     }
+    _track(event)
+    return event
+
+
+def posthog_event_name(event: WorkflowEvent) -> str:
+    if not event["ok"]:
+        return "workflow_step_failed"
+    for action, name in POSTHOG_EVENTS.items():
+        if event["action"].startswith(action):
+            return name
+    return "workflow_step_completed"
+
+
+def _track(event: WorkflowEvent) -> None:
+    run = _run.get()
+    if run is None:
+        return
+    capture, product_id = run
+    # Only the step's outcome: no listing text, photo or personal data.
+    properties: dict[str, Any] = {
+        "agent": event["agent"],
+        "ok": event["ok"],
+        "action": event["action"],
+        "$process_person_profile": False,
+    }
+    try:
+        capture(posthog_event_name(event), product_id, properties, event["at"])
+    except Exception as error:
+        logger.debug("PostHog capture failed: %s", type(error).__name__)
 
 
 def _failed(agent: Agent, action: str, message: str, error: Exception) -> RunState:
@@ -143,7 +193,9 @@ class Workflow:
         llm: LLMClient | None = None,
         shopify: ShopifyClient | None = None,
         checkpointer: BaseCheckpointSaver[Any] | None = None,
+        capture: Capture | None = None,
     ) -> None:
+        self._capture = capture if capture is not None else _posthog_capture
         self._llm = llm
         self._shopify = shopify
         self._checkpointer = checkpointer if checkpointer is not None else default_checkpointer()
@@ -219,7 +271,7 @@ class Workflow:
             with self._guard:
                 if product_id not in self._started:
                     self._started.append(product_id)
-            self._graph.invoke(seed, config)
+            self._invoke(product_id, seed, config)
             return _public(self._graph.get_state(config).values)
 
     def decide(self, product_id: str, approved: bool, *, reason: str | None = None) -> RunState:
@@ -238,7 +290,7 @@ class Workflow:
                 raise NotAwaitingApprovalError(
                     f"Product {product_id!r} is not waiting for approval"
                 )
-            self._graph.invoke(Command(resume=approved), config)
+            self._invoke(product_id, Command(resume=approved), config)
             reason = " ".join((reason or "").split())
             if not approved and reason:
                 lessons.record(
@@ -264,6 +316,15 @@ class Workflow:
             for event in state.get("events", []):
                 merged.append({**event, "productId": product_id})
         return sorted(merged, key=lambda event: event["at"])
+
+    def _invoke(
+        self, product_id: str, value: RunState | Command[Any], config: RunnableConfig
+    ) -> None:
+        token = _run.set((self._capture, product_id))
+        try:
+            self._graph.invoke(value, config)
+        finally:
+            _run.reset(token)
 
     def _lock(self, product_id: str) -> threading.Lock:
         with self._guard:
@@ -391,6 +452,10 @@ def _after_marketing(state: RunState) -> str:
     if "error" in state:
         return END
     return "analytics" if "metrics" in state else "review"
+
+
+def _posthog_capture(event: str, distinct_id: str, properties: dict[str, Any], at: str) -> None:
+    PostHogClient().capture(event, distinct_id, properties, timestamp=at)
 
 
 _default: Workflow | None = None

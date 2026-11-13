@@ -139,7 +139,23 @@ class Abort(BaseException):
     """Stands in for the process being interrupted in the middle of a step."""
 
 
-def make_workflow(llm_responses=(), shopify_responses=()):
+@pytest.fixture(autouse=True)
+def no_posthog_key(monkeypatch):
+    monkeypatch.delenv("POSTHOG_PROJECT_API_KEY", raising=False)
+
+
+class Captured:
+    def __init__(self):
+        self.calls = []
+
+    def __call__(self, event, distinct_id, properties, at):
+        self.calls.append((event, distinct_id, properties, at))
+
+    def names(self):
+        return [call[0] for call in self.calls]
+
+
+def make_workflow(llm_responses=(), shopify_responses=(), capture=None):
     llm_fake = FakeLLM(*llm_responses)
     shopify_fake = FakeShopify(*shopify_responses)
     llm = LLMClient(
@@ -150,7 +166,7 @@ def make_workflow(llm_responses=(), shopify_responses=()):
         transport=shopify_fake,
         sleep=lambda _: None,
     )
-    return Workflow(llm=llm, shopify=shopify), llm_fake, shopify_fake
+    return Workflow(llm=llm, shopify=shopify, capture=capture), llm_fake, shopify_fake
 
 
 def pending_workflow(metrics=None):
@@ -627,6 +643,74 @@ def test_module_products_and_events_use_the_default_workflow(monkeypatch):
     monkeypatch.setattr(graph, "_default", workflow)
     assert graph.products() == [PRODUCT_ID]
     assert [e["productId"] for e in graph.events()] == [PRODUCT_ID] * 5
+
+
+def test_full_run_to_approval_sends_one_posthog_event_per_step():
+    capture = Captured()
+    workflow, _, shopify = make_workflow(
+        [reply(LISTING), reply(COPY)], [NOT_FOUND, CREATED], capture=capture
+    )
+    workflow.start(PRODUCT_ID, "Blue mug, 350 ml.", metrics=METRICS)
+    shopify.queue(*PUBLISH_FLOW)
+    state = workflow.decide(PRODUCT_ID, True)
+
+    assert capture.names() == [
+        "listing_drafted",
+        "shopify_draft_created",
+        "marketing_copy_written",
+        "analytics_recommended",
+        "approval_requested",
+        "listing_approved",
+        "listing_published",
+    ]
+    assert {call[1] for call in capture.calls} == {PRODUCT_ID}
+    for (_, _, properties, at), event in zip(capture.calls, state["events"], strict=True):
+        assert properties == {
+            "agent": event["agent"],
+            "ok": True,
+            "action": event["action"],
+            "$process_person_profile": False,
+        }
+        assert at == event["at"]
+    sent = json.dumps(capture.calls)
+    assert "Blue Ceramic Mug" not in sent and "350 ml" not in sent
+
+
+def test_rejection_and_skipped_analytics_have_their_own_posthog_events():
+    capture = Captured()
+    workflow, _, _ = make_workflow(
+        [reply(LISTING), reply(COPY)], [NOT_FOUND, CREATED], capture=capture
+    )
+    workflow.start(PRODUCT_ID, "Blue mug.")
+    workflow.decide(PRODUCT_ID, False)
+    assert capture.names()[-3:] == ["analytics_skipped", "approval_requested", "listing_rejected"]
+
+
+def test_failed_step_sends_the_failure_event():
+    capture = Captured()
+    workflow, _, _ = make_workflow([(400, b"bad request")], capture=capture)
+
+    workflow.start(PRODUCT_ID, "Blue mug.")
+
+    [(name, distinct_id, properties, _)] = capture.calls
+    assert (name, distinct_id) == ("workflow_step_failed", PRODUCT_ID)
+    assert properties == {
+        "agent": "product",
+        "ok": False,
+        "action": "Could not write the listing",
+        "$process_person_profile": False,
+    }
+
+
+def test_a_capture_that_raises_does_not_change_the_run():
+    def broken(*args):
+        raise RuntimeError("posthog down")
+
+    workflow, _, _ = make_workflow(
+        [reply(LISTING), reply(COPY)], [NOT_FOUND, CREATED], capture=broken
+    )
+    state = workflow.start(PRODUCT_ID, "Blue mug.")
+    assert state["approval"] == "pending" and "error" not in state
 
 
 def test_rejection_with_a_reason_records_the_owner_lesson_for_the_product_agent():
