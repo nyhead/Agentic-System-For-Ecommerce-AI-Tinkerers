@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..600&amp;display=swap">
 <link rel="stylesheet" href="css/cockpit.css">
 <script src="js/icons.js"></script>
+<script src="js/api.js"></script>
 <script src="js/demo.js"></script>
 </helmet>
 <div class="app">
@@ -766,6 +767,7 @@
           </div>
           <button class="btn btn-ghost" onClick="{{ L.save }}">Save draft</button>
           <sc-if value="{{ L.canFeedback }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary" onClick="{{ L.toggleFb }}" aria-expanded="{{ L.fbOpen }}">Request changes</button></sc-if>
+          <sc-if value="{{ L.canReject }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary" onClick="{{ L.reject }}" disabled="{{ L.rejectDisabled }}"><cc-icon name="x" size="16"></cc-icon>Reject</button></sc-if>
           <button class="btn btn-primary" onClick="{{ L.publish }}" disabled="{{ L.publishDisabled }}"><cc-icon name="check" size="16"></cc-icon>Approve &amp; publish</button>
         </div>
       </div>
@@ -972,7 +974,9 @@
                 </sc-for>
               </div>
             </sc-if>
-            <p class="note"><cc-icon name="info" size="14"></cc-icon><span>Photos are all the agents need. The Product agent writes the listing, the Research agent suggests a price from comparable listings, and quantity starts at 1. You can change anything when you review it.</span></p>
+            <label for="am-notes" class="sub-title">Notes for the agent</label>
+            <textarea id="am-notes" rows="3" value="{{ M.notes }}" onChange="{{ M.onNotes }}" placeholder="e.g. Hand-thrown blue mug, 350 ml, price 24.90" class="input" style="min-height:72px"></textarea>
+            <p class="note"><cc-icon name="info" size="14"></cc-icon><span>The Product agent writes the listing from the cover photo and your notes and saves it in Shopify as a hidden draft. A price is set only if your notes state one. Nothing is published until you approve.</span></p>
           </div>
         </sc-if>
         <sc-if value="{{ M.sGen }}" hint-placeholder-val="{{ false }}">
@@ -981,7 +985,7 @@
               <sc-for list="{{ M.thumbs }}" as="t" hint-placeholder-count="6"><div class="gen-thumb"><img src="{{ t.src }}" alt=""></div></sc-for>
             </div>
             <div class="block">
-              <div><div class="block-title">Your agents are preparing the listing</div><div class="block-lede">Product agent writes the listing; Research agent prices it from comparable listings. Simulated in this demo — usually a few seconds.</div></div>
+              <div><div class="block-title">Your agents are preparing the listing</div><div class="block-lede">The Product agent writes the listing and saves it in Shopify as a hidden draft, then the Marketing agent writes the launch copy. Usually 10 to 20 seconds.</div></div>
               <ol role="status" aria-live="polite" class="gen-list">
                 <sc-for list="{{ M.gen }}" as="g" hint-placeholder-count="4">
                   <li class="gen-item" style="color:{{ g.fg }};font-weight:{{ g.weight }}">
@@ -1092,8 +1096,9 @@ class Component extends DCLogic {
     this._kd = e => this.onKey(e);
     document.addEventListener('keydown', this._kd);
     this._iv = setInterval(() => this.setState({ now: Date.now() }), 30000);
+    this._ev = setInterval(() => this.syncEvents(), 4000);
   }
-  componentWillUnmount() { clearTimeout(this._bt); clearInterval(this._iv); clearTimeout(this._tt); clearTimeout(this._pt); document.removeEventListener('keydown', this._kd); }
+  componentWillUnmount() { clearTimeout(this._bt); clearInterval(this._iv); clearInterval(this._ev); clearTimeout(this._tt); clearTimeout(this._pt); document.removeEventListener('keydown', this._kd); }
   componentDidUpdate(pp) {
     // dc-runtime passes only prevProps, so keep our own snapshot of the previous state.
     const ps = this._prevState || {};
@@ -1195,8 +1200,42 @@ class Component extends DCLogic {
     this.setState({ drawer: null });
     this.toast({ title: 'Draft saved', body: 'Your changes are kept. Nothing was published.' });
   }
+  // Live listing: POST /api/products/{id}/approval, then show the outcome; the service's error text is shown as is.
+  decideLive(pid, approved) {
+    const p0 = this.P(pid); if (!p0 || !p0.apiId || this.state.liveBusy) return;
+    this.setState({ liveBusy: true });
+    window.CCDemo.agents.decideListing(p0.apiId, approved).then(view => {
+      this.setState({ liveBusy: false });
+      if (view.error) { this.toast({ title: approved ? 'Not published' : 'Not rejected', body: view.error }); this.syncEvents(); return; }
+      const ok = view.approval === (approved ? 'approved' : 'rejected');
+      this.mut(d => {
+        const p = this.P(pid, d);
+        p.status = approved && ok ? 'published' : 'draft'; p.updated = Date.now();
+        p.history.unshift({ ts: Date.now(), who: 'You', text: approved ? 'Approved — published to the Online Store' : 'Rejected — left as a hidden draft in Shopify' });
+        this.resolveDecisions(d, x => x.kind === 'listing' && x.productId === pid, approved ? 'Published to Shopify' : 'Rejected');
+      });
+      this.setState({ drawer: null });
+      this.toast(approved
+        ? { title: 'Published to Shopify', body: p0.name + ' is live in the Online Store.', action: 'View product', onAction: () => this.openProduct(pid) }
+        : { title: 'Listing rejected', body: p0.name + ' stays a hidden draft in Shopify. Nothing was published.' });
+      this.syncEvents();
+    }).catch(e => {
+      this.setState({ liveBusy: false });
+      this.toast({ title: approved ? 'Not published' : 'Not rejected', body: (e && e.message) || 'The service didn’t respond.' });
+    });
+  }
+  // Live action log: GET /api/events replaces the previous live rows whenever the log changes.
+  syncEvents() {
+    if (!window.CCApi || !this.state.data) return;
+    window.CCApi.events().then(evs => {
+      if (!Array.isArray(evs) || evs.length === this._evN) return;
+      this._evN = evs.length;
+      this.mut(d => { d.activity = d.activity.filter(a => !a.live).concat(window.CCDemo.eventsToActivity(evs, d.products)); });
+    }).catch(() => {});
+  }
   publish(pid) {
     const p0 = this.P(pid); if (!window.CCDemo.requirements(p0).every(r => r.ok)) return;
+    if (p0.apiId) return this.decideLive(pid, true);
     this.mut(d => {
       const p = this.P(pid, d);
       p.status = 'published'; p.updated = Date.now();
@@ -1274,7 +1313,7 @@ class Component extends DCLogic {
   // ── add product
   // Two steps: 1 = photos, 2 = generating. Photos are the only input; price and quantity come from the agents.
   setM(patch) { this.setState(s => s.modal ? { modal: Object.assign({}, s.modal, typeof patch === 'function' ? patch(s.modal) : patch) } : null); }
-  openAdd() { this.setState({ menu: null, modal: { step: 1, images: [], coverId: null, errors: [], busy: 0, dragging: false, err: '', gen: -1, genError: null } }); }
+  openAdd() { this.setState({ menu: null, modal: { step: 1, images: [], coverId: null, errors: [], busy: 0, dragging: false, err: '', gen: -1, genError: null, notes: '', apiId: null } }); }
   downscale(file) {
     return new Promise((res, rej) => {
       const fr = new FileReader();
@@ -1300,7 +1339,7 @@ class Component extends DCLogic {
   isSample(m) { return m.images.length > 0 && m.images.every(i => String(i.id).startsWith('w-')); }
   modalNext() {
     const m = this.state.modal;
-    if (!m.images.length) return this.setM({ err: 'Add at least one photo — or use the sample watch.' });
+    if (!m.images.length && !(m.notes || '').trim()) return this.setM({ err: 'Add a photo, a few notes, or both.' });
     if (m.busy) return this.setM({ err: 'Hold on — previews are still being prepared.' });
     this.generate();
   }
@@ -1319,7 +1358,7 @@ class Component extends DCLogic {
     const m = this.state.modal; const sample = this.isSample(m); const actId = C.uid('a'); const n = m.images.length;
     this.mut(d => { d.activity.unshift({ id: actId, ts: Date.now(), agent: 'product', title: 'Preparing a listing', desc: 'Reading ' + n + ' photo' + (n === 1 ? '' : 's') + ' for a new product.', status: 'working', details: ['Started from Add product'] }); });
     this.setM({ step: 2, gen: 0, genError: null, err: '' });
-    C.agents.generateListing({ images: m.images, coverId: m.coverId, sample }, i => this.setM({ gen: i })).then(p => {
+    C.agents.generateListing({ images: m.images, coverId: m.coverId, sample, notes: m.notes || '', productId: m.apiId }, i => this.setM({ gen: i })).then(p => {
       this.setM({ gen: C.GEN_STEPS.length });
       setTimeout(() => {
         const decId = C.uid('d'); const r = p.research;
@@ -1327,15 +1366,17 @@ class Component extends DCLogic {
           d.products.unshift(p);
           d.decisions.unshift({ id: decId, kind: 'listing', agent: 'product', productId: p.id, title: sample ? 'Confirm watch details' : 'Confirm product details', action: 'Confirm details', status: 'pending', created: Date.now() });
           const a = d.activity.find(x => x.id === actId);
-          Object.assign(a, { title: 'Prepared a listing', desc: 'Drafted “' + p.name + '” from ' + n + ' photo' + (n === 1 ? '' : 's') + ' and handed it to you.', status: 'needs_input', decisionId: decId, next: 'Confirm details', target: { type: 'product', id: p.id, label: p.name }, details: sample ? ['Grouped photos as one product', 'Transcribed dial, case-back and strap markings', 'Set quantity to 1 — change it if you have more', 'Left year, reference, size, authenticity and condition for you'] : ['Grouped ' + n + ' photos as one product', 'Set quantity to 1 — change it if you have more', 'Asked you for the details it couldn’t verify'] });
-          this.logAct(d, { agent: 'research', title: 'Researched a market price', desc: 'Suggested ' + C.euro(r.suggested) + ' for “' + p.name + '” from ' + r.comps + ' comparable listings.', status: 'completed', target: { type: 'product', id: p.id, label: p.name },
+          Object.assign(a, { title: 'Prepared a listing', desc: 'Drafted “' + p.name + '” and handed it to you.', status: 'needs_input', decisionId: decId, next: 'Confirm details', target: { type: 'product', id: p.id, label: p.name }, details: p.apiId ? ['Saved in Shopify as a hidden draft', 'Nothing is published until you approve'] : sample ? ['Grouped photos as one product', 'Transcribed dial, case-back and strap markings', 'Set quantity to 1 — change it if you have more', 'Left year, reference, size, authenticity and condition for you'] : ['Grouped ' + n + ' photos as one product', 'Set quantity to 1 — change it if you have more', 'Asked you for the details it couldn’t verify'] });
+          if (r) this.logAct(d, { agent: 'research', title: 'Researched a market price', desc: 'Suggested ' + C.euro(r.suggested) + ' for “' + p.name + '” from ' + r.comps + ' comparable listings.', status: 'completed', target: { type: 'product', id: p.id, label: p.name },
             details: ['Range ' + C.euro(r.low) + '–' + C.euro(r.high) + ' across ' + r.comps + ' ' + r.basis + ' · synthetic in this demo', 'Confidence: ' + r.confidence.toLowerCase(), 'Shown to you as a suggestion; nothing publishes until you approve'] });
         });
         this.setState(Object.assign({ modal: null, drawer: { type: 'listing', productId: p.id, decisionId: decId } }, this.uiReset()));
       }, 450 * ((window.CCDemo && window.CCDemo.speed) || 1));
-    }).catch(() => {
-      this.mut(d => { const a = d.activity.find(x => x.id === actId); if (a) Object.assign(a, { status: 'failed', title: 'Listing preparation failed', desc: 'The simulated agent didn’t respond.' }); });
-      this.setM({ genError: 'The simulated agent didn’t respond. Your photos are still here.' });
+    }).catch(e => {
+      const msg = (e && e.message) || 'The Product agent didn’t respond.';
+      this.mut(d => { const a = d.activity.find(x => x.id === actId); if (a) Object.assign(a, { status: 'failed', title: 'Listing preparation failed', desc: msg }); });
+      this.setM(mm => ({ genError: msg, apiId: (e && e.productId) || mm.apiId }));
+      this.syncEvents();
     });
   }
 
@@ -1547,7 +1588,8 @@ class Component extends DCLogic {
           optFields: [['reference', 'Reference number', 'Not provided', ''], ['year', 'Year of manufacture', 'Not provided', 'Engraved dates aren’t proof of manufacture year.'], ['diameter', 'Case diameter', 'Not provided — e.g. 34 mm', ''], ['calibre', 'Movement calibre', 'Not provided', '']].map(([k, l, ph, h]) => ({ k, id: 'opt-' + k, label: l, ph, hint: h, hasHint: !!h, value: (p.optional || {})[k] || '', on: e => this.mut(dd => { const pp = this.P(p.id, dd); pp.optional = Object.assign({}, pp.optional, { [k]: e.target.value }); }) })),
           optOpen: s.optOpen, optChev: s.optOpen ? 'chevron-up' : 'chevron-down', toggleOpt: () => this.setState({ optOpen: !s.optOpen }), optLabel: (() => { const f = Object.values(p.optional || {}).filter(Boolean).length; return f ? f + ' of 4 added' : 'Optional — won’t block publishing'; })(),
           history: (p.history || []).slice(0, s.histOpen ? 50 : 3).map((h, i) => ({ i, who: h.who, text: h.text, time: this.rel(h.ts) })), histOpen: s.histOpen, histChev: s.histOpen ? 'chevron-up' : 'chevron-down', toggleHist: () => this.setState({ histOpen: !s.histOpen }), histMore: (p.history || []).length > 3, histLabel: s.histOpen ? 'Show less' : 'Show all ' + (p.history || []).length,
-          ready: !miss.length, notReady: miss.length > 0, missText: this.list(miss.map(r => r.label)), publishDisabled: miss.length > 0 || p.status === 'published',
+          ready: !miss.length, notReady: miss.length > 0, missText: this.list(miss.map(r => r.label)), publishDisabled: miss.length > 0 || p.status === 'published' || !!s.liveBusy,
+          canReject: !!p.apiId && p.status === 'needs_review', reject: () => this.decideLive(p.id, false), rejectDisabled: !!s.liveBusy,
           isWorking: !!(dec && dec.state === 'working'),
           save: () => this.saveListing(p.id), publish: () => this.publish(p.id),
           fbOpen: s.fbOpen, fb: s.fb, fbErr: s.fbErr, onFb: e => this.setState({ fb: e.target.value, fbErr: false }), toggleFb: () => this.setState({ fbOpen: !s.fbOpen, fbErr: false }), cancelFb: () => this.setState({ fbOpen: false, fb: '', fbErr: false }), sendFb: () => this.sendFeedback(p.id), canFeedback: !!dec,
@@ -1608,6 +1650,7 @@ class Component extends DCLogic {
         onDragOver: e => { e.preventDefault(); if (!this.state.modal.dragging) this.setM({ dragging: true }); }, onDragLeave: e => { if (e.currentTarget.contains(e.relatedTarget)) return; this.setM({ dragging: false }); }, onDrop: e => { e.preventDefault(); this.addFiles(e.dataTransfer.files); },
         pick: () => this.fileRef.current && this.fileRef.current.click(), onFiles: e => { this.addFiles(e.target.files); e.target.value = ''; },
         useSample: () => this.useSample(), isSample: this.isSample(m),
+        notes: m.notes || '', onNotes: e => this.setM({ notes: e.target.value, err: '' }),
         cover: (m.images.find(i => i.id === m.coverId) || {}).src || '', hasCover: !!m.coverId,
         gen: C.GEN_STEPS.map((l, i) => ({ label: l, done: m.gen > i, active: m.gen === i, pending: m.gen < i, fg: m.gen >= i ? 'var(--text)' : 'var(--dot-neutral)', weight: m.gen === i ? '600' : '400' })),
         genError: m.genError || '', hasGenError: !!m.genError, retryGen: () => this.generate(), backFromError: () => this.setM({ step: 1, genError: null, gen: -1 }),

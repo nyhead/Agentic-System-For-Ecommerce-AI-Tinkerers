@@ -1,5 +1,6 @@
 // CommerceCrew demo data + simulated agent services.
-// Presentation reads only from window.CCDemo; swap `agents.*` for real API calls later.
+// Presentation reads only from window.CCDemo. The demo path is live: generateListing, decideListing and
+// eventsToActivity call the service through window.CCApi (js/api.js). Everything else is demo data.
 (function () {
   const VERSION = 4;
   const MIN = 60000;
@@ -17,6 +18,8 @@
     marketing: { name: 'Marketing agent', icon: 'megaphone' },
     sales:     { name: 'Sales agent',     icon: 'shopping-bag' },
     analytics: { name: 'Analytics agent', icon: 'bar-chart' },
+    merchant:  { name: 'You',             icon: 'user' },
+    workflow:  { name: 'Workflow',        icon: 'route' },
   };
 
   // One watch, six photos. fx/fy = crop focus (%), zoom = thumbnail crop scale.
@@ -166,6 +169,11 @@
 
   // Publication requirements — proportionate, never blocked by optional specs.
   function requirements(p) {
+    // Live listings: the service holds the draft, so only what it needs to publish is checked here.
+    if (p.apiId) return [
+      { key: 'title', label: 'title', ok: !!(p.name || '').trim() },
+      { key: 'description', label: 'description', ok: !!(p.description || '').trim() },
+    ];
     const stockOk = p.stock !== '' && p.stock != null && Number.isInteger(Number(p.stock)) && Number(p.stock) >= 0;
     const open = (p.claims || []).filter(c => c.state === 'open').length;
     return [
@@ -185,12 +193,69 @@
     return hi + '[Waiting for your answer: has this watch been pressure-tested?]';
   }
 
-  const GEN_STEPS = ['Reading photos', 'Preparing product details', 'Researching market price', 'Writing listing copy', 'Checking what needs your review'];
+  const GEN_STEPS = ['Reading your photo and notes', 'Writing the listing', 'Saving a hidden draft in Shopify', 'Writing launch copy', 'Handing it to you for approval'];
+
+  // A WorkflowView from POST /api/products/draft as a cockpit product. Shows the merchant's own photos:
+  // the image URL Shopify returns is not viewable right after upload.
+  function liveProduct(view, input) {
+    const r = view.product, mk = view.marketing;
+    const hasPrice = r.price != null && r.price !== '';
+    const details = [];
+    if (r.productType) details.push({ k: 'Product type', v: r.productType, src: 'ai' });
+    if (r.vendor) details.push({ k: 'Vendor', v: r.vendor, src: 'ai' });
+    if (r.tags && r.tags.length) details.push({ k: 'Tags', v: r.tags.join(', '), src: 'ai' });
+    if (mk && mk.seoTitle) details.push({ k: 'SEO title', v: mk.seoTitle, src: 'ai' });
+    if (r.shopifyProductId) details.push({ k: 'Shopify', v: 'Hidden draft · ' + String(r.shopifyProductId).split('/').pop(), src: 'ai' });
+    const n = input.images.length;
+    return simpleProduct({
+      id: uid('p'), apiId: view.productId, name: r.title, nameSrc: 'ai', nameNote: 'Written by the Product agent',
+      category: r.productType || 'Other', categoryKey: 'other', status: 'needs_review', icon: 'package',
+      images: input.images, coverId: input.coverId, description: r.description, descSrc: 'ai',
+      price: hasPrice ? Number(r.price) : '', priceSrc: 'you', stock: 1, stockSrc: 'default', condition: '',
+      details, marketing: mk || null, analytics: view.analytics || null,
+      history: [
+        { ts: Date.now(), who: 'You', text: 'Sent ' + (n ? n + ' photo' + (n === 1 ? '' : 's') : 'notes') + (input.notes ? ' and notes' : '') },
+        { ts: Date.now(), who: 'Product agent', text: 'Wrote the listing and saved it in Shopify as a hidden draft' },
+      ].concat(mk ? [{ ts: Date.now(), who: 'Marketing agent', text: 'Wrote the SEO title, meta description and two social ads' }] : []),
+      updated: Date.now(), created: Date.now(),
+    });
+  }
+
+  // GET /api/events as activity rows, linked to the cockpit product they belong to.
+  function eventsToActivity(events, products) {
+    return events.map((ev, i) => {
+      const p = products.find(x => x.apiId && x.apiId === ev.productId);
+      return {
+        id: 'ev-' + i, live: true, agent: ev.agent, title: ev.action,
+        desc: p ? '“' + p.name + '”' : (ev.productId ? 'Product ' + ev.productId : ''),
+        status: ev.ok ? 'completed' : 'failed', ts: Date.parse(ev.at) || Date.now(),
+        target: p ? { type: 'product', id: p.id, label: p.name } : null,
+        details: ['Logged by the service (GET /api/events)'],
+      };
+    });
+  }
 
   const agents = {
-    // Simulated: a real backend would upload images, run the Product and Research agents and stream task status.
-    // Photos are the only input: the price comes from market research and quantity starts at 1.
+    // Live: POST /api/products/draft with the cover photo and the notes. Blocks 10 to 20 s; the steps advance
+    // on a timer meanwhile. Throws the service's own words; `productId` on the error lets "Try again" retry it.
     async generateListing(input, onStep) {
+      let i = 0; onStep && onStep(0);
+      const tick = setInterval(() => { if (i < GEN_STEPS.length - 1) onStep && onStep(++i); }, 3500);
+      try {
+        const cover = input.images.find(im => im.id === input.coverId) || input.images[0];
+        const photo = cover ? await window.CCApi.toDataUrl(cover.src) : null;
+        const view = await window.CCApi.draft(photo, input.notes, input.productId);
+        if (view.error || !view.product) {
+          const e = new Error(view.error || 'The Product agent returned no listing.'); e.productId = view.productId; throw e;
+        }
+        onStep && onStep(GEN_STEPS.length - 1);
+        return liveProduct(view, input);
+      } finally { clearInterval(tick); }
+    },
+    // Live: POST /api/products/{productId}/approval. Resolves with the WorkflowView; `error` may be set.
+    decideListing(apiId, approved) { return window.CCApi.decide(apiId, approved); },
+    // The original simulation, kept for reference; nothing calls it.
+    async simulateListing(input, onStep) {
       for (let i = 0; i < GEN_STEPS.length; i++) { onStep && onStep(i); await wait(850); }
       const n = input.images.length, photos = n + ' photo' + (n === 1 ? '' : 's');
       let p;
@@ -223,5 +288,5 @@
     async retryTask() { await wait(1800); return { ok: true }; },
   };
 
-  window.CCDemo = { VERSION, AGENTS, GEN_STEPS, seed, requirements, supportReply, watchGallery: WATCH_GALLERY, agents, uid, euro };
+  window.CCDemo = { VERSION, AGENTS, GEN_STEPS, seed, requirements, supportReply, watchGallery: WATCH_GALLERY, agents, uid, euro, eventsToActivity };
 })();
