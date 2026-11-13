@@ -211,7 +211,8 @@
       id: uid('p'), apiId: view.productId, name: r.title, nameSrc: 'ai', nameNote: 'Written by the Product agent',
       category: r.productType || 'Other', categoryKey: 'other', status: 'needs_review', icon: 'package',
       images: input.images, coverId: input.coverId, description: r.description, descSrc: 'ai',
-      price: hasPrice ? Number(r.price) : '', priceSrc: 'you', stock: 1, stockSrc: 'default', condition: '',
+      // The demo store prices in CZK; the draft response carries no currency. window.CC_CURRENCY overrides it.
+      price: hasPrice ? Number(r.price) : '', currency: window.CC_CURRENCY || 'CZK', priceSrc: 'you', stock: 1, stockSrc: 'default', condition: '',
       details, marketing: mk || null, analytics: view.analytics || null,
       history: [
         { ts: Date.now(), who: 'You', text: 'Sent ' + (n ? n + ' photo' + (n === 1 ? '' : 's') : 'notes') + (input.notes ? ' and notes' : '') },
