@@ -1,0 +1,7 @@
+{
+  "productId": "demo-mug-001",
+  "source": "synthetic",
+  "periodDays": 7,
+  "sessions": 240,
+  "orders": 6
+}
