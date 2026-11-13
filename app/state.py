@@ -1,7 +1,7 @@
 """Shared fixture contracts. Nihad coordinates changes to this file."""
 
 from decimal import Decimal
-from typing import Literal, TypedDict
+from typing import Annotated, Literal, TypedDict
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -96,6 +96,9 @@ ResearchStatus = Literal[
 PriceType = Literal["asking", "auction_bid", "sold", "unknown"]
 MatchLevel = Literal["same_model", "related"]
 ConfidenceLabel = Literal["low", "medium", "high"]
+# Listing URLs come from third-party marketplaces and the cockpit renders them as links. Only
+# http(s) passes, so a scraped listing cannot put a javascript: or data: URL in the browser.
+ListingUrl = Annotated[str, Field(pattern=r"^(?i:https?)://\S", max_length=2048)]
 
 
 class Money(BaseModel):
@@ -146,7 +149,7 @@ class Comparable(BaseModel):
     ref: str
     source: str
     actorId: str
-    sourceUrl: str
+    sourceUrl: ListingUrl
     retrievedAt: str
     listingId: str | None = None
     title: str
@@ -171,7 +174,7 @@ class Comparable(BaseModel):
 
 class ExcludedCandidate(BaseModel):
     ref: str
-    sourceUrl: str
+    sourceUrl: ListingUrl
     title: str
     reason: str
 

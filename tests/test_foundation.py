@@ -7,7 +7,14 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from app.main import app
-from app.state import AnalyticsResult, MarketingResult, MetricsRecord, ProductRecord
+from app.state import (
+    AnalyticsResult,
+    Comparable,
+    ExcludedCandidate,
+    MarketingResult,
+    MetricsRecord,
+    ProductRecord,
+)
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 
@@ -95,3 +102,28 @@ def test_analytics_contract_allows_no_rate_without_sessions():
 def test_analytics_contract_rejects_unknown_rule():
     with pytest.raises(ValidationError):
         AnalyticsResult.model_validate({**ANALYTICS_PAYLOAD, "recommendationRule": "guess"})
+
+
+COMPARABLE = {
+    "ref": "C1",
+    "source": "ebay_sold",
+    "actorId": "example/actor",
+    "retrievedAt": "2026-11-13T15:00:00+00:00",
+    "title": "Omega Seamaster De Ville",
+    "priceType": "sold",
+}
+
+
+@pytest.mark.parametrize("url", ["https://www.ebay.com/itm/1", "HTTP://example.com/a"])
+def test_listing_urls_accept_http_and_https(url):
+    assert Comparable.model_validate({**COMPARABLE, "sourceUrl": url}).sourceUrl == url
+
+
+@pytest.mark.parametrize(
+    "url", ["javascript:alert(1)", "JavaScript:alert(1)", "data:text/html,x", "//evil.example", ""]
+)
+def test_listing_urls_reject_scripts_and_other_schemes(url):
+    with pytest.raises(ValidationError):
+        Comparable.model_validate({**COMPARABLE, "sourceUrl": url})
+    with pytest.raises(ValidationError):
+        ExcludedCandidate(ref="C1", sourceUrl=url, title="x", reason="y")
