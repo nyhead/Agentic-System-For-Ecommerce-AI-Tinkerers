@@ -158,12 +158,15 @@ def test_top_level_graphql_errors_raise():
 
 
 def test_publish_activates_and_publishes_to_online_store():
+    def catalog(handle):
+        return {"apps": {"nodes": [{"handle": handle}]}}
+
     publications = data(
         publications={
             "nodes": [
-                {"id": "gid://shopify/Publication/1", "catalog": {"title": "Point of Sale"}},
+                {"id": "gid://shopify/Publication/1", "catalog": catalog("pos")},
                 {"id": "gid://shopify/Publication/2", "catalog": None},
-                {"id": "gid://shopify/Publication/3", "catalog": {"title": "Online Store"}},
+                {"id": "gid://shopify/Publication/3", "catalog": catalog("online_store")},
             ]
         }
     )
