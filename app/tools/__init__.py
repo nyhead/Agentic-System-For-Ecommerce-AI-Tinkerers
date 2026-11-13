@@ -1,1 +1,1 @@
-"""Nihad owns Shopify tools; keep external credentials server-side."""
+"""External integrations (e.g. Shopify); keep credentials server-side."""

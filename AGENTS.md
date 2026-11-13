@@ -2,10 +2,10 @@
 
 Build the Python LangGraph MVP in this repository. Delivery is 16:45 Prague on 13 November 2026; freeze features at 16:00.
 
-- Nihad: `product-agent` branch; `app/agents/product.py`, `app/tools/shopify.py`, demo composition and final integration.
-- Ibrahim: `marketing-agent` branch; `app/agents/marketing.py` and its tests/component.
-- Musa: `analytics-agent` branch; `app/agents/analytics.py` and its tests/component.
-- Nihad coordinates changes to `app/state.py`, the eventual `app/graph.py`, `pyproject.toml`, `uv.lock`, CI and deployment.
+- Nihad: DevOps and orchestration only — CI/CD (`.github/`, `scripts/`, `Dockerfile`), deployment, `pyproject.toml`/`uv.lock`, shared contracts in `app/state.py`, and wiring workstreams together in the eventual `app/graph.py`. Nihad does not own a feature agent.
+- Ibrahim and Musa: feature workstreams, **not yet assigned**. Record the agreed task, module and branch here once confirmed.
+- Branch per task from `main` as `feat/<short-topic>`; one owner per module under `app/agents/` and `app/tools/`.
+- Coordinate with Nihad before changing `app/state.py`, dependencies, CI or deployment.
 - Each teammate uses their own clone and coding session. Ship small pull requests every 30–45 minutes.
 - Read the fixtures and shared models first. Work against fixtures while tools are being implemented. Label synthetic output.
 - Keep credentials server-side and out of Git. Real Shopify writes target a test store, require explicit merchant approval and must tolerate retries without duplicate writes.

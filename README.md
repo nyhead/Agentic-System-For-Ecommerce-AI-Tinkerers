@@ -2,11 +2,13 @@
 
 A Shopify merchant turns a product photo and rough notes into a draft listing, launch copy, and a follow-up recommendation.
 
-| Owner | Branch | Demo deliverable |
-| --- | --- | --- |
-| Nihad | `product-agent` | Turn a photo and notes into a Shopify dev-store draft with an image. Own integration and the demo screen. |
-| Ibrahim | `marketing-agent` | Generate an SEO title, meta description, and two social ad drafts for review. |
-| Musa | `analytics-agent` | Show sessions, orders, conversion rate, and one suggested next action using labeled synthetic metrics. |
+| Owner | Role |
+| --- | --- |
+| Nihad | DevOps and orchestration: CI/CD, deployment, dependencies, shared contracts and integrating workstreams. |
+| Ibrahim | Feature work — task to be confirmed. |
+| Musa | Feature work — task to be confirmed. |
+
+Candidate workstreams (unassigned): product listing → Shopify draft, marketing copy, analytics recommendation.
 
 ## Shared inputs
 
@@ -36,15 +38,15 @@ Open http://localhost:8000/docs. Copy `.env.example` to an ignored `.env` only w
 
 ## Parallel development today
 
-Each teammate clones the same repository in their own Ubuntu `~/code` folder and starts Codex/Claude inside that checkout. Keep the existing branches: Nihad `product-agent`, Ibrahim `marketing-agent`, Musa `analytics-agent`. See [AGENTS.md](AGENTS.md) for file ownership.
+Each teammate clones the same repository in their own Ubuntu `~/code` folder and starts Codex/Claude inside that checkout. Branch per task as `feat/<short-topic>` once your task is confirmed. See [AGENTS.md](AGENTS.md) for ownership.
 
 ```bash
 git switch main
 git pull --ff-only
-git switch -c product-agent  # choose your assigned branch instead
+git switch -c feat/<short-topic>
 ```
 
-Nihad owns `app/state.py`, `app/graph.py`, dependency changes and final integration. Teammates implement their own nodes in `app/agents/`; start with the fixtures instead of waiting for Shopify. Merge small reviewed PRs every 30–45 minutes.
+Nihad owns CI/CD, deployment, `app/state.py`, `app/graph.py`, dependency changes and integration. Feature owners implement their own nodes in `app/agents/`; start with the fixtures instead of waiting for Shopify. Merge small reviewed PRs every 30–45 minutes.
 
 ## CI and deployment
 
