@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from app.main import app
-from app.state import MarketingResult, MetricsRecord, ProductRecord
+from app.state import AnalyticsResult, MarketingResult, MetricsRecord, ProductRecord
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 
@@ -46,3 +46,30 @@ def test_marketing_preserves_shared_json_copy_field():
         ],
     }
     assert MarketingResult.model_validate(payload).model_dump() == payload
+
+
+ANALYTICS_PAYLOAD = {
+    "productId": "demo-mug-001",
+    "source": "synthetic",
+    "periodDays": 7,
+    "sessions": 240,
+    "orders": 6,
+    "conversionRate": 0.025,
+    "recommendationRule": "healthy_conversion",
+    "recommendation": "Synthetic sample data, not real shop visits: 240 visits and 6 orders.",
+}
+
+
+def test_analytics_contract_round_trips_json_field_names():
+    assert AnalyticsResult.model_validate(ANALYTICS_PAYLOAD).model_dump() == ANALYTICS_PAYLOAD
+
+
+def test_analytics_contract_allows_no_rate_without_sessions():
+    payload = {**ANALYTICS_PAYLOAD, "sessions": 0, "orders": 0, "conversionRate": None}
+    payload["recommendationRule"] = "no_traffic"
+    assert AnalyticsResult.model_validate(payload).conversionRate is None
+
+
+def test_analytics_contract_rejects_unknown_rule():
+    with pytest.raises(ValidationError):
+        AnalyticsResult.model_validate({**ANALYTICS_PAYLOAD, "recommendationRule": "guess"})
