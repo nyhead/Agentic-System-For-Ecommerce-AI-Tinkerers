@@ -38,9 +38,31 @@ class MetricsRecord(BaseModel):
     orders: int = Field(ge=0)
 
 
+RecommendationRule = Literal[
+    "no_traffic", "low_traffic", "no_orders", "low_conversion", "healthy_conversion"
+]
+
+
+class AnalyticsResult(BaseModel):
+    """Metrics, conversion rate and one recommended next action for a product."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    productId: str
+    source: Literal["synthetic", "observed"]
+    periodDays: int = Field(gt=0)
+    sessions: int = Field(ge=0)
+    orders: int = Field(ge=0)
+    # None when sessions are zero: there is no rate to show.
+    conversionRate: float | None = Field(ge=0)
+    recommendationRule: RecommendationRule
+    recommendation: str = Field(min_length=1)
+
+
 class WorkflowState(TypedDict, total=False):
     product: ProductRecord
     marketing: MarketingResult
     metrics: MetricsRecord
+    analytics: AnalyticsResult
     approval: Literal["pending", "approved", "rejected"]
     error: str
