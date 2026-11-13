@@ -1,5 +1,9 @@
 """Product agent: draft a listing from a photo and notes, create it in Shopify, publish it."""
 
+import re
+from decimal import Decimal
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.state import ProductRecord
@@ -13,6 +17,12 @@ MAX_TITLE_LENGTH = 70
 DRAFT_TIMEOUT_SECONDS = 45.0
 # Low, so the model stays close to the facts it was given instead of embellishing.
 DRAFT_TEMPERATURE = 0.3
+MAX_TAGS = 8
+MAX_TAG_LENGTH = 30
+# Product type and vendor are short labels; Shopify itself allows up to 255 characters.
+MAX_LABEL_LENGTH = 60
+# A plain amount: digits, optionally a dot and one or two decimals. No symbol, sign or exponent.
+_AMOUNT = re.compile(r"\d{1,9}(\.\d{1,2})?")
 
 SYSTEM_PROMPT = f"""\
 You write product listings for a small independent shop. The shop owner publishes what you \
@@ -32,7 +42,17 @@ Write:
 characters, without the shop name, the price or promotional words.
 - description: two to four plain sentences that a customer reads on the product page, about \
 what the product is, what it looks like and what the notes say about it. Plain text only: no \
-markdown, bullet points, headings, emoji or hashtags."""
+markdown, bullet points, headings, emoji or hashtags.
+- price: only when the owner's notes state a price. Copy that amount as a plain number string \
+such as "24.90", without a currency symbol or code. A photo never shows a price. Never \
+estimate, suggest or round a price; if the notes give none, use null.
+- productType: a short, general category of what the item is, such as "Wristwatch" or "Mug". \
+The photo may tell you this.
+- vendor: the brand, only when the notes name it or it is legibly written on the product in \
+the photo; otherwise null. Do not infer a brand from the style or shape of the product.
+- tags: up to {MAX_TAGS} short, lowercase, descriptive tags about what is visible in the photo \
+or stated in the notes, such as "blue" or "ceramic". No invented attributes, no promotional \
+words."""
 
 
 class _ListingDraft(BaseModel):
@@ -42,6 +62,13 @@ class _ListingDraft(BaseModel):
 
     title: str = Field(min_length=1, description="Product title shown to shoppers.")
     description: str = Field(min_length=1, description="Two to four plain-text sentences.")
+    # Any JSON value, so a malformed price never fails the draft; _price keeps only an amount.
+    price: Any = Field(
+        default=None, description='Price stated in the notes as a string, e.g. "24.90", else null.'
+    )
+    productType: str | None = Field(default=None, description="Short general category.")
+    vendor: str | None = Field(default=None, description="Brand from notes or product, else null.")
+    tags: list[str] = Field(default_factory=list, description="Short lowercase tags.")
 
 
 def draft_listing(
@@ -51,7 +78,10 @@ def draft_listing(
     image: Image | None = None,
     llm: LLMClient | None = None,
 ) -> ProductRecord:
-    """Draft a title and description with the model. Writes nothing to Shopify.
+    """Draft the listing with the model. Writes nothing to Shopify.
+
+    Besides title and description the model proposes product type, vendor and tags; price is
+    kept only when it is a plain amount, which the prompt allows only when the notes state one.
 
     Raises ValueError when there are neither notes nor an image, and LLMError when the model
     gives no usable reply.
@@ -70,7 +100,13 @@ def draft_listing(
         temperature=DRAFT_TEMPERATURE,
     )
     return ProductRecord(
-        productId=product_id, title=_fit_title(draft.title), description=draft.description
+        productId=product_id,
+        title=_fit_title(draft.title),
+        description=draft.description,
+        price=_price(draft.price),
+        productType=_label(draft.productType),
+        vendor=_label(draft.vendor),
+        tags=_tags(draft.tags),
     )
 
 
@@ -118,6 +154,28 @@ def _user_prompt(notes: str, *, has_image: bool) -> str:
     if notes:
         return f"{source}\n\nThe shop owner's notes:\n<notes>\n{notes}\n</notes>"
     return f"{source}\n\nThe shop owner gave no notes. Describe only what the photo shows."
+
+
+def _price(value: Any) -> Decimal | None:
+    # bool is an int subclass; True is not a price.
+    if isinstance(value, bool) or not isinstance(value, str | int | float):
+        return None
+    text = str(value).strip()
+    return Decimal(text) if _AMOUNT.fullmatch(text) else None
+
+
+def _label(value: str | None) -> str | None:
+    value = " ".join((value or "").split())
+    return value[:MAX_LABEL_LENGTH].rstrip() or None
+
+
+def _tags(values: list[str]) -> list[str]:
+    tags: list[str] = []
+    for value in values:
+        tag = " ".join(value.split()).lower()
+        if tag and len(tag) <= MAX_TAG_LENGTH and tag not in tags:
+            tags.append(tag)
+    return tags[:MAX_TAGS]
 
 
 def _fit_title(title: str) -> str:

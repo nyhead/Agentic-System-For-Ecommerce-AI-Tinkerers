@@ -11,6 +11,7 @@ import urllib.request
 import uuid
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from decimal import Decimal
 from typing import Any, Literal
 
 from app.state import ProductRecord
@@ -49,6 +50,11 @@ mutation CreateDraftProduct($product: ProductCreateInput!, $media: [CreateMediaI
   productCreate(product: $product, media: $media) {
     product {
       id
+      variants(first: 1) {
+        nodes {
+          id
+        }
+      }
       media(first: 1) {
         nodes {
           preview {
@@ -58,6 +64,23 @@ mutation CreateDraftProduct($product: ProductCreateInput!, $media: [CreateMediaI
           }
         }
       }
+    }
+    userErrors {
+      field
+      message
+    }
+  }
+}
+"""
+
+# Since 2024-04 ProductCreateInput has no variants: productCreate makes one default variant at
+# price 0.00, and its price is set with a variant mutation afterwards.
+SET_VARIANT_PRICE = """
+mutation SetDefaultVariantPrice($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+  productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+    productVariants {
+      id
+      price
     }
     userErrors {
       field
@@ -264,6 +287,12 @@ def create_draft_product(
 
     `image_url` is a public URL or a `resourceUrl` from `upload_image`. The returned
     `imageUrl` is Shopify's CDN URL once the image is processed, else the source URL.
+
+    Product type, vendor and tags go into `productCreate`; a price needs a second request on
+    the default variant. If that second request fails, the hidden DRAFT exists with price
+    0.00 and this raises ShopifyError. A retry then finds the product by handle and returns
+    it without sending a price, like any existing product, so the owner sets the price in the
+    Shopify admin; nothing is created twice.
     """
     client = client or ShopifyClient()
     handle = product_handle(record.productId)
@@ -272,15 +301,18 @@ def create_draft_product(
         raise ShopifyError(f"Handle {handle!r} belongs to a product CommerceCrew did not create")
     product = found
     if product is None:
-        variables: dict[str, Any] = {
-            "product": {
-                "title": record.title,
-                "descriptionHtml": _description_html(record.description),
-                "handle": handle,
-                "status": "DRAFT",
-                "tags": [PRODUCT_TAG],
-            }
+        fields: dict[str, Any] = {
+            "title": record.title,
+            "descriptionHtml": _description_html(record.description),
+            "handle": handle,
+            "status": "DRAFT",
+            "tags": [PRODUCT_TAG, *(tag for tag in record.tags if tag != PRODUCT_TAG)],
         }
+        if record.productType:
+            fields["productType"] = record.productType
+        if record.vendor:
+            fields["vendor"] = record.vendor
+        variables: dict[str, Any] = {"product": fields}
         if image_url:
             variables["media"] = [
                 {"originalSource": image_url, "mediaContentType": "IMAGE", "alt": record.title}
@@ -288,6 +320,8 @@ def create_draft_product(
         product = client.mutate(CREATE_PRODUCT, variables, "productCreate").get("product")
         if not product:
             raise ShopifyError("productCreate returned no product")
+        if record.price is not None:
+            _set_default_price(client, str(product["id"]), product, record.price)
     media = product.get("media", {}).get("nodes", [])
     cdn_url = _preview_url(media)
     source_url = image_url if (media or found is None) else None
@@ -467,6 +501,26 @@ def _multipart(
 def _description_html(description: str) -> str:
     paragraphs = [p.strip() for p in description.split("\n\n") if p.strip()]
     return "".join(f"<p>{html.escape(p)}</p>" for p in paragraphs)
+
+
+def _set_default_price(
+    client: ShopifyClient, product_id: str, product: Mapping[str, Any], price: Decimal
+) -> None:
+    variants = (product.get("variants") or {}).get("nodes") or []
+    if not variants or not variants[0].get("id"):
+        raise ShopifyError(f"Draft {product_id} was created without a variant to price")
+    # Money is a decimal string; the format also turns an exponent such as 1E+3 into 1000.00.
+    variant = {"id": variants[0]["id"], "price": f"{price:.2f}"}
+    try:
+        client.mutate(
+            SET_VARIANT_PRICE,
+            {"productId": product_id, "variants": [variant]},
+            "productVariantsBulkUpdate",
+        )
+    except ShopifyError as error:
+        raise ShopifyError(
+            f"Draft {product_id} was created but its price was not set: {error}"
+        ) from error
 
 
 def _preview_url(media: list[dict[str, Any]]) -> str | None:
