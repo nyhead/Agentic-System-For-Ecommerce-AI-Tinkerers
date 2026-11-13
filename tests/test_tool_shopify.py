@@ -524,3 +524,63 @@ def test_purchase_info_requires_a_shopify_product():
     with pytest.raises(ShopifyError, match="no Shopify product"):
         shopify.purchase_info(record(), client=make_client(fake))
     assert fake.calls == []
+
+
+ORDER_GID = "gid://shopify/Order/5550001"
+
+
+def order_created(test=True, user_errors=None):
+    order = {
+        "id": ORDER_GID,
+        "name": "#1001",
+        "test": test,
+        "displayFinancialStatus": "PAID",
+        "totalPriceSet": {"shopMoney": {"amount": "24.0", "currencyCode": "EUR"}},
+    }
+    return data(orderCreate={"order": order, "userErrors": user_errors or []})
+
+
+def test_create_test_order_sends_one_paid_test_unit_of_the_variant():
+    fake = FakeShopify(ONLINE_STORE, purchase_facts(), order_created())
+    order = shopify.create_test_order(listed(), client=make_client(fake))
+    assert order == shopify.ShopifyTestOrder(ORDER_GID, "#1001", "24.0", "EUR", True)
+    sent = fake.request(2)
+    assert "orderCreate(order: $order)" in sent["query"]
+    assert sent["variables"] == {
+        "order": {
+            "test": True,
+            "financialStatus": "PAID",
+            "lineItems": [{"variantId": VARIANT_GID, "quantity": 1}],
+        }
+    }
+
+
+@pytest.mark.parametrize(
+    ("facts", "reason"),
+    [
+        (purchase_facts(status="DRAFT", published=False), "not_active"),
+        (purchase_facts(published=False), "not_published"),
+        (purchase_facts(available=False), "sold_out"),
+    ],
+)
+def test_create_test_order_refuses_unbuyable_product_without_sending(facts, reason):
+    fake = FakeShopify(ONLINE_STORE, facts)
+    with pytest.raises(shopify.NotBuyableError) as raised:
+        shopify.create_test_order(listed(), client=make_client(fake))
+    assert raised.value.reason == reason
+    assert isinstance(raised.value, ShopifyError)
+    assert len(fake.calls) == 2
+    assert all(b"orderCreate" not in call["body"] for call in fake.calls)
+
+
+def test_create_test_order_raises_on_user_errors():
+    errors = [{"field": ["order"], "message": "Variant is invalid"}]
+    fake = FakeShopify(ONLINE_STORE, purchase_facts(), order_created(user_errors=errors))
+    with pytest.raises(ShopifyError, match="Variant is invalid"):
+        shopify.create_test_order(listed(), client=make_client(fake))
+
+
+def test_create_test_order_raises_if_shopify_did_not_mark_it_test():
+    fake = FakeShopify(ONLINE_STORE, purchase_facts(), order_created(test=False))
+    with pytest.raises(ShopifyError, match="as a test order"):
+        shopify.create_test_order(listed(), client=make_client(fake))
