@@ -16,8 +16,18 @@ from app.graph import (
     WorkflowExistsError,
 )
 from app.state import MetricsRecord
+from app.tools import lessons
 from app.tools.llm import LLMClient
 from app.tools.shopify import ShopifyClient, ShopifyConfig
+
+
+@pytest.fixture(autouse=True)
+def lessons_path(tmp_path, monkeypatch):
+    # Never write to the real lessons file; each test starts with an empty memory.
+    path = tmp_path / "lessons.json"
+    monkeypatch.setenv("LESSONS_PATH", str(path))
+    return path
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PRODUCT_ID = "demo-mug-001"
@@ -617,3 +627,27 @@ def test_module_products_and_events_use_the_default_workflow(monkeypatch):
     monkeypatch.setattr(graph, "_default", workflow)
     assert graph.products() == [PRODUCT_ID]
     assert [e["productId"] for e in graph.events()] == [PRODUCT_ID] * 5
+
+
+def test_rejection_with_a_reason_records_the_owner_lesson_for_the_product_agent():
+    workflow, _, _ = pending_workflow()
+    state = workflow.decide(PRODUCT_ID, False, reason="  Never call it  handmade. ")
+    assert state["approval"] == "rejected"
+    assert lessons.recall("product") == [
+        'The shop owner rejected an earlier listing and said: "Never call it handmade."'
+    ]
+
+
+def test_decide_without_a_reason_records_nothing():
+    workflow, _, _ = pending_workflow()
+    assert workflow.decide(PRODUCT_ID, False)["approval"] == "rejected"
+    assert lessons.recall("product") == []
+
+
+def test_module_decide_passes_the_reason(monkeypatch):
+    workflow, _, _ = pending_workflow()
+    monkeypatch.setattr(graph, "_default", workflow)
+    graph.decide(PRODUCT_ID, False, reason="Too long.")
+    assert lessons.recall("product") == [
+        'The shop owner rejected an earlier listing and said: "Too long."'
+    ]

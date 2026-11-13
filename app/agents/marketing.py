@@ -3,6 +3,7 @@
 import json
 
 from app.state import MarketingResult, ProductRecord, SocialAd
+from app.tools import lessons
 from app.tools.llm import LLMClient, LLMError
 
 # Google shows about 50-60 characters of a title before cutting it off.
@@ -17,6 +18,8 @@ REQUEST_TIMEOUT_SECONDS = 15.0
 TEMPERATURE = 0.5
 
 CHANNELS = ("Instagram", "Facebook")
+# The name this agent's lessons are stored under.
+AGENT = "marketing"
 
 SYSTEM_PROMPT = (
     "You write launch copy for a small online shop. The shop owner reviews your copy and "
@@ -55,23 +58,59 @@ def write_marketing(product: ProductRecord, *, llm: LLMClient | None = None) -> 
         {"title": product.title, "description": product.description}, ensure_ascii=False
     )
     draft = client.structured(
-        _PROMPT.format(product=facts),
+        _PROMPT.format(product=facts) + lessons.prompt_block(AGENT),
         MarketingResult,
         system=SYSTEM_PROMPT,
         temperature=TEMPERATURE,
+        on_retry=lessons.on_retry(AGENT),
     )
     result = MarketingResult(
-        seoTitle=_fit(draft.seoTitle, SEO_TITLE_MAX),
-        metaDescription=_fit(draft.metaDescription, META_DESCRIPTION_MAX),
+        seoTitle=_fit_and_learn(draft.seoTitle, SEO_TITLE_MAX, "seoTitle"),
+        metaDescription=_fit_and_learn(
+            draft.metaDescription, META_DESCRIPTION_MAX, "metaDescription"
+        ),
         socialAds=[
             SocialAd.model_validate(
-                {"channel": " ".join(ad.channel.split()), "copy": _fit(ad.text, AD_COPY_MAX)}
+                {
+                    "channel": " ".join(ad.channel.split()),
+                    "copy": _fit_and_learn(ad.text, AD_COPY_MAX, "copy of each social ad"),
+                }
             )
             for ad in draft.socialAds
         ],
     )
-    _check(result)
+    try:
+        _check(result)
+    except LLMError as error:
+        lessons.record(AGENT, _REJECTION_LESSONS.get(str(error), ""))
+        raise
     return result
+
+
+_REJECTION_LESSONS = {
+    "model returned empty marketing copy": (
+        "Fill in every field: seoTitle, metaDescription and each ad's channel and copy; an "
+        "earlier reply left one empty."
+    ),
+    "model returned both social ads for the same channel": (
+        f'Write one ad for channel "{CHANNELS[0]}" and one for channel "{CHANNELS[1]}"; an '
+        "earlier reply put both ads on the same channel."
+    ),
+    "model returned the same social ad twice": (
+        "Make the two ads say different things; an earlier reply repeated the same ad twice."
+    ),
+}
+
+
+def _fit_and_learn(text: str, limit: int, field: str) -> str:
+    fitted = _fit(text, limit)
+    if fitted != " ".join(text.split()):
+        lessons.record(
+            AGENT,
+            f"Keep the {field} within {limit - 5} characters: an earlier one was longer and "
+            "had to be cut.",
+        )
+    return fitted
 
 
 def _fit(text: str, limit: int) -> str:
