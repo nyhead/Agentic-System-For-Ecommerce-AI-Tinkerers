@@ -250,10 +250,13 @@ def test_default_shopify_client_is_built_at_call_time(monkeypatch):
 
 
 def test_publish_activates_and_publishes():
+    # Shaped like the real dev store's reply; the Online Store is found by its app handle.
+    catalog = {
+        "title": "Online Store",
+        "apps": {"nodes": [{"handle": "online_store"}]},
+    }
     publications = data(
-        publications={
-            "nodes": [{"id": "gid://shopify/Publication/3", "catalog": {"title": "Online Store"}}]
-        }
+        publications={"nodes": [{"id": "gid://shopify/Publication/3", "catalog": catalog}]}
     )
     activated = data(
         productUpdate={"product": {"id": PRODUCT_GID, "status": "ACTIVE"}, "userErrors": []}
