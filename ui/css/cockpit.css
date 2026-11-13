@@ -773,7 +773,6 @@ select.input {
 
 /* ── Keyframes (refined in the motion section) ──────────────────────── */
 @keyframes cc-spin { to { transform: rotate(360deg); } }
-@keyframes cc-fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* ── Responsive ─────────────────────────────────────────────────────── */
 @media (max-width: 1180px) {
@@ -902,4 +901,54 @@ select.input {
 .foot-msg:empty { display: none; }
 @media (max-width: 768px) {
   .table-scroll .prod-cell { min-width: 240px; }
+}
+
+/* ── Motion ─────────────────────────────────────────────────────────────
+   Only where it explains or confirms: press feedback and overlay entrances.
+   Transform and opacity only, custom ease-out curves, nothing over 260ms.
+   Screen changes and keyboard actions stay instant on purpose. */
+
+/* Press feedback */
+.btn, .chip, .float-btn, .lb-btn, .cover-tag, .seg-btn, .context-chip { transition-property: background-color, border-color, color, box-shadow, transform; transition-duration: var(--dur-1); transition-timing-function: var(--ease-out); }
+.btn:not(:disabled):active, .chip:active, .float-btn:active, .lb-btn:active,
+.cover-tag--off:active, .seg-btn:active, .context-chip:active { transform: scale(0.97); }
+.nav-item:active, .inbox-item:active, .feed-btn:active, .stat:active { transform: scale(0.99); }
+.nav-item, .inbox-item, .feed-btn, .stat { transition-property: background-color, color, transform; }
+
+/* Popover menus grow from their trigger */
+.popover { transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out); }
+@starting-style {
+  .popover { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  .popover--up { opacity: 0; transform: translateY(4px) scale(0.97); }
+}
+
+/* Scrims fade, panels arrive */
+.backdrop, .dialog-wrap, .lightbox { transition: opacity var(--dur-2) var(--ease-out); }
+.drawer { transition: opacity var(--dur-3) var(--ease-drawer), transform var(--dur-3) var(--ease-drawer); }
+.modal, .dialog { transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out); }
+.toast { transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out); }
+.feed-detail, .working, .handoff { transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out); }
+@starting-style {
+  .backdrop, .dialog-wrap, .lightbox { opacity: 0; }
+  .drawer { opacity: 0; transform: translateX(40px); }
+  .modal, .dialog { opacity: 0; transform: scale(0.98); }
+  .toast { opacity: 0; transform: translateY(8px); }
+  .feed-detail { opacity: 0; transform: translateY(-4px); }
+  .working, .handoff { opacity: 0; }
+}
+
+/* Loading */
+.sk { animation: cc-pulse 1.4s ease-in-out infinite alternate; }
+@keyframes cc-pulse { from { opacity: 1; } to { opacity: 0.55; } }
+
+/* Reduced motion: keep the fades that explain state, drop the movement */
+@media (prefers-reduced-motion: reduce) {
+  .btn:not(:disabled):active, .chip:active, .float-btn:active, .lb-btn:active, .cover-tag--off:active,
+  .seg-btn:active, .context-chip:active, .nav-item:active, .inbox-item:active, .feed-btn:active, .stat:active { transform: none; }
+  .stat:hover cc-icon { transform: none; }
+  @starting-style {
+    .popover, .popover--up, .drawer, .modal, .dialog, .toast, .feed-detail { transform: none; }
+  }
+  .sk { animation: none; }
+  .spin { animation-duration: 1.6s; }
 }
