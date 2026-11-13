@@ -2,7 +2,10 @@
 
 from fastapi import FastAPI
 
+from app.api import analytics
+
 app = FastAPI(title="CommerceCrew", version="0.1.0")
+app.include_router(analytics.router)
 
 
 @app.get("/")
