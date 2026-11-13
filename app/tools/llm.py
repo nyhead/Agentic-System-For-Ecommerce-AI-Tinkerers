@@ -20,6 +20,9 @@ T = TypeVar("T", bound=BaseModel)
 Transport = Callable[[str, Mapping[str, str], bytes, float], tuple[int, bytes]]
 
 _RETRY_STATUSES = frozenset({429}) | frozenset(range(500, 600))
+# Sent when the caller sets no limit. Some hosts (Featherless) otherwise default max_tokens to
+# the whole context window and reject the request, since that leaves no room for the prompt.
+DEFAULT_MAX_TOKENS = 4096
 # Reasoning models (e.g. DeepSeek-R1, Qwen3) may prefix the answer with their chain of thought.
 _THINK_BLOCK = re.compile(r"^\s*<think>.*?</think>\s*", re.DOTALL)
 
@@ -159,8 +162,7 @@ class LLMClient:
         payload: dict[str, Any] = {"model": model, "messages": messages}
         if temperature is not None:
             payload["temperature"] = temperature
-        if max_tokens is not None:
-            payload["max_tokens"] = max_tokens
+        payload["max_tokens"] = max_tokens if max_tokens is not None else DEFAULT_MAX_TOKENS
         url = f"{base_url.rstrip('/')}/chat/completions"
         headers = {
             "Authorization": f"Bearer {api_key}",
