@@ -51,8 +51,8 @@ what shoppers type into a search.
 - description: two to four plain sentences that a customer reads on the product page, about \
 what the product is, what it looks like and what the notes say about it. Describe the \
 product, not the photograph: leave out the background, the surface it lies on and the \
-lighting. Describe; do not praise: no words such as elegant, timeless, stunning or high quality. Plain text only: no \
-markdown, bullet points, headings, emoji or hashtags.
+lighting. Describe; do not praise: no words such as elegant, timeless, stunning or high \
+quality. Plain text only: no markdown, bullet points, headings, emoji or hashtags.
 - price: only when the owner's notes state a price. Copy that amount as a plain number string \
 such as "24.90", without a currency symbol or code. A photo never shows a price. Never \
 estimate, suggest or round a price; if the notes give none, use null.
