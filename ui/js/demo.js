@@ -169,10 +169,14 @@
 
   // Publication requirements — proportionate, never blocked by optional specs.
   function requirements(p) {
-    // Live listings: the service holds the draft, so only what it needs to publish is checked here.
+    // Live listings: the service holds the draft and checks it, so price, quantity and claims never
+    // block approval here. Keep every key: the review drawer looks each one up by name.
     if (p.apiId) return [
       { key: 'title', label: 'title', ok: !!(p.name || '').trim() },
       { key: 'description', label: 'description', ok: !!(p.description || '').trim() },
+      { key: 'price', label: 'price', ok: true },
+      { key: 'stock', label: 'quantity', ok: true },
+      { key: 'claims', label: '0 claims', ok: true },
     ];
     const stockOk = p.stock !== '' && p.stock != null && Number.isInteger(Number(p.stock)) && Number(p.stock) >= 0;
     const open = (p.claims || []).filter(c => c.state === 'open').length;
