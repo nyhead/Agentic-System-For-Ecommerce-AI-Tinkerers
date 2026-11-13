@@ -1,5 +1,6 @@
 """Shared fixture contracts. Nihad coordinates changes to this file."""
 
+from decimal import Decimal
 from typing import Literal, TypedDict
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -13,6 +14,11 @@ class ProductRecord(BaseModel):
     title: str = Field(min_length=1)
     description: str
     imageUrl: str | None = None
+    # In the shop's currency, without a symbol; None when the merchant has not stated a price.
+    price: Decimal | None = Field(default=None, ge=0, decimal_places=2)
+    productType: str | None = None
+    vendor: str | None = None
+    tags: list[str] = Field(default_factory=list)
 
 
 class SocialAd(BaseModel):

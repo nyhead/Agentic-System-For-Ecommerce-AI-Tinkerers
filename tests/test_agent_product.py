@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import sys
+from decimal import Decimal
 
 import pytest
 
@@ -123,6 +124,66 @@ def test_prompt_forbids_inventing_what_a_photo_cannot_show():
         f"at most {product.MAX_TITLE_LENGTH}",
     ):
         assert phrase in prompt
+
+
+def test_prompt_allows_a_price_only_from_the_notes():
+    prompt = " ".join(product.SYSTEM_PROMPT.split())
+    for phrase in (
+        "only when the owner's notes state a price",
+        "A photo never shows a price",
+        "Never estimate, suggest or round a price",
+        "legibly written on the product",
+        f"up to {product.MAX_TAGS} short, lowercase",
+        "No invented attributes",
+    ):
+        assert phrase in prompt
+
+
+def fields_reply(**fields):
+    content = json.dumps({"title": "Blue Mug", "description": "A blue mug."} | fields)
+    return 200, json.dumps({"choices": [{"message": {"content": content}}]}).encode()
+
+
+def test_draft_keeps_stated_price_type_vendor_and_tags():
+    llm, _ = make_llm(
+        fields_reply(price="24.90", productType="Mug", vendor="Acme", tags=["Blue", "ceramic"])
+    )
+    result = product.draft_listing("p", "Acme mug, 24.90", llm=llm)
+    assert result.price == Decimal("24.90")
+    assert result.productType == "Mug"
+    assert result.vendor == "Acme"
+    assert result.tags == ["blue", "ceramic"]
+
+
+@pytest.mark.parametrize(
+    "value", ["$24.90", "about 25", "24,90", "1e3", "-5", "24.999", True, [24]]
+)
+def test_price_that_is_not_a_plain_amount_is_dropped(value):
+    llm, fake = make_llm(fields_reply(price=value))
+    result = product.draft_listing("p", "notes", llm=llm)
+    assert result.price is None
+    assert result.title == "Blue Mug"
+    assert len(fake.calls) == 1
+
+
+def test_numeric_price_is_kept_exactly():
+    llm, _ = make_llm(fields_reply(price=24.9))
+    assert product.draft_listing("p", "notes", llm=llm).price == Decimal("24.9")
+
+
+def test_missing_fields_stay_empty():
+    llm, _ = make_llm(fields_reply(price=None, productType="  ", vendor=None))
+    result = product.draft_listing("p", "notes", llm=llm)
+    assert (result.price, result.productType, result.vendor, result.tags) == (None, None, None, [])
+
+
+def test_tags_are_capped_in_count_and_length():
+    tags = ["blue", "BLUE", "x" * (product.MAX_TAG_LENGTH + 1), " "] + [f"t{i}" for i in range(20)]
+    llm, _ = make_llm(fields_reply(tags=tags))
+    result = product.draft_listing("p", "notes", llm=llm).tags
+    assert len(result) == product.MAX_TAGS
+    assert result[:2] == ["blue", "t0"]
+    assert all(len(tag) <= product.MAX_TAG_LENGTH for tag in result)
 
 
 def test_draft_from_notes_only_sends_text():

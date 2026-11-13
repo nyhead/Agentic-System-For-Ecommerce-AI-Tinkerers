@@ -1,5 +1,6 @@
 import json
 import urllib.error
+from decimal import Decimal
 
 import pytest
 
@@ -129,6 +130,102 @@ def test_second_create_returns_existing_product_without_mutation():
     assert "productCreate" not in fake.request(0)["query"]
     assert result.shopifyProductId == PRODUCT_GID
     assert result.imageUrl == CDN_URL
+
+
+DRAFT_VARIANT_GID = "gid://shopify/ProductVariant/2002"
+CREATED_WITH_VARIANT = data(
+    productCreate={
+        "product": {
+            "id": PRODUCT_GID,
+            "variants": {"nodes": [{"id": DRAFT_VARIANT_GID}]},
+            "media": {"nodes": []},
+        },
+        "userErrors": [],
+    }
+)
+PRICED = data(
+    productVariantsBulkUpdate={
+        "productVariants": [{"id": DRAFT_VARIANT_GID, "price": "24.90"}],
+        "userErrors": [],
+    }
+)
+
+
+def listing(**fields):
+    values = {"price": "24.90", "productType": "Mug", "vendor": "Acme", "tags": ["blue"]}
+    return ProductRecord(**(record().model_dump() | values | fields))
+
+
+def test_create_draft_sends_type_vendor_tags_and_sets_variant_price():
+    fake = FakeShopify(NOT_FOUND, CREATED_WITH_VARIANT, PRICED)
+    result = shopify.create_draft_product(listing(), client=make_client(fake))
+
+    product = fake.request(1)["variables"]["product"]
+    assert "variants(first: 1)" in fake.request(1)["query"]
+    assert product["productType"] == "Mug"
+    assert product["vendor"] == "Acme"
+    assert product["tags"] == ["commercecrew", "blue"]
+    price = fake.request(2)
+    assert "productVariantsBulkUpdate(productId: $productId, variants: $variants)" in price["query"]
+    assert price["variables"] == {
+        "productId": PRODUCT_GID,
+        "variants": [{"id": DRAFT_VARIANT_GID, "price": "24.90"}],
+    }
+    assert result.shopifyProductId == PRODUCT_GID
+    assert result.price == listing().price
+
+
+def test_price_is_sent_with_two_decimals():
+    fake = FakeShopify(NOT_FOUND, CREATED_WITH_VARIANT, PRICED)
+    shopify.create_draft_product(listing(price=Decimal("1E+1")), client=make_client(fake))
+    assert fake.request(2)["variables"]["variants"][0]["price"] == "10.00"
+
+
+def test_commercecrew_tag_is_not_duplicated():
+    fake = FakeShopify(NOT_FOUND, CREATED_WITH_VARIANT, PRICED)
+    shopify.create_draft_product(listing(tags=["commercecrew", "blue"]), client=make_client(fake))
+    assert fake.request(1)["variables"]["product"]["tags"] == ["commercecrew", "blue"]
+
+
+def test_no_price_request_without_a_price():
+    fake = FakeShopify(NOT_FOUND, CREATED_WITH_VARIANT)
+    shopify.create_draft_product(
+        listing(price=None, productType=None, vendor=None, tags=[]), client=make_client(fake)
+    )
+    assert len(fake.calls) == 2
+    product = fake.request(1)["variables"]["product"]
+    assert "productType" not in product
+    assert "vendor" not in product
+    assert product["tags"] == ["commercecrew"]
+
+
+def test_no_price_request_for_an_existing_product():
+    existing = data(
+        productByIdentifier={"id": PRODUCT_GID, "tags": ["commercecrew"], "media": {"nodes": []}}
+    )
+    fake = FakeShopify(existing)
+    result = shopify.create_draft_product(listing(), client=make_client(fake))
+    assert len(fake.calls) == 1
+    assert result.shopifyProductId == PRODUCT_GID
+
+
+def test_failed_price_step_raises_and_says_the_draft_exists():
+    rejected = data(
+        productVariantsBulkUpdate={
+            "productVariants": None,
+            "userErrors": [{"field": ["variants", "0", "price"], "message": "Price is invalid"}],
+        }
+    )
+    fake = FakeShopify(NOT_FOUND, CREATED_WITH_VARIANT, rejected)
+    with pytest.raises(ShopifyError, match=f"Draft {PRODUCT_GID} was created but its price"):
+        shopify.create_draft_product(listing(), client=make_client(fake))
+    assert len(fake.calls) == 3
+
+
+def test_created_product_without_variant_raises_on_price():
+    fake = FakeShopify(NOT_FOUND, CREATED)
+    with pytest.raises(ShopifyError, match="without a variant"):
+        shopify.create_draft_product(listing(), client=make_client(fake))
 
 
 def test_handle_owned_by_another_product_is_not_reused():

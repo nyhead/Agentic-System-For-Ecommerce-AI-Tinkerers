@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -22,6 +23,27 @@ def test_existing_team_fixtures_share_a_product():
     metrics = MetricsRecord.model_validate_json((FIXTURES / "metrics.json").read_text())
     assert product.productId == metrics.productId
     assert metrics.source == "synthetic"
+
+
+def test_product_listing_fields_are_optional():
+    product = ProductRecord.model_validate_json((FIXTURES / "product.json").read_text())
+    assert product.price is None
+    assert product.productType is None
+    assert product.vendor is None
+    assert product.tags == []
+
+
+def test_product_price_is_an_exact_amount():
+    values = {"productId": "p", "title": "Mug", "description": "A mug."}
+    full = ProductRecord(
+        **values, price="24.90", productType="Mug", vendor="Acme", tags=["blue", "ceramic"]
+    )
+    assert full.price == Decimal("24.90")
+    assert json.loads(full.model_dump_json())["price"] == "24.90"
+    assert ProductRecord.model_validate_json(full.model_dump_json()) == full
+    for bad in ("-1", "24.999", "$24.90", "abc", "NaN"):
+        with pytest.raises(ValidationError):
+            ProductRecord(**values, price=bad)
 
 
 def test_negative_sessions_cannot_enter_workflow():
