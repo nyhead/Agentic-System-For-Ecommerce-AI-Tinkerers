@@ -382,7 +382,7 @@ select.input {
   border: 0; background: transparent; text-align: left; color: var(--text);
 }
 .stat + .stat { border-left: 1px solid var(--border); padding-left: var(--s-5); }
-.stat-n { font-size: var(--fs-28); font-weight: 600; letter-spacing: -0.03em; line-height: 1; min-width: 24px; }
+.stat-n { font-size: var(--fs-20); font-weight: 600; letter-spacing: -0.02em; line-height: 1; min-width: 20px; }
 .stat-text { display: flex; flex-direction: column; line-height: 1.35; flex: 1; min-width: 0; }
 .stat-label { font-size: var(--fs-14); font-weight: 500; }
 .stat-hint { font-size: var(--fs-13); color: var(--text-3); }
@@ -875,6 +875,10 @@ select.input {
 
 /* Small utilities */
 .grow { flex: 1; min-width: 0; }
+.w500 { font-weight: 500; }
+.cell-sm { font-size: var(--fs-13); }
+.detail-main { display: flex; flex-direction: column; gap: var(--s-8); min-width: 0; }
+.form-section--tight { gap: var(--s-1); }
 .brand-a { fill: var(--ink); }
 .brand-b { fill: none; stroke: var(--accent); stroke-width: 1.5; }
 

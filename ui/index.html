@@ -90,85 +90,86 @@
       </div>
     </sc-if>
     <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ false }}">
-      <div style="padding:28px 40px 48px;display:flex;flex-direction:column;gap:24px">
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64">{{ todayLabel }}</div>
-          <h2 style="margin:0;font-size:26px;font-weight:600;letter-spacing:-0.02em;line-height:1.2;color:#202522">Your store, moving forward.</h2>
-          <p style="margin:0;font-size:14.5px;color:#626A64;max-width:720px;text-wrap:pretty">{{ summary }}</p>
+      <div class="page">
+        <div class="intro">
+          <h2 class="display">Your store, moving forward.</h2>
+          <p class="lede">{{ summary }}</p>
+          <p class="hint">{{ todayLabel }}</p>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px;overflow:hidden">
+        <div class="stat-row">
           <sc-for list="{{ counts }}" as="c" hint-placeholder-count="3">
-            <button onClick="{{ c.go }}" style="display:flex;align-items:center;gap:14px;padding:14px 20px;border:0;border-left:{{ c.border }};background:transparent;cursor:pointer;text-align:left;transition:background 160ms" style-hover="background:#FBFAF7">
-              <span style="font-size:26px;font-weight:600;letter-spacing:-0.02em;color:{{ c.fg }};min-width:28px">{{ c.n }}</span>
-              <span style="display:flex;flex-direction:column;line-height:1.3;flex:1;min-width:0"><span style="font-size:13.5px;font-weight:500;color:#202522">{{ c.label }}</span><span style="font-size:12px;color:#626A64">{{ c.hint }}</span></span>
-              <cc-icon name="arrow-right" size="15" style="color:#8C948E"></cc-icon>
+            <button class="stat" onClick="{{ c.go }}">
+              <span class="stat-n" style="color:{{ c.fg }}">{{ c.n }}</span>
+              <span class="stat-text"><span class="stat-label">{{ c.label }}</span><span class="stat-hint">{{ c.hint }}</span></span>
+              <cc-icon name="arrow-right" size="16"></cc-icon>
             </button>
           </sc-for>
         </div>
-        <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:32px;align-items:start">
-          <div style="display:flex;flex-direction:column;gap:28px;min-width:0">
-            <section aria-labelledby="att-h" style="display:flex;flex-direction:column;gap:10px">
-              <div style="display:flex;align-items:baseline;gap:10px">
-                <h3 id="att-h" style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Needs your attention</h3>
-                <span style="font-size:12px;color:#626A64">{{ attentionCount }}</span>
-                <button onClick="{{ goReview }}" class="btn btn-ghost" style="margin-left:auto;font-size:12.5px;font-weight:500;padding:2px 6px;border-radius:6px;color:#8C321A">Review queue</button>
+        <div class="split">
+          <div class="stack">
+            <section aria-labelledby="att-h" class="section">
+              <div class="section-head">
+                <h3 id="att-h" class="section-title">Needs your attention</h3>
+                <span class="section-count">{{ attentionCount }}</span>
+                <button onClick="{{ goReview }}" class="btn btn-link">Review queue</button>
               </div>
-              <div style="background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px;overflow:hidden">
+              <div class="panel">
                 <sc-for list="{{ attention }}" as="d" hint-placeholder-count="3">
-                  <div onClick="{{ d.open }}" style="display:grid;grid-template-columns:60px minmax(0,1fr) auto;gap:16px;align-items:center;padding:16px 20px;border-bottom:1px solid #EDEFEA;cursor:pointer;transition:background 160ms" style-hover="background:#FBFAF7">
-                    <div style="width:60px;height:60px;border-radius:10px;overflow:hidden;background:{{ d.thumb.bg }};display:grid;place-items:center;color:#202522;border:1px solid #E3E6E0">
-                      <sc-if value="{{ d.thumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ d.thumb.src }}" alt="" style="width:100%;height:100%;object-fit:cover;transform:{{ d.thumb.t }};transform-origin:{{ d.thumb.o }}"></sc-if>
-                      <sc-if value="{{ d.thumb.noPhoto }}" hint-placeholder-val="{{ false }}"><cc-icon name="{{ d.thumb.icon }}" size="22"></cc-icon></sc-if>
+                  <div class="task-row" onClick="{{ d.open }}">
+                    <div class="thumb" style="background:{{ d.thumb.bg }}">
+                      <sc-if value="{{ d.thumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ d.thumb.src }}" alt="" loading="lazy" decoding="async" style="transform:{{ d.thumb.t }};transform-origin:{{ d.thumb.o }}"></sc-if>
+                      <sc-if value="{{ d.thumb.noPhoto }}" hint-placeholder-val="{{ false }}"><cc-icon name="{{ d.thumb.icon }}" size="20"></cc-icon></sc-if>
                     </div>
-                    <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
-                      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#626A64"><cc-icon name="{{ d.agentIcon }}" size="13"></cc-icon><span style="font-weight:500;color:#3E4641">{{ d.agentName }}</span><span aria-hidden="true">·</span><span>{{ d.time }}</span></div>
-                      <div style="font-size:15px;font-weight:600;color:#202522;line-height:1.3">{{ d.title }}</div>
-                      <div style="font-size:13px;color:#626A64;text-wrap:pretty;line-height:1.45">{{ d.text }}</div>
+                    <div class="task-body">
+                      <div class="meta"><cc-icon name="{{ d.agentIcon }}" size="14"></cc-icon><strong>{{ d.agentName }}</strong><span aria-hidden="true">·</span><span>{{ d.time }}</span></div>
+                      <div class="row-title-lg">{{ d.title }}</div>
+                      <div class="row-text">{{ d.text }}</div>
                     </div>
-                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
-                      <span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;white-space:nowrap;background:{{ d.st.bg }};color:{{ d.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ d.st.dot }}"></span>{{ d.st.label }}</span>
-                      <button class="btn btn-secondary" onClick="{{ d.open }}" disabled="{{ d.working }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:13px;padding:7px 12px;border-radius:8px;color:#202522;white-space:nowrap" style-hover="background:#F3F2EE;border-color:#BCC2BA">{{ d.action }}<cc-icon name="arrow-right" size="14"></cc-icon></button>
+                    <div class="task-aside">
+                      <span class="status"><span class="status-dot" style="background:{{ d.st.dot }}"></span>{{ d.st.label }}</span>
+                      <button class="btn btn-secondary" onClick="{{ d.open }}" disabled="{{ d.working }}">{{ d.action }}<cc-icon name="arrow-right" size="14"></cc-icon></button>
                     </div>
                   </div>
                 </sc-for>
                 <sc-if value="{{ noAttention }}" hint-placeholder-val="{{ false }}">
-                  <div style="padding:32px 24px;display:flex;align-items:center;gap:14px">
-                    <span style="width:40px;height:40px;border-radius:10px;background:#E5EFE7;color:#235A3A;display:grid;place-items:center"><cc-icon name="check" size="20"></cc-icon></span>
-                    <div><div style="font-size:15px;font-weight:600">Nothing needs you right now.</div><div style="font-size:13px;color:#626A64">New decisions from your agents will appear here.</div></div>
+                  <div class="empty">
+                    <span class="empty-icon ok"><cc-icon name="check-circle" size="20"></cc-icon></span>
+                    <div class="empty-title">Nothing needs you right now.</div>
+                    <div class="empty-body">New decisions from your agents will appear here.</div>
                   </div>
                 </sc-if>
               </div>
             </section>
-            <section aria-labelledby="rp-h" style="display:flex;flex-direction:column;gap:10px">
-              <div style="display:flex;align-items:baseline;gap:10px">
-                <h3 id="rp-h" style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Recent products</h3>
-                <button onClick="{{ goProducts }}" class="btn btn-ghost" style="margin-left:auto;font-size:12.5px;font-weight:500;padding:2px 6px;border-radius:6px;color:#8C321A">All products</button>
+            <section aria-labelledby="rp-h" class="section">
+              <div class="section-head">
+                <h3 id="rp-h" class="section-title">Recent products</h3>
+                <button onClick="{{ goProducts }}" class="btn btn-link">All products</button>
               </div>
-              <div style="background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px;overflow:hidden">
-                <table class="table" style="font-size:13.5px;table-layout:fixed">
+              <div class="panel">
+                <table class="table table--fixed">
                   <thead><tr>
-                    <th style="padding:10px 20px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px">Product</th>
-                    <th style="width:128px;padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px">Status</th>
-                    <th style="width:104px;padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px;text-align:right">Available</th>
-                    <th style="width:104px;padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px;text-align:right">Price</th>
-                    <th style="width:104px;padding:10px 20px 10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px;text-align:right">Updated</th>
+                    <th>Product</th>
+                    <th style="width:132px">Status</th>
+                    <th class="num hide-sm" style="width:96px">Available</th>
+                    <th class="num" style="width:120px">Price</th>
+                    <th class="num hide-sm" style="width:112px">Updated</th>
                   </tr></thead>
                   <tbody>
                     <sc-for list="{{ recent }}" as="p" hint-placeholder-count="5">
-                      <tr onClick="{{ p.open }}" style="cursor:pointer">
-                        <td style="padding:8px 12px 8px 20px;border-bottom:1px solid #EDEFEA">
-                          <div style="display:flex;align-items:center;gap:12px;min-width:0">
-                            <div style="width:36px;height:36px;border-radius:8px;overflow:hidden;flex:none;background:#EEECE7;display:grid;place-items:center;color:#7D847F;border:1px solid #E3E6E0">
-                              <sc-if value="{{ p.thumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ p.thumb.src }}" alt="" style="width:100%;height:100%;object-fit:cover;transform:{{ p.thumb.t }};transform-origin:{{ p.thumb.o }}"></sc-if>
+                      <tr onClick="{{ p.open }}">
+                        <td>
+                          <div class="prod-cell">
+                            <div class="thumb thumb-36">
+                              <sc-if value="{{ p.thumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ p.thumb.src }}" alt="" loading="lazy" decoding="async" style="transform:{{ p.thumb.t }};transform-origin:{{ p.thumb.o }}"></sc-if>
                               <sc-if value="{{ p.thumb.noPhoto }}" hint-placeholder-val="{{ false }}"><cc-icon name="{{ p.thumb.icon }}" size="16"></cc-icon></sc-if>
                             </div>
-                            <button onClick="{{ p.open }}" title="{{ p.name }}" style="border:0;background:none;padding:0;font:inherit;font-weight:500;line-height:1.35;color:#202522;text-align:left;cursor:pointer;min-width:0;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2">{{ p.name }}</button>
+                            <button onClick="{{ p.open }}" title="{{ p.name }}" class="text-btn clamp-2">{{ p.name }}</button>
                           </div>
                         </td>
-                        <td style="padding:8px 12px;border-bottom:1px solid #EDEFEA;overflow:hidden"><span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;white-space:nowrap;background:{{ p.st.bg }};color:{{ p.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ p.st.dot }}"></span>{{ p.st.label }}</span></td>
-                        <td style="padding:8px 12px;border-bottom:1px solid #EDEFEA;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:{{ p.stockColor }}">{{ p.stock }}</td>
-                        <td style="padding:8px 12px;border-bottom:1px solid #EDEFEA;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:{{ p.priceColor }}">{{ p.price }}</td>
-                        <td style="padding:8px 20px 8px 12px;border-bottom:1px solid #EDEFEA;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#626A64">{{ p.updated }}</td>
+                        <td class="cell-truncate"><span class="status"><span class="status-dot" style="background:{{ p.st.dot }}"></span>{{ p.st.label }}</span></td>
+                        <td class="num hide-sm cell-truncate" style="color:{{ p.stockColor }}">{{ p.stock }}</td>
+                        <td class="num cell-truncate" style="color:{{ p.priceColor }}">{{ p.price }}</td>
+                        <td class="num hide-sm cell-truncate muted">{{ p.updated }}</td>
                       </tr>
                     </sc-for>
                   </tbody>
@@ -176,34 +177,34 @@
               </div>
             </section>
           </div>
-          <section aria-labelledby="feed-h" style="display:flex;flex-direction:column;gap:10px;min-width:0">
-            <div style="display:flex;align-items:baseline;gap:10px">
-              <h3 id="feed-h" style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Agent activity</h3>
-              <button onClick="{{ goActivity }}" class="btn btn-ghost" style="margin-left:auto;font-size:12.5px;font-weight:500;padding:2px 6px;border-radius:6px;color:#8C321A">View all</button>
+          <section aria-labelledby="feed-h" class="section">
+            <div class="section-head">
+              <h3 id="feed-h" class="section-title">Agent activity</h3>
+              <button onClick="{{ goActivity }}" class="btn btn-link">View all</button>
             </div>
-            <div style="display:flex;flex-direction:column;border-top:1px solid #E3E6E0">
+            <div class="feed">
               <sc-for list="{{ feed }}" as="a" hint-placeholder-count="6">
-                <div style="border-bottom:1px solid #E3E6E0;padding:4px 0">
-                  <button onClick="{{ a.toggle }}" aria-expanded="{{ a.expanded }}" style="width:100%;display:grid;grid-template-columns:28px minmax(0,1fr) 16px;gap:12px;align-items:start;padding:10px 8px;border:0;border-radius:8px;background:transparent;text-align:left;cursor:pointer;color:#202522;transition:background 160ms" style-hover="background:#EFEEE9">
-                    <span style="width:28px;height:28px;border-radius:7px;background:#EBEAE4;display:grid;place-items:center;color:#3E4641"><cc-icon name="{{ a.icon }}" size="14"></cc-icon></span>
-                    <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
-                      <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#626A64"><span style="font-weight:500;color:#3E4641">{{ a.agentName }}</span><span aria-hidden="true">·</span><span>{{ a.time }}</span></span>
-                      <span style="font-size:13.5px;font-weight:600;line-height:1.35">{{ a.title }}</span>
-                      <span style="font-size:12.5px;color:#626A64;line-height:1.45;text-wrap:pretty">{{ a.desc }}</span>
-                      <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:{{ a.st.fg }};margin-top:3px"><span style="width:6px;height:6px;border-radius:50%;background:{{ a.st.dot }}"></span>{{ a.st.label }}</span>
+                <div class="feed-item">
+                  <button class="feed-btn" onClick="{{ a.toggle }}" aria-expanded="{{ a.expanded }}">
+                    <cc-icon name="{{ a.icon }}" size="16"></cc-icon>
+                    <span class="feed-text">
+                      <span class="meta"><strong>{{ a.agentName }}</strong><span aria-hidden="true">·</span><span>{{ a.time }}</span></span>
+                      <span class="feed-title">{{ a.title }}</span>
+                      <span class="feed-desc">{{ a.desc }}</span>
+                      <span class="status"><span class="status-dot" style="background:{{ a.st.dot }}"></span>{{ a.st.label }}</span>
                     </span>
-                    <span style="color:#8C948E;padding-top:6px"><cc-icon name="{{ a.chev }}" size="16"></cc-icon></span>
+                    <span class="chev"><cc-icon name="{{ a.chev }}" size="16"></cc-icon></span>
                   </button>
                   <sc-if value="{{ a.expanded }}" hint-placeholder-val="{{ false }}">
-                    <div style="padding:0 8px 12px 48px;display:flex;flex-direction:column;gap:8px">
+                    <div class="feed-detail">
                       <sc-if value="{{ a.hasDetails }}" hint-placeholder-val="{{ false }}">
-                        <ul style="margin:0;padding:0 0 0 16px;font-size:12.5px;color:#3E4641;line-height:1.55">
+                        <ul>
                           <sc-for list="{{ a.details }}" as="t" hint-placeholder-count="2"><li>{{ t.t }}</li></sc-for>
                         </ul>
                       </sc-if>
-                      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                        <sc-if value="{{ a.hasTarget }}" hint-placeholder-val="{{ false }}"><button onClick="{{ a.openTarget }}" style="display:inline-flex;align-items:center;gap:6px;border:1px solid #E3E6E0;background:#FFFFFF;border-radius:6px;padding:3px 8px;font-size:12px;color:#202522;cursor:pointer" style-hover="border-color:#BCC2BA"><cc-icon name="{{ a.targetIcon }}" size="12"></cc-icon>{{ a.targetLabel }}</button></sc-if>
-                        <sc-if value="{{ a.hasNext }}" hint-placeholder-val="{{ false }}"><button onClick="{{ a.doNext }}" class="btn btn-ghost" style="font-size:12.5px;font-weight:500;padding:3px 6px;border-radius:6px;color:#8C321A">{{ a.next }}<cc-icon name="arrow-right" size="13"></cc-icon></button></sc-if>
+                      <div class="feed-actions">
+                        <sc-if value="{{ a.hasTarget }}" hint-placeholder-val="{{ false }}"><button class="chip" onClick="{{ a.openTarget }}"><cc-icon name="{{ a.targetIcon }}" size="14"></cc-icon>{{ a.targetLabel }}</button></sc-if>
+                        <sc-if value="{{ a.hasNext }}" hint-placeholder-val="{{ false }}"><button class="btn btn-link btn-sm" onClick="{{ a.doNext }}">{{ a.next }}<cc-icon name="arrow-right" size="14"></cc-icon></button></sc-if>
                       </div>
                     </div>
                   </sc-if>
@@ -215,167 +216,171 @@
       </div>
     </sc-if>
     <sc-if value="{{ isProducts }}" hint-placeholder-val="{{ false }}">
-      <div style="padding:24px 40px 48px;display:flex;flex-direction:column;gap:16px">
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-          <div style="position:relative;width:320px;max-width:100%">
-            <span style="position:absolute;left:11px;top:11px;color:#626A64"><cc-icon name="search" size="16"></cc-icon></span>
-            <input type="search" aria-label="Search products" placeholder="Search by name, SKU or category" value="{{ search }}" onChange="{{ onSearch }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px 8px 34px;color:#202522;width:100%">
+      <div class="page page--tight">
+        <div class="toolbar">
+          <div class="search">
+            <span class="search-icon"><cc-icon name="search" size="16"></cc-icon></span>
+            <input type="search" aria-label="Search products" placeholder="Search by name, SKU or category" value="{{ search }}" onChange="{{ onSearch }}" class="input">
           </div>
-          <div role="group" aria-label="Filter by listing status" style="display:inline-flex;border:1px solid #D3D7D0;border-radius:8px;overflow:hidden;background:#FFFFFF">
+          <div role="group" aria-label="Filter by listing status" class="seg">
             <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
-              <button aria-pressed="{{ f.active }}" onClick="{{ f.pick }}" style="border:0;border-left:{{ f.bl }};background:{{ f.bg }};color:{{ f.fg }};padding:8px 12px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background 160ms">{{ f.label }}<span style="color:{{ f.cfg }};font-weight:400">{{ f.count }}</span></button>
+              <button class="seg-btn" aria-pressed="{{ f.active }}" onClick="{{ f.pick }}">{{ f.label }}<span class="count">{{ f.count }}</span></button>
             </sc-for>
           </div>
-          <span style="margin-left:auto;font-size:12.5px;color:#626A64">{{ resultLabel }}</span>
+          <span class="toolbar-end">{{ resultLabel }}</span>
         </div>
-        <div style="background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px;overflow:hidden">
+        <div class="panel">
           <sc-if value="{{ hasRows }}" hint-placeholder-val="{{ true }}">
-            <table class="table" style="font-size:13.5px">
-              <thead><tr>
-                <th style="padding:10px 12px 10px 20px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px">Product</th>
-                <th style="padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px">SKU</th>
-                <th style="padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px;text-align:right">Available</th>
-                <th style="padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px;text-align:right">Price</th>
-                <th style="padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px">Listing status</th>
-                <th style="padding:10px 12px;border-bottom:1px solid #E3E6E0;font-weight:600;color:#626A64;font-size:11px">Last updated</th>
-                <th style="padding:10px 20px 10px 12px;border-bottom:1px solid #E3E6E0"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Action</span></th>
-              </tr></thead>
-              <tbody>
-                <sc-for list="{{ rows }}" as="p" hint-placeholder-count="6">
-                  <tr onClick="{{ p.open }}" style="cursor:pointer">
-                    <td style="padding:10px 12px 10px 20px;border-bottom:1px solid #EDEFEA">
-                      <div style="display:flex;align-items:center;gap:12px;min-width:0">
-                        <div style="width:44px;height:44px;border-radius:8px;overflow:hidden;flex:none;background:#EEECE7;display:grid;place-items:center;color:#7D847F;border:1px solid #E3E6E0">
-                          <sc-if value="{{ p.thumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ p.thumb.src }}" alt="" style="width:100%;height:100%;object-fit:cover;transform:{{ p.thumb.t }};transform-origin:{{ p.thumb.o }}"></sc-if>
-                          <sc-if value="{{ p.thumb.noPhoto }}" hint-placeholder-val="{{ false }}"><cc-icon name="{{ p.thumb.icon }}" size="18"></cc-icon></sc-if>
+            <div class="table-scroll">
+              <table class="table">
+                <thead><tr>
+                  <th>Product</th>
+                  <th>SKU</th>
+                  <th class="num">Available</th>
+                  <th class="num">Price</th>
+                  <th>Listing status</th>
+                  <th>Last updated</th>
+                  <th><span class="sr-only">Action</span></th>
+                </tr></thead>
+                <tbody>
+                  <sc-for list="{{ rows }}" as="p" hint-placeholder-count="6">
+                    <tr onClick="{{ p.open }}">
+                      <td>
+                        <div class="prod-cell">
+                          <div class="thumb thumb-44">
+                            <sc-if value="{{ p.thumb.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ p.thumb.src }}" alt="" loading="lazy" decoding="async" style="transform:{{ p.thumb.t }};transform-origin:{{ p.thumb.o }}"></sc-if>
+                            <sc-if value="{{ p.thumb.noPhoto }}" hint-placeholder-val="{{ false }}"><cc-icon name="{{ p.thumb.icon }}" size="16"></cc-icon></sc-if>
+                          </div>
+                          <div class="prod-text">
+                            <button onClick="{{ p.open }}" class="text-btn">{{ p.name }}</button>
+                            <span class="prod-sub">{{ p.category }}</span>
+                          </div>
                         </div>
-                        <div style="display:flex;flex-direction:column;min-width:0">
-                          <button onClick="{{ p.open }}" style="border:0;background:none;padding:0;font:inherit;font-weight:500;color:#202522;text-align:left;cursor:pointer">{{ p.name }}</button>
-                          <span style="font-size:12px;color:#626A64">{{ p.category }}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td style="padding:10px 12px;border-bottom:1px solid #EDEFEA;white-space:nowrap;color:{{ p.skuColor }};font-size:13px">{{ p.sku }}</td>
-                    <td style="padding:10px 12px;border-bottom:1px solid #EDEFEA;text-align:right;white-space:nowrap;color:{{ p.stockColor }}">{{ p.stock }}</td>
-                    <td style="padding:10px 12px;border-bottom:1px solid #EDEFEA;text-align:right;white-space:nowrap;color:{{ p.priceColor }}">{{ p.price }}</td>
-                    <td style="padding:10px 12px;border-bottom:1px solid #EDEFEA"><span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;white-space:nowrap;background:{{ p.st.bg }};color:{{ p.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ p.st.dot }}"></span>{{ p.st.label }}</span></td>
-                    <td style="padding:10px 12px;border-bottom:1px solid #EDEFEA;white-space:nowrap;color:#626A64">{{ p.updated }}</td>
-                    <td style="padding:10px 20px 10px 12px;border-bottom:1px solid #EDEFEA;text-align:right"><button class="btn btn-secondary" onClick="{{ p.act }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:12.5px;padding:5px 10px;border-radius:7px;color:#202522" style-hover="background:#F3F2EE;border-color:#BCC2BA">{{ p.action }}</button></td>
-                  </tr>
-                </sc-for>
-              </tbody>
-            </table>
+                      </td>
+                      <td class="nowrap cell-sm" style="color:{{ p.skuColor }}">{{ p.sku }}</td>
+                      <td class="num nowrap" style="color:{{ p.stockColor }}">{{ p.stock }}</td>
+                      <td class="num nowrap" style="color:{{ p.priceColor }}">{{ p.price }}</td>
+                      <td><span class="status"><span class="status-dot" style="background:{{ p.st.dot }}"></span>{{ p.st.label }}</span></td>
+                      <td class="nowrap muted">{{ p.updated }}</td>
+                      <td class="num"><button class="btn btn-secondary btn-sm" onClick="{{ p.act }}">{{ p.action }}</button></td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
           </sc-if>
           <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
-            <div style="padding:48px 24px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;max-width:420px;margin:0 auto">
-              <span style="width:40px;height:40px;border-radius:10px;background:#F3F2EE;display:grid;place-items:center;color:#626A64"><cc-icon name="search" size="18"></cc-icon></span>
-              <div style="font-size:15px;font-weight:600">{{ emptyTitle }}</div>
-              <div style="font-size:13px;color:#626A64">{{ emptyBody }}</div>
-              <button class="btn btn-secondary" onClick="{{ clearSearch }}" style="background:#FFFFFF;border-color:#D3D7D0;font-weight:500;font-size:13px;padding:7px 12px;border-radius:8px;color:#202522;margin-top:4px">Clear search and filters</button>
+            <div class="empty empty--center">
+              <span class="empty-icon"><cc-icon name="search" size="20"></cc-icon></span>
+              <div class="empty-title">{{ emptyTitle }}</div>
+              <div class="empty-body">{{ emptyBody }}</div>
+              <button class="btn btn-secondary" onClick="{{ clearSearch }}">Clear search and filters</button>
             </div>
           </sc-if>
         </div>
-        <div style="font-size:12px;color:#626A64;display:flex;align-items:center;gap:6px"><cc-icon name="info" size="13"></cc-icon>Inventory is read-only after creation in this prototype. Publishing updates the demo catalog only.</div>
+        <p class="note"><cc-icon name="info" size="14"></cc-icon><span>Inventory is read-only after creation in this prototype. Publishing updates the demo catalog only.</span></p>
       </div>
     </sc-if>
     <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
-      <div style="padding:20px 40px 48px;display:flex;flex-direction:column;gap:20px;max-width:1240px">
-        <div><button onClick="{{ DT.back }}" class="btn btn-ghost" style="font-size:13px;font-weight:500;color:#3E4641;padding:4px 6px;border-radius:6px"><cc-icon name="arrow-left" size="14"></cc-icon>Products</button></div>
-        <div style="display:flex;align-items:flex-end;gap:16px;justify-content:space-between;flex-wrap:wrap">
-          <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
-            <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64">{{ DT.category }} · SKU {{ DT.sku }}</div>
-            <h2 style="margin:0;font-size:22px;font-weight:600;letter-spacing:-0.015em;line-height:1.25">{{ DT.name }}</h2>
+      <div class="page page--detail">
+        <button onClick="{{ DT.back }}" class="btn btn-ghost back"><cc-icon name="arrow-left" size="16"></cc-icon>Products</button>
+        <div class="detail-head">
+          <div class="detail-title">
+            <h2 class="h2">{{ DT.name }}</h2>
+            <p class="hint">{{ DT.category }} · SKU {{ DT.sku }}</p>
           </div>
-          <sc-if value="{{ DT.canReview }}" hint-placeholder-val="{{ false }}"><button class="btn btn-primary" onClick="{{ DT.openReview }}" style="font-weight:500;font-size:13.5px;padding:9px 14px;border-radius:8px;color:#FFFFFF">{{ DT.reviewLabel }}<cc-icon name="arrow-right" size="15"></cc-icon></button></sc-if>
+          <sc-if value="{{ DT.canReview }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary" onClick="{{ DT.openReview }}">{{ DT.reviewLabel }}<cc-icon name="arrow-right" size="16"></cc-icon></button></sc-if>
         </div>
-        <div style="display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:32px;align-items:start">
-          <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="detail-grid">
+          <div class="gallery">
             <sc-if value="{{ DT.hasImages }}" hint-placeholder-val="{{ false }}">
-              <div style="position:relative;aspect-ratio:3/4;background:#EFEDE8;border-radius:12px;overflow:hidden;border:1px solid #E3E6E0">
-                <img src="{{ DT.main.src }}" alt="{{ DT.main.label }}" style="width:100%;height:100%;object-fit:contain">
-                <button aria-label="Enlarge photo" onClick="{{ DT.enlarge }}" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border:0;border-radius:8px;background:rgba(255,255,255,0.94);color:#202522;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 3px rgba(32,35,33,.18)" style-hover="background:#FFFFFF"><cc-icon name="maximize" size="15"></cc-icon></button>
+              <div class="stage">
+                <img src="{{ DT.main.src }}" alt="{{ DT.main.label }}">
+                <button class="float-btn" aria-label="Enlarge photo" onClick="{{ DT.enlarge }}"><cc-icon name="maximize" size="16"></cc-icon></button>
               </div>
-              <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#626A64"><span><span style="font-weight:500;color:#202522">{{ DT.main.role }}</span> · {{ DT.main.label }}</span><span>{{ DT.idxLabel }}</span></div>
-              <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px">
+              <div class="caption"><span><strong>{{ DT.main.role }}</strong> · {{ DT.main.label }}</span><span>{{ DT.idxLabel }}</span></div>
+              <div class="thumbs">
                 <sc-for list="{{ DT.images }}" as="im" hint-placeholder-count="6">
-                  <button onClick="{{ im.select }}" aria-label="{{ im.label }}" aria-pressed="{{ im.active }}" style="aspect-ratio:1;padding:0;border-radius:8px;overflow:hidden;border:2px solid {{ im.border }};background:#EFEDE8;cursor:pointer"><img src="{{ im.src }}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:{{ im.pos }}"></button>
+                  <button class="thumb-btn" onClick="{{ im.select }}" aria-label="{{ im.label }}" aria-pressed="{{ im.active }}"><img src="{{ im.src }}" alt="" loading="lazy" decoding="async" style="object-position:{{ im.pos }}"></button>
                 </sc-for>
               </div>
             </sc-if>
             <sc-if value="{{ DT.noImages }}" hint-placeholder-val="{{ false }}">
-              <div style="aspect-ratio:4/3;background:#EEECE7;border-radius:12px;border:1px solid #E3E6E0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#7D847F"><cc-icon name="{{ DT.icon }}" size="36" stroke="1.25"></cc-icon><span style="font-size:12.5px;color:#626A64">Demo product · no photos</span></div>
+              <div class="stage stage--empty"><cc-icon name="{{ DT.icon }}" size="32" stroke="1.25"></cc-icon><span>Demo product · no photos</span></div>
             </sc-if>
           </div>
-          <div style="display:flex;flex-direction:column;gap:24px;min-width:0">
-            <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);background:#FFFFFF;border:1px solid #E3E6E0;border-radius:12px">
-              <div style="padding:14px 18px;display:flex;flex-direction:column;gap:8px;border-right:1px solid #E3E6E0">
-                <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64">Listing status</div>
-                <div><span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;background:{{ DT.st.bg }};color:{{ DT.st.fg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ DT.st.dot }}"></span>{{ DT.st.label }}</span></div>
-                <div style="font-size:12.5px;color:#626A64">{{ DT.statusNote }}</div>
+          <div class="detail-main">
+            <div class="facts">
+              <div class="fact">
+                <div class="fact-label">Listing status</div>
+                <span class="status"><span class="status-dot" style="background:{{ DT.st.dot }}"></span>{{ DT.st.label }}</span>
+                <div class="hint">{{ DT.statusNote }}</div>
               </div>
-              <div style="padding:14px 18px;display:flex;flex-direction:column;gap:8px">
-                <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626A64">Agent tasks</div>
+              <div class="fact">
+                <div class="fact-label">Agent tasks</div>
                 <sc-for list="{{ DT.tasks }}" as="t" hint-placeholder-count="1">
-                  <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+                  <div class="task-line">
                     <cc-icon name="{{ t.icon }}" size="14"></cc-icon>
-                    <span style="flex:1;min-width:0"><span style="font-weight:500">{{ t.title }}</span><span style="color:#626A64"> · {{ t.agent }}</span></span>
-                    <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:{{ t.st.fg }};white-space:nowrap"><span style="width:6px;height:6px;border-radius:50%;background:{{ t.st.dot }}"></span>{{ t.st.label }}</span>
+                    <span class="grow"><span class="w500">{{ t.title }}</span><span class="muted"> · {{ t.agent }}</span></span>
+                    <span class="status"><span class="status-dot" style="background:{{ t.st.dot }}"></span>{{ t.st.label }}</span>
                   </div>
                 </sc-for>
-                <sc-if value="{{ DT.noTasks }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#626A64">No open agent tasks for this product.</div></sc-if>
+                <sc-if value="{{ DT.noTasks }}" hint-placeholder-val="{{ false }}"><div class="hint">No open agent tasks for this product.</div></sc-if>
               </div>
             </div>
-            <section style="display:flex;flex-direction:column;gap:14px">
-              <div style="display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid #E3E6E0">
-                <h3 style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522;flex:1">Listing information</h3>
+            <section class="form-section">
+              <div class="sub-head">
+                <h3 class="sub-title">Listing information</h3>
                 <sc-if value="{{ DT.dirty }}" hint-placeholder-val="{{ false }}">
-                  <button class="btn btn-ghost" onClick="{{ DT.discard }}" style="font-size:12.5px;font-weight:500;color:#3E4641;padding:4px 8px;border-radius:6px">Discard</button>
-                  <button class="btn btn-primary" onClick="{{ DT.save }}" disabled="{{ DT.nameEmpty }}" style="font-weight:500;font-size:12.5px;padding:6px 12px;border-radius:7px;color:#FFFFFF">Save changes</button>
+                  <button class="btn btn-ghost btn-sm" onClick="{{ DT.discard }}">Discard</button>
+                  <button class="btn btn-primary btn-sm" onClick="{{ DT.save }}" disabled="{{ DT.nameEmpty }}">Save changes</button>
                 </sc-if>
               </div>
-              <div style="display:flex;flex-direction:column;gap:6px">
-                <label for="dt-name" style="font-size:13px;font-weight:500">Title</label>
-                <input id="dt-name" value="{{ DT.bName }}" onChange="{{ DT.onName }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px;color:#202522;width:100%">
+              <div class="field">
+                <label for="dt-name" class="label">Title</label>
+                <input id="dt-name" value="{{ DT.bName }}" onChange="{{ DT.onName }}" class="input">
               </div>
-              <div style="display:flex;flex-direction:column;gap:6px">
-                <label for="dt-desc" style="font-size:13px;font-weight:500">Description</label>
-                <textarea id="dt-desc" rows="5" value="{{ DT.bDesc }}" onChange="{{ DT.onDesc }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;line-height:1.55;padding:9px 10px;color:#202522;width:100%;min-height:120px"></textarea>
+              <div class="field">
+                <label for="dt-desc" class="label">Description</label>
+                <textarea id="dt-desc" rows="5" value="{{ DT.bDesc }}" onChange="{{ DT.onDesc }}" class="input" style="min-height:120px"></textarea>
               </div>
-              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
-                <div style="display:flex;flex-direction:column;gap:6px">
-                  <label for="dt-price" style="font-size:13px;font-weight:500">Price ({{ DT.currency }})</label>
-                  <input id="dt-price" type="number" min="0" step="0.01" placeholder="Not provided" value="{{ DT.bPrice }}" onChange="{{ DT.onPrice }}" class="input" style="background:#FFFFFF;border:1px solid #D3D7D0;border-radius:8px;font-size:14px;min-height:38px;padding:8px 10px;color:#202522;width:100%">
+              <div class="grid-3">
+                <div class="field">
+                  <label for="dt-price" class="label">Price ({{ DT.currency }})</label>
+                  <input id="dt-price" type="number" min="0" step="0.01" placeholder="Not provided" value="{{ DT.bPrice }}" onChange="{{ DT.onPrice }}" class="input">
                 </div>
-                <div style="display:flex;flex-direction:column;gap:6px">
-                  <span style="font-size:13px;font-weight:500">Available</span>
-                  <div style="min-height:38px;padding:8px 10px;border-radius:8px;background:#F3F2EE;color:{{ DT.stockColor }};font-size:14px">{{ DT.stockRaw }}</div>
-                  <span style="font-size:11.5px;color:#626A64">Read-only in this prototype</span>
+                <div class="field">
+                  <span class="label">Available</span>
+                  <div class="readonly" style="color:{{ DT.stockColor }}">{{ DT.stockRaw }}</div>
+                  <span class="hint">Read-only in this prototype</span>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:6px">
-                  <span style="font-size:13px;font-weight:500">Condition</span>
-                  <div style="min-height:38px;padding:8px 10px;border-radius:8px;background:#F3F2EE;font-size:14px">{{ DT.conditionLabel }}</div>
+                <div class="field">
+                  <span class="label">Condition</span>
+                  <div class="readonly">{{ DT.conditionLabel }}</div>
                 </div>
               </div>
             </section>
             <sc-if value="{{ DT.hasDetails }}" hint-placeholder-val="{{ false }}">
-              <section style="display:flex;flex-direction:column;gap:4px">
-                <h3 style="margin:0 0 6px;padding-bottom:8px;border-bottom:1px solid #E3E6E0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Product details</h3>
-                <sc-for list="{{ DT.details }}" as="x" hint-placeholder-count="4">
-                  <div style="display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:7px 0;border-bottom:1px solid #EDEFEA;font-size:13.5px">
-                    <span style="color:#626A64">{{ x.k }}</span><span>{{ x.v }}</span>
-                    <span style="display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:500;color:{{ x.s.fg }}"><cc-icon name="{{ x.s.icon }}" size="12"></cc-icon>{{ x.s.label }}</span>
-                  </div>
-                </sc-for>
+              <section class="form-section form-section--tight">
+                <div class="sub-head"><h3 class="sub-title">Product details</h3></div>
+                <div class="kv">
+                  <sc-for list="{{ DT.details }}" as="x" hint-placeholder-count="4">
+                    <div class="kv-row">
+                      <span class="kv-k">{{ x.k }}</span><span>{{ x.v }}</span>
+                      <span class="prov" style="color:{{ x.s.fg }}"><cc-icon name="{{ x.s.icon }}" size="14"></cc-icon>{{ x.s.label }}</span>
+                    </div>
+                  </sc-for>
+                </div>
               </section>
             </sc-if>
             <sc-if value="{{ DT.hasHistory }}" hint-placeholder-val="{{ false }}">
-              <section style="display:flex;flex-direction:column;gap:4px">
-                <h3 style="margin:0 0 6px;padding-bottom:8px;border-bottom:1px solid #E3E6E0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#202522">Activity history</h3>
-                <sc-for list="{{ DT.history }}" as="h" hint-placeholder-count="3">
-                  <div style="display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:12px;padding:6px 0;font-size:13px;border-bottom:1px solid #EDEFEA">
-                    <span style="font-weight:500">{{ h.who }}</span><span style="color:#3E4641">{{ h.text }}</span><span style="color:#626A64;white-space:nowrap">{{ h.time }}</span>
-                  </div>
-                </sc-for>
+              <section class="form-section form-section--tight">
+                <div class="sub-head"><h3 class="sub-title">Activity history</h3></div>
+                <div class="kv">
+                  <sc-for list="{{ DT.history }}" as="h" hint-placeholder-count="3">
+                    <div class="hist-row"><span class="hist-who">{{ h.who }}</span><span class="hist-text">{{ h.text }}</span><span class="hist-time">{{ h.time }}</span></div>
+                  </sc-for>
+                </div>
               </section>
             </sc-if>
           </div>
