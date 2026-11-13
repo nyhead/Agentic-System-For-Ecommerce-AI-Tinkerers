@@ -1,0 +1,495 @@
+import json
+import logging
+import os
+import subprocess
+import sys
+from datetime import datetime
+
+import pytest
+
+from app import graph
+from app.graph import NotAwaitingApprovalError, UnknownWorkflowError, Workflow
+from app.state import MetricsRecord
+from app.tools.llm import LLMClient
+from app.tools.shopify import ShopifyClient, ShopifyConfig
+
+PRODUCT_ID = "demo-mug-001"
+PRODUCT_GID = "gid://shopify/Product/1001"
+PUBLICATION_GID = "gid://shopify/Publication/7"
+STAGED_URL = "https://shopify-staged-uploads.storage.googleapis.com/"
+RESOURCE_URL = "https://shopify-staged-uploads.storage.googleapis.com/tmp/photo.jpg"
+PHOTO = b"\xff\xd8\xff fake jpeg"
+
+LISTING = {"title": "Blue Ceramic Mug", "description": "A blue ceramic mug with a handle."}
+COPY = {
+    "seoTitle": "Blue Ceramic Mug",
+    "metaDescription": "A blue ceramic mug with a handle.",
+    "socialAds": [
+        {"channel": "Instagram", "copy": "Deep blue and glazed."},
+        {"channel": "Facebook", "copy": "A handle that fits your hand."},
+    ],
+}
+METRICS = MetricsRecord(
+    productId=PRODUCT_ID, source="synthetic", periodDays=7, sessions=240, orders=6
+)
+
+
+class FakeLLM:
+    def __init__(self, *responses):
+        self.responses = list(responses)
+        self.calls = []
+
+    def __call__(self, url, headers, body, timeout):
+        self.calls.append(json.loads(body))
+        return self.responses.pop(0)
+
+
+class FakeShopify:
+    def __init__(self, *responses):
+        self.responses = list(responses)
+        self.calls = []
+
+    def __call__(self, method, url, headers, body, timeout):
+        self.calls.append({"url": url, "body": body})
+        status, payload = self.responses.pop(0)
+        return status, payload if isinstance(payload, bytes) else json.dumps(payload).encode()
+
+    def queue(self, *responses):
+        self.responses.extend(responses)
+
+    def operations(self):
+        names = []
+        for call in self.calls:
+            if call["url"] == STAGED_URL:
+                names.append("upload")
+                continue
+            query = json.loads(call["body"])["query"]
+            names.append(query.split()[1].split("(")[0])
+        return names
+
+
+def reply(payload):
+    content = json.dumps(payload)
+    return 200, json.dumps({"choices": [{"message": {"content": content}}]}).encode()
+
+
+def data(**fields):
+    return 200, {"data": fields}
+
+
+def user_errors(name, message):
+    return data(**{name: {"userErrors": [{"field": ["x"], "message": message}]}})
+
+
+NOT_FOUND = data(productByIdentifier=None)
+CREATED = data(
+    productCreate={
+        "product": {
+            "id": PRODUCT_GID,
+            "media": {"nodes": [{"preview": {"image": {"url": "https://cdn.shopify.com/m.jpg"}}}]},
+        },
+        "userErrors": [],
+    }
+)
+STAGED = data(
+    stagedUploadsCreate={
+        "stagedTargets": [{"url": STAGED_URL, "resourceUrl": RESOURCE_URL, "parameters": []}],
+        "userErrors": [],
+    }
+)
+UPLOADED = (204, b"")
+PUBLICATIONS = data(
+    publications={
+        "nodes": [
+            {"id": PUBLICATION_GID, "catalog": {"apps": {"nodes": [{"handle": "online_store"}]}}}
+        ]
+    }
+)
+ACTIVATED = data(
+    productUpdate={"product": {"id": PRODUCT_GID, "status": "ACTIVE"}, "userErrors": []}
+)
+PUBLISHED = data(publishablePublish={"userErrors": []})
+PUBLISH_FLOW = (PUBLICATIONS, ACTIVATED, PUBLISHED)
+
+
+def make_workflow(llm_responses=(), shopify_responses=()):
+    llm_fake = FakeLLM(*llm_responses)
+    shopify_fake = FakeShopify(*shopify_responses)
+    llm = LLMClient(
+        "https://llm.example/v1", "sk-test", "vision/model", transport=llm_fake, sleep=lambda _: 0
+    )
+    shopify = ShopifyClient(
+        ShopifyConfig("demo-shop.myshopify.com", "shpat_test"),
+        transport=shopify_fake,
+        sleep=lambda _: None,
+    )
+    return Workflow(llm=llm, shopify=shopify), llm_fake, shopify_fake
+
+
+def pending_workflow(metrics=None):
+    workflow, llm, shopify = make_workflow([reply(LISTING), reply(COPY)], [NOT_FOUND, CREATED])
+    state = workflow.start(PRODUCT_ID, "Blue mug, 350 ml.", metrics=metrics)
+    assert state["approval"] == "pending"
+    return workflow, llm, shopify
+
+
+def actions(state):
+    return [(event["agent"], event["action"], event["ok"]) for event in state["events"]]
+
+
+def test_photo_run_stops_pending_with_draft_copy_and_analytics():
+    workflow, llm, shopify = make_workflow(
+        [reply(LISTING), reply(COPY)], [STAGED, UPLOADED, NOT_FOUND, CREATED]
+    )
+
+    state = workflow.start(
+        PRODUCT_ID, "Blue mug, 350 ml.", photo=PHOTO, photo_mime_type="image/jpeg", metrics=METRICS
+    )
+
+    assert state["approval"] == "pending"
+    assert "error" not in state
+    assert "photo" not in state
+    assert state["product"].shopifyProductId == PRODUCT_GID
+    assert state["product"].title == "Blue Ceramic Mug"
+    assert state["product"].imageUrl == "https://cdn.shopify.com/m.jpg"
+    assert state["marketing"].seoTitle == "Blue Ceramic Mug"
+    assert state["analytics"].conversionRate == 0.025
+    assert state["analytics"].recommendation.startswith("Synthetic sample data")
+    # The photo goes to the model and, as the staged upload, to the Shopify draft.
+    image_part = llm.calls[0]["messages"][1]["content"][1]
+    assert image_part["image_url"]["url"].startswith("data:image/jpeg;base64,")
+    assert shopify.operations() == [
+        "StageImageUpload",
+        "upload",
+        "FindProductByHandle",
+        "CreateDraftProduct",
+    ]
+    assert PHOTO in shopify.calls[1]["body"]
+    create = json.loads(shopify.calls[3]["body"])["variables"]
+    assert create["product"]["status"] == "DRAFT"
+    assert create["media"][0]["originalSource"] == RESOURCE_URL
+
+
+def test_notes_only_run_has_no_analytics_and_logs_the_skip():
+    workflow, llm, shopify = make_workflow([reply(LISTING), reply(COPY)], [NOT_FOUND, CREATED])
+
+    state = workflow.start(PRODUCT_ID, "Blue mug, 350 ml.")
+
+    assert state["approval"] == "pending"
+    assert "analytics" not in state and "metrics" not in state
+    assert isinstance(llm.calls[0]["messages"][1]["content"], str)
+    assert shopify.operations() == ["FindProductByHandle", "CreateDraftProduct"]
+    assert "media" not in json.loads(shopify.calls[1]["body"])["variables"]
+    assert actions(state) == [
+        ("product", "Wrote a draft title and description", True),
+        ("product", "Created the draft in Shopify, hidden from customers", True),
+        ("marketing", "Wrote an SEO title, a meta description and two social ads", True),
+        ("analytics", "Skipped: no shop numbers for this product yet", True),
+        ("workflow", "Waiting for the shop owner to approve or reject", True),
+    ]
+
+
+def test_image_url_is_shown_to_the_model_and_attached_to_the_draft():
+    workflow, llm, shopify = make_workflow([reply(LISTING), reply(COPY)], [NOT_FOUND, CREATED])
+    url = "https://images.example/mug.jpg"
+
+    workflow.start(PRODUCT_ID, "", image_url=url)
+
+    assert llm.calls[0]["messages"][1]["content"][1]["image_url"]["url"] == url
+    create = json.loads(shopify.calls[1]["body"])["variables"]
+    assert create["media"][0]["originalSource"] == url
+
+
+def test_event_log_with_metrics_and_approval_is_ordered_and_json_friendly():
+    workflow, _, shopify = pending_workflow(metrics=METRICS)
+    shopify.queue(*PUBLISH_FLOW)
+
+    state = workflow.decide(PRODUCT_ID, True)
+
+    assert actions(state) == [
+        ("product", "Wrote a draft title and description", True),
+        ("product", "Created the draft in Shopify, hidden from customers", True),
+        ("marketing", "Wrote an SEO title, a meta description and two social ads", True),
+        ("analytics", "Recommended a next step from synthetic metrics", True),
+        ("workflow", "Waiting for the shop owner to approve or reject", True),
+        ("merchant", "Approved the listing", True),
+        ("product", "Published the product to the Online Store", True),
+    ]
+    for event in state["events"]:
+        assert set(event) == {"agent", "action", "ok", "at"}
+        assert datetime.fromisoformat(event["at"]).tzinfo is not None
+    json.dumps(state["events"])
+
+
+def test_approval_publishes_and_ends_approved():
+    workflow, _, shopify = pending_workflow()
+    shopify.queue(*PUBLISH_FLOW)
+
+    state = workflow.decide(PRODUCT_ID, True)
+
+    assert state["approval"] == "approved"
+    assert "error" not in state
+    assert shopify.operations()[-3:] == ["AppPublications", "ActivateProduct", "PublishProduct"]
+    activate = json.loads(shopify.calls[-2]["body"])["variables"]
+    assert activate == {"product": {"id": PRODUCT_GID, "status": "ACTIVE"}}
+    publish = json.loads(shopify.calls[-1]["body"])["variables"]
+    assert publish == {"id": PRODUCT_GID, "input": [{"publicationId": PUBLICATION_GID}]}
+    assert workflow.graph.get_state({"configurable": {"thread_id": PRODUCT_ID}}).next == ()
+
+
+def test_rejection_publishes_nothing_and_ends_rejected():
+    workflow, _, shopify = pending_workflow()
+    before = len(shopify.calls)
+
+    state = workflow.decide(PRODUCT_ID, False)
+
+    assert state["approval"] == "rejected"
+    assert len(shopify.calls) == before
+    assert actions(state)[-1] == ("merchant", "Rejected the listing; nothing was published", True)
+    assert workflow.graph.get_state({"configurable": {"thread_id": PRODUCT_ID}}).next == ()
+
+
+def test_publish_is_reachable_only_from_the_approval_decision():
+    workflow, _, shopify = pending_workflow()
+
+    edges = workflow.graph.get_graph().edges
+    assert {edge.source for edge in edges if edge.target == "publish"} == {"decision"}
+    assert workflow.graph.get_state({"configurable": {"thread_id": PRODUCT_ID}}).next == (
+        "decision",
+    )
+    # Starting again does not move past the approval either.
+    workflow.start(PRODUCT_ID, "Blue mug, 350 ml.")
+    assert "AppPublications" not in shopify.operations()
+    assert workflow.snapshot(PRODUCT_ID)["approval"] == "pending"
+
+
+def test_decide_requires_a_real_bool():
+    workflow, _, shopify = pending_workflow()
+    with pytest.raises(TypeError):
+        workflow.decide(PRODUCT_ID, "yes")
+    assert "AppPublications" not in shopify.operations()
+    assert workflow.snapshot(PRODUCT_ID)["approval"] == "pending"
+
+
+def test_model_failure_in_drafting_creates_nothing():
+    workflow, _, shopify = make_workflow([(400, b"bad request")])
+
+    state = workflow.start(PRODUCT_ID, "Blue mug.")
+
+    assert state["error"] == graph.DRAFT_MODEL_FAILED
+    assert "product" not in state and "approval" not in state
+    assert shopify.calls == []
+    assert actions(state) == [("product", "Could not write the listing", False)]
+
+
+def test_unusable_input_is_reported_to_the_merchant():
+    workflow, llm, shopify = make_workflow()
+
+    state = workflow.start(PRODUCT_ID, "   ")
+
+    assert state["error"] == graph.DRAFT_INPUT_UNUSABLE
+    assert llm.calls == [] and shopify.calls == []
+
+
+def test_shopify_failure_keeps_the_drafted_listing():
+    workflow, _, shopify = make_workflow(
+        [reply(LISTING)], [NOT_FOUND, user_errors("productCreate", "Title is invalid")]
+    )
+
+    state = workflow.start(PRODUCT_ID, "Blue mug.")
+
+    assert state["error"] == graph.DRAFT_SHOPIFY_FAILED
+    assert state["product"].title == "Blue Ceramic Mug"
+    assert state["product"].shopifyProductId is None
+    assert "marketing" not in state and "approval" not in state
+    assert "shpat_test" not in state["error"]
+    assert actions(state) == [
+        ("product", "Wrote a draft title and description", True),
+        ("product", "Could not save the draft in Shopify", False),
+    ]
+
+
+def test_marketing_failure_keeps_the_shopify_draft():
+    workflow, _, _ = make_workflow(
+        [reply(LISTING), (500, b"down"), (500, b"down")], [NOT_FOUND, CREATED]
+    )
+
+    state = workflow.start(PRODUCT_ID, "Blue mug.", metrics=METRICS)
+
+    assert state["error"] == graph.MARKETING_FAILED
+    assert state["product"].shopifyProductId == PRODUCT_GID
+    assert "marketing" not in state and "analytics" not in state and "approval" not in state
+    assert actions(state)[-1] == ("marketing", "Could not write the launch copy", False)
+    with pytest.raises(NotAwaitingApprovalError):
+        workflow.decide(PRODUCT_ID, True)
+
+
+def test_failure_message_is_logged_server_side_without_credentials(caplog):
+    workflow, _, _ = make_workflow([(401, b'{"error": "bad key sk-test"}')])
+    with caplog.at_level(logging.WARNING, logger="app.graph"):
+        state = workflow.start(PRODUCT_ID, "Blue mug.")
+    assert "HTTP 401" in caplog.text
+    assert "sk-test" not in caplog.text
+    assert "HTTP" not in state["error"]
+
+
+def test_start_again_while_pending_changes_nothing():
+    workflow, llm, shopify = pending_workflow()
+    first = workflow.snapshot(PRODUCT_ID)
+    calls = (len(llm.calls), len(shopify.calls))
+
+    again = workflow.start(PRODUCT_ID, "Different notes.")
+
+    assert again == first
+    assert (len(llm.calls), len(shopify.calls)) == calls
+
+
+def test_start_again_after_a_marketing_failure_resumes_without_a_second_draft():
+    workflow, llm, shopify = make_workflow(
+        [reply(LISTING), (500, b"down"), (500, b"down")], [NOT_FOUND, CREATED]
+    )
+    workflow.start(PRODUCT_ID, "Blue mug.")
+    llm.responses.append(reply(COPY))
+
+    state = workflow.start(PRODUCT_ID, "Blue mug.")
+
+    assert state["approval"] == "pending"
+    assert "error" not in state
+    assert state["product"].shopifyProductId == PRODUCT_GID
+    assert state["marketing"].seoTitle == "Blue Ceramic Mug"
+    # One draft call and two failed copy calls, then only the copy call on the retry.
+    assert len(llm.calls) == 4
+    assert shopify.operations() == ["FindProductByHandle", "CreateDraftProduct"]
+    assert [a for a in actions(state) if not a[2]] == [
+        ("marketing", "Could not write the launch copy", False)
+    ]
+    assert actions(state)[-1][0] == "workflow"
+
+
+def test_start_again_after_a_shopify_failure_reuses_the_written_listing():
+    workflow, llm, shopify = make_workflow(
+        [reply(LISTING), reply(COPY)], [NOT_FOUND, user_errors("productCreate", "Busy")]
+    )
+    workflow.start(PRODUCT_ID, "Blue mug.")
+    shopify.queue(NOT_FOUND, CREATED)
+
+    state = workflow.start(PRODUCT_ID, "Blue mug.")
+
+    assert state["approval"] == "pending"
+    assert state["product"].shopifyProductId == PRODUCT_GID
+    # The model wrote the listing once; the retry only saved it in Shopify.
+    assert len(llm.calls) == 2
+    created = [json.loads(c["body"]) for c in shopify.calls if "productCreate" in str(c["body"])]
+    assert all(c["variables"]["product"]["title"] == "Blue Ceramic Mug" for c in created)
+
+
+def test_publish_failure_leaves_a_hidden_draft_and_can_be_retried():
+    workflow, _, shopify = pending_workflow()
+    shopify.queue(PUBLICATIONS, user_errors("productUpdate", "Not allowed"))
+
+    state = workflow.decide(PRODUCT_ID, True)
+
+    assert state["error"] == graph.PUBLISH_FAILED
+    assert state["approval"] == "pending"
+    assert "PublishProduct" not in shopify.operations()
+    calls = len(shopify.calls)
+    state = workflow.start(PRODUCT_ID, "Blue mug.")
+    assert state["approval"] == "pending" and "error" not in state
+    assert len(shopify.calls) == calls  # the existing draft and copy are kept
+    shopify.queue(*PUBLISH_FLOW)
+    assert workflow.decide(PRODUCT_ID, True)["approval"] == "approved"
+
+
+def test_decide_on_unknown_product_fails():
+    workflow, _, shopify = make_workflow()
+    with pytest.raises(UnknownWorkflowError):
+        workflow.decide("no-such-product", True)
+    assert shopify.calls == []
+
+
+def test_decide_twice_fails_the_second_time_without_publishing_again():
+    workflow, _, shopify = pending_workflow()
+    shopify.queue(*PUBLISH_FLOW)
+    workflow.decide(PRODUCT_ID, True)
+    calls = len(shopify.calls)
+
+    with pytest.raises(NotAwaitingApprovalError):
+        workflow.decide(PRODUCT_ID, True)
+    with pytest.raises(NotAwaitingApprovalError):
+        workflow.decide(PRODUCT_ID, False)
+    assert len(shopify.calls) == calls
+    assert workflow.snapshot(PRODUCT_ID)["approval"] == "approved"
+
+
+def test_decide_after_rejection_cannot_publish():
+    workflow, _, shopify = pending_workflow()
+    workflow.decide(PRODUCT_ID, False)
+    with pytest.raises(NotAwaitingApprovalError):
+        workflow.decide(PRODUCT_ID, True)
+    assert "AppPublications" not in shopify.operations()
+
+
+def test_snapshot_of_known_and_unknown_products():
+    workflow, _, _ = pending_workflow()
+    state = workflow.snapshot(PRODUCT_ID)
+    assert state["approval"] == "pending"
+    assert state["product"].productId == PRODUCT_ID
+    assert workflow.snapshot("no-such-product") is None
+
+
+def test_workflows_are_separate_per_product():
+    workflow, llm, shopify = pending_workflow()
+    assert workflow.snapshot("other-001") is None
+    with pytest.raises(UnknownWorkflowError):
+        workflow.decide("other-001", True)
+
+
+def test_start_rejects_metrics_for_another_product_and_two_images():
+    workflow, llm, shopify = make_workflow()
+    other = METRICS.model_copy(update={"productId": "other-001"})
+    with pytest.raises(ValueError, match="metrics"):
+        workflow.start(PRODUCT_ID, "Blue mug.", metrics=other)
+    with pytest.raises(ValueError, match="not both"):
+        workflow.start(PRODUCT_ID, "Blue mug.", photo=PHOTO, image_url="https://x.example/a.jpg")
+    assert workflow.snapshot(PRODUCT_ID) is None
+
+
+def test_checkpoint_restores_state_types_without_unregistered_type_warnings(caplog):
+    with caplog.at_level(logging.WARNING):
+        workflow, _, _ = pending_workflow(metrics=METRICS)
+        workflow.snapshot(PRODUCT_ID)
+    assert "unregistered type" not in caplog.text
+
+
+def test_module_functions_use_one_lazily_built_default_workflow(monkeypatch):
+    workflow, _, shopify = make_workflow([reply(LISTING), reply(COPY)], [NOT_FOUND, CREATED])
+    monkeypatch.setattr(graph, "_default", workflow)
+
+    assert graph.start(PRODUCT_ID, "Blue mug.")["approval"] == "pending"
+    assert graph.snapshot(PRODUCT_ID)["approval"] == "pending"
+    shopify.queue(*PUBLISH_FLOW)
+    assert graph.decide(PRODUCT_ID, True)["approval"] == "approved"
+
+
+def test_default_workflow_without_credentials_reports_an_error(monkeypatch):
+    for name in ("LLM_BASE_URL", "LLM_API_KEY", "LLM_MODEL"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(graph, "_default", None)
+
+    state = graph.start("fresh-001", "Blue mug.")
+
+    assert state["error"] == graph.DRAFT_MODEL_FAILED
+    assert graph.default_workflow() is graph.default_workflow()
+
+
+def test_import_needs_no_credentials():
+    env = {
+        key: value for key, value in os.environ.items() if not key.startswith(("LLM_", "SHOPIFY_"))
+    }
+    result = subprocess.run(
+        [sys.executable, "-c", "import app.graph as g; assert g._default is None"],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
