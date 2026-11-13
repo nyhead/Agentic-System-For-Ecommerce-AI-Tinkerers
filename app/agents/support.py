@@ -385,6 +385,8 @@ class PublicMessage(BaseModel):
     text: str
     links: list[CustomerLink]
     createdAt: str
+    # Only on the customer's own messages: the id their chat sent, so it can match a retry.
+    clientMessageId: str | None = None
 
 
 class PublicProduct(BaseModel):
@@ -727,8 +729,9 @@ class Route(BaseModel):
 def classify(text: str) -> Route:
     """The keyword router. Pure: no tools, no model."""
     text = _DIGIT_UNIT.sub(r"\1 \2", text)  # "20mm" reads as "20 mm"
-    order_match = _ORDER_REF.search(text)
-    order_ref = order_match.group(1).upper() if order_match else None
+    # The latest order number wins: a follow-up may correct the one asked about first.
+    order_refs = [match.group(1).upper() for match in _ORDER_REF.finditer(text)]
+    order_ref = order_refs[-1] if order_refs else None
     if _COMPLAINT.search(text):
         return Route(intent="human_assistance", complaint=True, order_ref=order_ref)
     if _HUMAN.search(text):
@@ -1419,6 +1422,11 @@ class SupportDesk:
                 intent=classify(message.text).intent,
                 resolution_status="paused",
             )
+        asked = _clarified_question(conversation)
+        if asked is not None:
+            # An answer to a clarifying question is read with the question it answers:
+            # "Is it in stock?" then "The 22 mm one" asks about stock of the 22 mm strap.
+            message = message.model_copy(update={"text": f"{asked}\n{message.text}"})
         route = self._route(message.text, turn)
         self._event(
             "triage",
@@ -2317,6 +2325,16 @@ def _resolve_fact(
     return "confirmed", top[-1], context
 
 
+def _clarified_question(conversation: Conversation) -> str | None:
+    """The customer's question when the last reply asked them to clarify it; one level only."""
+    if not conversation.results:
+        return None
+    last = conversation.results[-1]
+    if last.resolution_status != "clarification_requested":
+        return None
+    return next((m.text for m in conversation.messages if m.messageId == last.message_id), None)
+
+
 def _varies(facts: list[SupportFact], key: str) -> bool:
     return any(f.key == key and f.variantId is not None for f in facts)
 
@@ -2383,6 +2401,7 @@ def _public_message(message: Message) -> PublicMessage:
         text=message.text,
         links=list(message.links),
         createdAt=message.createdAt,
+        clientMessageId=message.clientMessageId if message.role == "customer" else None,
     )
 
 

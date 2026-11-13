@@ -790,3 +790,53 @@ def test_events_feed_the_activity_log():
     assert events[1].action == "Asked you to help with a customer question"
     assert events[1].escalationId == desk.escalations()[0].escalationId
     assert all(e.conversationId == chat.conversationId for e in events)
+
+
+def test_public_view_returns_only_the_customers_own_client_ids():
+    desk, _ = make_desk()
+    chat = watch_chat(desk)
+    first = desk.receive(chat.conversationId, SWIM, client_message_id="m1")
+    desk.answer_escalation(first.escalation_id, MERCHANT_ANSWER, merchant_id="elena",
+                           idempotency_key="k1")
+
+    messages = desk.public_conversation(chat.conversationId).messages
+
+    assert [(m.author, m.clientMessageId) for m in messages] == [
+        ("customer", "m1"),
+        ("assistant", None),
+        ("shop_team", None),
+    ]
+
+
+def test_an_answer_to_a_clarifying_question_keeps_the_original_question():
+    desk, _ = make_desk()
+    chat = desk.open_conversation("Priya", product_id="p-strap")
+    desk.receive(chat.conversationId, "Is it in stock?", client_message_id="m1")
+
+    result = desk.receive(chat.conversationId, "The 20 mm one", client_message_id="m2")
+
+    assert result.relevant_variant_id == "v-strap-20"
+    assert "The 20 mm option is out of stock." in result.reply_text
+    assert customer_messages(desk, chat.conversationId, "customer")[-1].text == "The 20 mm one"
+
+
+def test_a_new_question_after_a_clarification_is_routed_on_its_own():
+    desk, _ = make_desk()
+    chat = desk.open_conversation("Priya", product_id="p-strap")
+    desk.receive(chat.conversationId, "Is it in stock?", client_message_id="m1")
+
+    result = desk.receive(chat.conversationId, "Where is my order #1001?", client_message_id="m2")
+
+    assert result.intent == "order_status"
+
+
+def test_a_corrected_order_number_replaces_the_first_one():
+    desk, _ = make_desk(orders=DemoOrders({"1001": ("cust-hannah", ORDER)}))
+    chat = desk.open_conversation("Hannah", identity=HANNAH)
+    desk.receive(chat.conversationId, "Where is my order #1010?", client_message_id="m1",
+                 identity=HANNAH)
+
+    result = desk.receive(chat.conversationId, "Sorry, it's #1001", client_message_id="m2",
+                          identity=HANNAH)
+
+    assert "Order 1001: Paid." in result.reply_text
